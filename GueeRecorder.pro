@@ -88,4 +88,6 @@ DISTFILES += \
     UiResource/Shaders/Test.frag \
     UiResource/Shaders/Test.vert \
     UiResource/Shaders/base.frag \
-    UiResource/Shaders/base.vert
+    UiResource/Shaders/base.vert \
+    README.md \
+    LICENSE
