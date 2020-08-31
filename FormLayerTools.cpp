@@ -296,6 +296,11 @@ void FormLayerTools::resetLayerList()
             ico.load(":/typeIconPicture.png");
             tit = layer->sourceName();
         }
+        else if (layer->layerType() == "camera")
+        {
+            ico.load(":/typeIconCamera.png");
+            tit = layer->sourceName();
+        }
         QStandardItem* item = new QStandardItem(QIcon(ico), tit);
         item->setData(QVariant(reinterpret_cast<qulonglong>(layer) ));
         model->appendRow(item);

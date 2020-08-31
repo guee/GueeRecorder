@@ -243,16 +243,21 @@ void BaseSource::setFrame(const QVideoFrame &frame)
             m_texture->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
             m_texture->setFormat(texFormat);
             m_texture->allocateStorage(pixFormat, pixType);
+
+            m_imageBuffer = nullptr;
+            m_stride = 0;
+            m_width = frame.width();
+            m_height = frame.height();
+            m_pixFormat = QImage::Format_Invalid;
+            for (auto it:m_layers)
+            {
+                it->onSizeChanged();
+            }
         }
         else
         {
             m_texture->bind();
         }
-        m_imageBuffer = nullptr;
-        m_stride = 0;
-        m_width = frame.width();
-        m_height = frame.height();
-        m_pixFormat = QImage::Format_Invalid;
         m_imageChanged = true;
         m_texture->setData(pixFormat, pixType, (const uint8_t*)cloneFrame.bits(), nullptr);
         m_imageLock.unlock();

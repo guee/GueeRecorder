@@ -269,8 +269,8 @@ void StackedWidgetAddLayer::on_pushButtonAddCamera_clicked()
     hide();
     BaseLayer* layer = VideoSynthesizer::instance().createLayer("camera");
     layer->setAspectRatioMode(Qt::KeepAspectRatio);
-    static_cast<CameraLayer*>(layer)->setViewSetting(m_camSetting);
     layer->open(ui->comboBoxCameras->itemData(ui->comboBoxCameras->currentIndex()).toString());
+    static_cast<CameraLayer*>(layer)->setViewSetting(m_camSetting);
     layer->play();
 }
 
