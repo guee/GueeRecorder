@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FormLayerTools</class>
+ <widget class="QWidget" name="FormLayerTools">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>162</width>
+    <height>354</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#widgetBox
+{
+	background-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(79, 79, 79, 196));
+}
+QPushButton
+{
+border:none;
+}
+
+QPushButton:hover
+{
+background-color: rgb(96, 96, 96);
+}
+
+QPushButton#pushButtonFullScreen
+{
+	image: url(:/butFullViewport_normal.png);
+}
+QPushButton#pushButtonFullScreen:checked
+{
+	image: url(:/butFullViewport_checked_normal.png);
+}
+QPushButton#pushButtonFullScreen:hover
+{
+	image: url(:/butFullViewport_enter.png);
+}
+QPushButton#pushButtonFullScreen:hover:checked
+{
+	image: url(:/butFullViewport_checked_enter.png);
+}
+QPushButton#pushButtonFullScreen:disabled
+{
+	image: url(:/butFullViewport_disable.png);
+}
+QPushButton#pushButtonFullScreen:disabled:checked
+{
+	image: url(:/butFullViewport_checked_disable.png);
+}
+
+
+QPushButton#pushButtonAspratio
+{
+	image: url(:/butLockAspectRatio_normal.png);
+}
+QPushButton#pushButtonAspratio:checked
+{
+	image: url(:/butLockAspectRatio_checked_normal.png);
+}
+QPushButton#pushButtonAspratio:hover
+{
+	image:url(:/butLockAspectRatio_enter.png);
+}
+QPushButton#pushButtonAspratio:hover:checked
+{
+	image: url(:/butLockAspectRatio_checked_enter.png);
+}
+QPushButton#pushButtonAspratio:disabled
+{
+	image:url(:/butLockAspectRatio_disable.png);
+}
+QPushButton#pushButtonAspratio:disabled:checked
+{
+	image: url(:/butLockAspectRatio_checked_disable.png);
+}
+
+QPushButton#pushButtonMoveUp
+{
+	image: url(:/butMoveLayerUp_normal.png);
+}
+QPushButton#pushButtonMoveUp:hover
+{
+	image: url(:/butMoveLayerUp_enter.png);
+}
+QPushButton#pushButtonMoveUp:disabled
+{
+	image: url(:/butMoveLayerUp_disable.png);
+}
+QPushButton#pushButtonMoveDown
+{
+	image: url(:/butMoveLayerDown_normal.png);
+}
+QPushButton#pushButtonMoveDown:hover
+{
+	image: url(:/butMoveLayerDown_enter.png);
+}
+QPushButton#pushButtonMoveDown:disabled
+{
+	image: url(:/butMoveLayerDown_disable.png);
+}
+
+
+QPushButton#pushButtonPrev
+{
+	image: url(:/butSelectPrev_normal.png);
+}
+QPushButton#pushButtonPrev:hover
+{
+	image: url(:/butSelectPrev_enter.png);
+}
+QPushButton#pushButtonPrev:disabled
+{
+	image: url(:/butSelectPrev_disable.png);
+}
+QPushButton#pushButtonNext
+{
+	image: url(:/butSelectNext_normal.png)
+}
+QPushButton#pushButtonNext:hover
+{
+	image: url(:/butSelectNext_enter.png);
+}
+QPushButton#pushButtonNext:disabled
+{
+	image: url(:/butSelectNext_disable.png);
+}
+
+QPushButton#pushButtonRemove
+{
+	image: url(:/butCancel_normal.png);
+}
+QPushButton#pushButtonRemove:hover
+{
+	image: url(:/butCancel_enter.png);
+}
+QPushButton#pushButtonRemove:disabled
+{
+	image: url(:/butCancel_disable.png);
+}
+</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QWidget" name="widgetBox" native="true">
+     <layout class="QFormLayout" name="formLayout">
+      <item row="2" column="0" colspan="2">
+       <widget class="QListView" name="listViewLayers">
+        <property name="iconSize">
+         <size>
+          <width>16</width>
+          <height>16</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>X:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="spinBoxX">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Y:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QSpinBox" name="spinBoxY">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>宽度:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QSpinBox" name="spinBoxW">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>高度:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QSpinBox" name="spinBoxH">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>图层：</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelLayers">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>-/0</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonPrev">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonNext">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonRemove">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QPushButton" name="pushButtonFullScreen">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonAspratio">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonMoveUp">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonMoveDown">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

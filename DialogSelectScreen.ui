@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogSelectScreen</class>
+ <widget class="QDialog" name="DialogSelectScreen">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1393</width>
+    <height>759</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="GlScreenSelect" name="widget" native="true">
+     <widget class="QWidget" name="widgetTools" native="true">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>430</y>
+        <width>291</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget#widgetTools
+{
+border: 0px solid  rgb(103, 103, 103);
+background-color: rgb(0, 0, 0, 128);
+}
+QToolButton
+{
+border: none;
+color: rgb(200, 200, 200);
+}
+QToolButton:hover
+{
+background-color: rgb(100, 100, 100, 228);
+}
+QLabel
+{
+border: none;
+color: rgb(200, 200, 200);
+}</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="topMargin">
+        <number>4</number>
+       </property>
+       <property name="bottomMargin">
+        <number>4</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="labelType">
+         <property name="minimumSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap resource="UiResource/recorder.qrc">:/typeIconScreen.png</pixmap>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelSize">
+         <property name="text">
+          <string>00000 x 00000</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonSave">
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonCancel">
+         <property name="text">
+          <string>Cancel</string>
+         </property>
+         <property name="icon">
+          <iconset resource="UiResource/recorder.qrc">
+           <normaloff>:/butCancel_normal.png</normaloff>
+           <disabledoff>:/butCancel_disable.png</disabledoff>:/butCancel_normal.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonOK">
+         <property name="text">
+          <string>OK</string>
+         </property>
+         <property name="icon">
+          <iconset resource="UiResource/recorder.qrc">
+           <normaloff>:/butOK_normal.png</normaloff>
+           <disabledoff>:/butOK_disable.png</disabledoff>:/butOK_normal.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="toolButtonStyle">
+          <enum>Qt::ToolButtonTextBesideIcon</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GlScreenSelect</class>
+   <extends>QWidget</extends>
+   <header>GlScreenSelect.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="UiResource/recorder.qrc"/>
+ </resources>
+ <connections/>
+</ui>
