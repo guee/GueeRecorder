@@ -37,7 +37,14 @@ SOURCES += \
     StackedWidgetAddLayer.cpp \
     VdeoSynthesizer.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    MediaCodec/VideoEncoder.cpp \
+    MediaCodec/MediaStream.cpp \
+    MediaCodec/MediaWriter.cpp \
+    MediaCodec/MediaWriterFlv.cpp \
+    MediaCodec/MediaWriterMp4.cpp \
+    MediaCodec/MediaWriterTs.cpp \
+    MediaCodec/VideoEncoder.cpp
 
 HEADERS += \
     Common/FrameRateCalc.h \
@@ -46,7 +53,6 @@ HEADERS += \
     FormLayerTools.h \
     GlScreenSelect.h \
     GlWidgetPreview.h \
-    GueeGL/GlDataType.h \
     InputSource/BaseLayer.h \
     InputSource/BaseSource.h \
     InputSource/CameraLayer.h \
@@ -55,12 +61,22 @@ HEADERS += \
     InputSource/PictureSource.h \
     InputSource/ScreenLayer.h \
     InputSource/ScreenSource.h \
-    MediaCodec/EncoderParams.h \
     ShaderProgramPool.h \
     StackedWidgetAddLayer.h \
     VdeoSynthesizer.h \
     mainwindow.h \
-    precompile.h
+    precompile.h \
+    MediaCodec/VideoEncoder.h \
+    MediaCodec/VideoCodec.h \
+    MediaCodec/H264Codec.h \
+    MediaCodec/MediaStream.h \
+    MediaCodec/MediaWriter.h \
+    MediaCodec/MediaWriterFlv.h \
+    MediaCodec/MediaWriterMp4.h \
+    MediaCodec/MediaWriterTs.h \
+    MediaCodec/VideoCodec.h \
+    MediaCodec/VideoEncoder.h \
+    MediaCodec/mp4struct.h
 
 FORMS += \
     DialogSelectScreen.ui \

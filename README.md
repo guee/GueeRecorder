@@ -4,14 +4,6 @@
 　　2020春节期间，在快递把龙芯3A4000送到之后，尝试编译了一款名为“SimpleScreenRecorder”的软件，但我对它的功能和性能都有些不满，于是就萌生了开发一款录屏软件的想法，虽然我知道同类软件中有个大名鼎鼎有OBS，但自己造个轮子我会用得更加开心。当然我也知道自己在Linux上的开发经验为0，可是仍然充满信心——反正也没人催我的进度，只要把预计的功能完成，并且运行效率稍高于SimpleScreenRecorder那就是胜利。然后一边学一边做大约花了半个月时间完成了一些基础的功能，只是由于众所周知的原因，不久后孩子开始上网课，公司也要求远程工作，于是每天疲于奔命，就中断了开发工作。后来虽然稍有了一些空闲时间，但每天琐事仍然很多，自造轮子这种不太紧要的事情也就一直没有重新拾起。中断之后，龙芯的电脑我都有半年没有开过机。</br>
 　　本来很怀疑这个软件又会像我以往的众多半成品一样，一旦开发中断，就会躺在硬盘里再也见不到天日。但是出于对龙芯CPU的热爱，以及为了熟悉Linux下应用软件开发等原因，近期我决定把这个程序继续写完。并且打算在把它完成之后，再重写所有的代码，进一步提高软件的性能，重新设计软件界面，写出令我自己基本满意的作品。</br>
 
-# 开发环境
-　　CPU：龙芯 Loongson 3A4000@1.8GHz</br>
-　　内存：紫光 DDR4 2666 8G</br>
-　　显卡：AMD R5 230</br>
-　　硬盘：WD SN750 1T Nvme</br>
-　　OS：统信UOS专业版、龙梦Fedora28</br>
-　　开发工具：Qt 5.x</br>
-
 # 功能说明
 　　可以录制屏幕、摄像头，还可加入图片和文本，并把这些内容使用OpenGL合成在同一个画面上编码为视频文件。软件有一个预览区域，在预览区域可以拖动各个图像的大小和位置。当选中某个图像时，会在预览区域中显示图层列表，可以通过功能按钮调整图层顺序及其它参数，或选中其它图层。可设置视频编码的参数，视频可保存为mp4或flv文件，也可直接向rtmp服务器推送直播视频流</br>
 ### 屏幕录像：
@@ -26,6 +18,34 @@
 　　尚未完成。</br>
 ### 视频编码：
 　　尚未完成。</br>
+
+# 开发环境
+### 硬件环境：
+　　CPU：龙芯 Loongson 3A4000@1.8GHz</br>
+　　内存：紫光 DDR4 2666 8G</br>
+　　显卡：AMD R5 230</br>
+　　硬盘：WD SN750 1T Nvme</br>
+### 软件环境：
+　　OS：统信 UOS 专业版、龙梦 Fedora28</br>
+　　开发工具：Qt 5.x</br>
+　　#### 开发环境配置：
+　　因为我对Linux还不熟悉，因此避免了自行编译 Qt 和需要的第三方库，而是直接使用各个操作系统软件源中可下载安装的版本。
+　　统信 UOS 专业版：
+　　　　sudo apt-get install g++ gdb
+　　　　sudo apt-get install libgl1-mesa-dev
+　　　　sudo apt-get install libqt5x11extras5-dev
+　　　　sudo apt-get install libxinerama-dev
+　　　　sudo apt-get install libx264-dev
+　　　　sudo apt-get install qt5-default
+　　　　sudo apt-get install qt5creator
+
+　　龙梦 Fedora28：
+　　　　sudo dnf inatall g++ gdb
+　　　　sudo dnf inatall qt5-devel
+　　　　sudo dnf inatall qt-creator
+
+
+
 
 # 日志：
 
