@@ -9,8 +9,6 @@ CMediaStream::CMediaStream()
 {
 	memset(&m_videoParams, 0, sizeof(m_videoParams));
 	memset(&m_audioParams, 0, sizeof(m_audioParams));
-	m_videoParams.frameRateNum = 30;
-	m_videoParams.frameRateDen = 1;
 	m_curFrame = (H264Frame*)malloc(sizeof(H264Frame) + sizeof(H264Frame::NAL) * 256);
 	m_videoDelayFrame = 0;
 	restartMember();
@@ -1033,24 +1031,21 @@ void CMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 				int time_scale = u(32, buf, StartBit);
 				//m_spsFrameRate = float_t(time_scale) / float_t(num_units_in_tick) / 2.0f;
 				int fixed_frame_rate_flag = u(1, buf, StartBit);
-				if (0 >= m_videoParams.frameRateNum || 0 >= m_videoParams.frameRateDen)
+                if (0 >= m_videoParams.frameRate)
 				{
-					m_videoParams.frameRateNum = time_scale;
-					m_videoParams.frameRateDen = num_units_in_tick * 2;
+                    m_videoParams.frameRate = float( time_scale) / float(num_units_in_tick * 2);
 				}
 			}
-			else if (0 >= m_videoParams.frameRateNum || 0 >= m_videoParams.frameRateDen)
+            else if (0 >= m_videoParams.frameRate)
 			{
-				m_videoParams.frameRateNum = 30;
-				m_videoParams.frameRateDen = 1;
+                m_videoParams.frameRate = 30.0f;
 			}
 		}
-		else if (0 >= m_videoParams.frameRateNum || 0 >= m_videoParams.frameRateDen)
-		{
-			m_videoParams.frameRateNum = 30;
-			m_videoParams.frameRateDen = 1;
-		}
-	}
+        else if (0 >= m_videoParams.frameRate)
+        {
+            m_videoParams.frameRate = 30.0f;
+        }
+    }
 	free(buf);
 }
 

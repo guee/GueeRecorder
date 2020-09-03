@@ -80,7 +80,7 @@ bool CMediaWriterFlv::onWriteHeader()
 			//如果是可变帧率，那么就要在结束时计算帧率并写入，因此暂存文件中写入帧率值的位置。
 			m_writeFramerateOffset = uint32_t(cacheSize() + m_totalBytes + 1 );
 		}
-		putAmfDouble( (double)videoParams.frameRateNum / videoParams.frameRateDen);
+        putAmfDouble( (double)videoParams.frameRate);
 		putAmfString( "videocodecid" );
 		putAmfDouble( FLV_CODECID_H264 );
 

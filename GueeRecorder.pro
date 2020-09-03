@@ -6,7 +6,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
 CONFIG += c++11 precompile_header
 PRECOMPILED_HEADER = precompile.h
-LIBS += -lX11 -lXfixes -lXinerama -lXext
+LIBS += -lX11 -lXfixes -lXinerama -lXext -lx264
 #LIBS += -lavformat -lavcodec -lavutil -lswscale -lX11 -lXext -lXfixes -lasound -ljack -ljacknet -lasound -lpulse -lXi -lXinerama
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -43,8 +43,8 @@ SOURCES += \
     MediaCodec/MediaWriter.cpp \
     MediaCodec/MediaWriterFlv.cpp \
     MediaCodec/MediaWriterMp4.cpp \
-    MediaCodec/MediaWriterTs.cpp \
-    MediaCodec/VideoEncoder.cpp
+    MediaCodec/MediaWriterTs.cpp
+
 
 HEADERS += \
     Common/FrameRateCalc.h \

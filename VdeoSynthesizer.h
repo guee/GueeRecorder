@@ -1,7 +1,7 @@
 #ifndef VIDEOSYNTHESIZER_H
 #define VIDEOSYNTHESIZER_H
 #include "InputSource/BaseLayer.h"
-#include "MediaCodec/EncoderParams.h"
+#include "MediaCodec/VideoEncoder.h"
 #include "ShaderProgramPool.h"
 
 class VideoSynthesizer : public QThread, public BaseLayer
@@ -25,69 +25,62 @@ public:
 
     bool resetDefaultOption();
     bool setSize(int32_t width, int32_t height);
-    int32_t width() const {return m_params.iWidth;}
-    int32_t height() const {return m_params.iHeight;}
+    int32_t width() const {return m_params.width;}
+    int32_t height() const {return m_params.height;}
     bool setFrameRate(float fps);
-    float frameRate() const override {return m_params.fFrameRate;}
+    float frameRate() const override {return m_params.frameRate;}
     float renderFps() const {return m_frameRate.fps();}
     bool setProfile(EVideoProfile profile);
-    EVideoProfile profile() const {return m_params.eProfile;}
+    EVideoProfile profile() const {return m_params.profile;}
     bool setPreset(EVideoPreset_x264 preset);
-    EVideoPreset_x264 perset() const {return m_params.ePresetX264;}
+    EVideoPreset_x264 perset() const {return m_params.presetX264;}
     bool setCSP(EVideoCSP csp);
-    EVideoCSP csp() const {return m_params.eOutputCSP;}
+    EVideoCSP csp() const {return m_params.outputCSP;}
     bool setPsyTune(EPsyTuneType psy);
-    EPsyTuneType psyTune() const {return m_params.ePsyTune;}
-    bool setBitrateMode(EBitrateMode rateMode);
-    EBitrateMode bitrateMode() const {return m_params.eBitrateMode;}
+    EPsyTuneType psyTune() const {return m_params.psyTune;}
+    bool setBitrateMode(EVideoRateMode rateMode);
+    EVideoRateMode bitrateMode() const {return m_params.rateMode;}
     bool setBitrate(int32_t bitrate);
-    int32_t bitrate() const {return m_params.iBitrate;}
+    int32_t bitrate() const {return m_params.bitrate;}
     bool setBitrateMin(int32_t bitrateMin);
-    int32_t bitrateMin() const {return m_params.iBitrateMin;}
+    int32_t bitrateMin() const {return m_params.bitrateMin;}
     bool setBitrateMax(int32_t bitrateMax);
-    int32_t bitrateMax() const {return m_params.iBitrateMax;}
+    int32_t bitrateMax() const {return m_params.bitrateMax;}
     bool setVbvBuffer(int32_t vbvBufferSize);
-    int32_t vbvBuffer() const {return m_params.iVbvBuffer;}
+    int32_t vbvBuffer() const {return m_params.vbvBuffer;}
     bool setGopMin(int32_t gopMin);
-    int32_t gopMin() const {return m_params.iGopMin;}
+    int32_t gopMin() const {return m_params.gopMin;}
     bool setGopMax(int32_t gopMax);
-    int32_t gopMax() const {return m_params.iGopMax;}
+    int32_t gopMax() const {return m_params.gopMax;}
     bool setRefFrames(int32_t refFrames);
-    int32_t refFrames() const {return m_params.iRefFrames;}
+    int32_t refFrames() const {return m_params.refFrames;}
     bool setBFrames(int32_t bFrames);
-    int32_t bFrames() const {return m_params.iBFrames;}
+    int32_t bFrames() const {return m_params.BFrames;}
 private:
     VideoSynthesizer();
     SVideoParams m_params;
     FrameSynchronization    m_frameSync;
     FrameRateCalc           m_frameRate;
-    SInputImage             m_frameData;
-    enum PlaneType
+    struct FrameInfo
     {
-        Plane_Y,
-        Plane_U,
-        Plane_V,
-        Plane_UV,
-        Plane_VU,
-        Plane_YUYV,
-        Plane_UYVY,
-        Plane_AYUV,
-        Plane_BGR,
-        Plane_RGB,
-        Plane_BGRA,
-    };
-    struct PlaneData
-    {
-        PlaneType planeType;
-        int32_t dataSize;
-        GLenum format;
-        GLenum dataType;
-        QOpenGLFramebufferObject* fbo;
+        EVideoCSP csp;
+        int64_t timestamp;
+        int alignWidth;
+        int alignHeight;
+        int textureWidth;
+        int textureHeight;
+        GLenum internalFormat;
+        GLenum dateType;
+        int dataSize;
+        int planeCount;
+        int stride[3];
+        QOpenGLBuffer*  buffer = nullptr;
+        QOpenGLFramebufferObject* fbo = nullptr;
     };
 
-    PlaneData  m_planes[3];
-    QOpenGLBuffer*  m_yuvBuffer = nullptr;
+    FrameInfo    m_frameData;
 
+    CVideoEncoder*  m_encoder = nullptr;
     bool initYuvFbo();
     void uninitYubFbo();
 
@@ -102,7 +95,7 @@ private:
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
-    void putFrameToEncoder();
+    void putFrameToEncoder(GLuint textureId);
 signals:
     void frameReady(uint textureId);
     void initDone( bool success);

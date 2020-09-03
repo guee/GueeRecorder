@@ -1,18 +1,18 @@
 #pragma once
+
+#include "x264.h"
 #include "VideoCodec.h"
 #include <QtCore>
 #include "MediaStream.h"
 
 using namespace std;
 
-#include "x264.h"
-
 class CMediaWriter;
 class CVideoEncoder : public QThread
 {
 public:
-	CVideoEncoder(void);
-	~CVideoEncoder(void);
+    CVideoEncoder(QObject* parent = nullptr);
+    ~CVideoEncoder();
     bool bindStream( CMediaStream* stream );
 	bool startEncode( const SVideoParams* videoParams );
 	void endEncode();
@@ -73,6 +73,7 @@ private:
 
 
     x264_picture_t*	popCachePool();
+    static inline int maximumCommonDivisor(int num, int den);
 
     void run();
 

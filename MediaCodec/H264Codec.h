@@ -181,8 +181,7 @@ struct	SVideoParams
 	int32_t		width;			//视频的宽度
     int32_t		height;         //视频的高度
 
-	int32_t		frameRateNum;	//视频的帧率(分子)，如果 bVfr 和 isOnlineMode 都为 false，时间基也会设置为帧率的倒数。
-	int32_t		frameRateDen;	//视频的帧率(分母)，帧率是 分子/分母。
+    float		frameRate;      //视频的帧率，如果 bVfr 和 isOnlineMode 都为 false，时间基也会设置为帧率的倒数。
     bool		vfr;			//可变帧率。如果设置为true，则当帧不连续时保持码率恒定，视频质量高。设置为false则输入帧数量少码率就低。
     bool		onlineMode;     //是否是在线模式，即输入的图像是否是实时采集的，输出的视频流也要尽量减少延迟。
 								//设置 true 时会禁止编码 B 帧，输入帧数据后立即返回，如果编码速度过慢则丢弃帧。

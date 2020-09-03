@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <mutex>
 #include <fstream>
-using namespace std; 
 
 #include "H264Codec.h"
+using namespace std;
 
 class CMediaWriter;
 
@@ -92,9 +92,7 @@ public:
 	const string& sei() const { return m_sei; }
 	int64_t	videoFrameCount() const { return m_videoFrameNum; }
 	int64_t videoTotalSize() const { return m_videoTotalSize; }
-	int64_t videoDuration() const { return m_videoParams.frameRateNum ?
-		m_videoDuration + 1000 * m_videoParams.frameRateDen / m_videoParams.frameRateNum :
-		m_videoDuration; }
+    int64_t videoDuration() const { return m_videoDuration + int64_t(1000.0f / m_videoParams.frameRate); }
 	const uint8_t* audioSpecificConfig(int32_t* size = nullptr) const { if (size) *size = m_audioSpecificConfigSize; return m_audioSpecificConfig; }
 	int64_t audioFrameCount() const { return m_audioFrameNum; }
 	int64_t audioTotalSize() const { return m_audioTotalSize; }
@@ -194,10 +192,11 @@ private:
 	uint32_t u(uint32_t BitCount, uint8_t * buf, uint32_t &nStartBit);
 	int32_t Se(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit);
 	uint32_t Ue(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit);
-
+    //PTS/DTS to ms
 	inline int64_t convertTimebaseMs(int64_t ts)
 	{
-		return (ts * m_videoParams.frameRateDen * 10000 / m_videoParams.frameRateNum + 5) / 10;
+        //return (ts * m_videoParams.frameRateDen * 10000 / m_videoParams.frameRateNum + 5) / 10;
+        return int64_t(double(ts) / m_videoParams.frameRate * 1000.0 + 0.5);
 	}
 
 	union	SADTS

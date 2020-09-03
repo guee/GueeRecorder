@@ -1,11 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <omp.h>
+//#include <omp.h>
 #include <unistd.h>
 #include "GlWidgetPreview.h"
 
 #include "stdio.h"
-#include "./GueeGL/GLShaderProgram.h"
+//#include "./GueeGL/GLShaderProgram.h"
 
 #include <QDesktopWidget>
 

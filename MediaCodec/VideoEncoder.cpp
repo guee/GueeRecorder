@@ -1,9 +1,9 @@
 ﻿#include "VideoEncoder.h"
 #include "MediaWriter.h"
-#include "x264.h"
 
 
-CVideoEncoder::CVideoEncoder(void)
+CVideoEncoder::CVideoEncoder(QObject* parent)
+    : QThread(parent)
 {
 	m_encodeing		= false;
 	memset( &m_videoParams, 0, sizeof( m_videoParams ) );
@@ -16,8 +16,7 @@ CVideoEncoder::CVideoEncoder(void)
     m_videoParams.outputCSP 	= Vid_CSP_I420;
     m_videoParams.width         = 800;
     m_videoParams.height		= 600;
-    m_videoParams.frameRateNum	= 15;
-    m_videoParams.frameRateDen	= 1;
+    m_videoParams.frameRate 	= 25;
     m_videoParams.refFrames		= -1;
     m_videoParams.gopMax		= -1;
     m_videoParams.gopMin		= -1;
@@ -28,7 +27,7 @@ CVideoEncoder::CVideoEncoder(void)
     m_videoParams.BFramePyramid	= 0;
 }
 
-CVideoEncoder::~CVideoEncoder(void)
+CVideoEncoder::~CVideoEncoder()
 {
     endEncode();
 }
@@ -53,7 +52,7 @@ bool CVideoEncoder::startEncode( const SVideoParams* videoParams )
 	if ( videoParams )
 	{
         if ( videoParams->height < 16 || videoParams->width < 16 ||
-            videoParams->frameRateNum <= 0 || videoParams->frameRateDen <= 0 ||
+            videoParams->frameRate <= 0.0f || videoParams->frameRate > 240.0f ||
             videoParams->vbvBuffer < 0 || videoParams->bitrateMax < 0 ||
             videoParams->encoder < VE_X264 || videoParams->encoder > VE_INTEL ||
             videoParams->profile < VF_Auto || videoParams->profile > VF_High ||
@@ -68,20 +67,12 @@ bool CVideoEncoder::startEncode( const SVideoParams* videoParams )
 	case VE_X264:
 		if ( !set264Params() )
 			return false;
-//		for ( auto w : m_writers )
-//		{
-//			if ( !w->checkVideoParams( m_videoParams ) )
-//			{
-//				return false;
-//			}
-//		}
-
 		m_x264Handle	= x264_encoder_open( &m_x264Param );
         if ( nullptr == m_x264Handle )
 			return false;
 		x264_encoder_parameters( m_x264Handle, &m_x264Param );
 		m_encodeing		= true;
-		start();
+        start();
 		break;
 	case VE_CUDA:
 		break;
@@ -105,7 +96,7 @@ void CVideoEncoder::endEncode()
         m_waitIdlePool.wakeAll();
         if ( isRunning() )
 		{
-			wait();
+            wait();
 		}
 		if ( m_x264Handle )
 		{
@@ -722,9 +713,11 @@ bool CVideoEncoder::set264StreamParams()
 								/* VFR input.  If 1, use timebase and timestamps for ratecontrol purposes. If 0, use fps only. */
 	//如果 b_vfr_input 和 b_pulldown 同时为 0(false)，x264 内部会重设时间基为帧率的倒数。
     m_x264Param.b_pulldown	= m_videoParams.onlineMode;		/* use explicity set timebase for CFR */
-    m_x264Param.i_fps_num = static_cast<uint32_t>(m_videoParams.frameRateNum); //帧率的分子
-    m_x264Param.i_fps_den = static_cast<uint32_t>(m_videoParams.frameRateDen);	//帧率的分母
-
+    m_x264Param.i_fps_num = static_cast<uint32_t>(m_videoParams.frameRate * 10000.0f); //帧率的分子
+    m_x264Param.i_fps_den = 10000;	//帧率的分母
+    int mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
+    m_x264Param.i_fps_num /= mcd;
+    m_x264Param.i_fps_den /= mcd;
 //	if ( m_videoParams.bVfr && m_videoParams.isOnlineMode )
 //	{
 //		m_x264Param.i_timebase_num = 1;
@@ -778,4 +771,16 @@ bool  CVideoEncoder::set264OtherParams()
     //m_x264Param.i_slice_count_max;   /* Absolute cap on slices per frame; stops applying slice-max-size
                                 /* and slice-max-mbs if this is reached. */
 	return true;
+}
+
+int CVideoEncoder::maximumCommonDivisor(int num, int den)
+{
+    while(true)
+    {
+        int c = num % den;
+        if (!c) break;
+        num = den;
+        den = c;
+    }
+    return den;
 }
