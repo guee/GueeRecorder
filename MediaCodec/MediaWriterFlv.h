@@ -1,16 +1,16 @@
 #pragma once
 #include "MediaWriter.h"
 
-class CMediaWriterFlv: public CMediaWriter
+class GueeMediaWriterFlv: public GueeMediaWriter
 {
 public:
-	CMediaWriterFlv(CMediaStream& stream);
-	virtual ~CMediaWriterFlv(void);
+    GueeMediaWriterFlv(GueeMediaStream& stream);
+    virtual ~GueeMediaWriterFlv(void);
 
 protected:
 	virtual bool onWriteHeader();
-	virtual bool onWriteVideo(const CMediaStream::H264Frame * frame);
-	virtual bool onWriteAudio(const CMediaStream::AUDFrame * frame);
+    virtual bool onWriteVideo(const GueeMediaStream::H264Frame * frame);
+    virtual bool onWriteAudio(const GueeMediaStream::AUDFrame * frame);
 	virtual	void onCloseWrite();
 
 	/* offsets for packed values */

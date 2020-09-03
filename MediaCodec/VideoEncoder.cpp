@@ -2,7 +2,7 @@
 #include "MediaWriter.h"
 
 
-CVideoEncoder::CVideoEncoder(QObject* parent)
+GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     : QThread(parent)
 {
 	m_encodeing		= false;
@@ -27,12 +27,12 @@ CVideoEncoder::CVideoEncoder(QObject* parent)
     m_videoParams.BFramePyramid	= 0;
 }
 
-CVideoEncoder::~CVideoEncoder()
+GueeVideoEncoder::~GueeVideoEncoder()
 {
     endEncode();
 }
 
-bool CVideoEncoder::bindStream( CMediaStream* stream )
+bool GueeVideoEncoder::bindStream( GueeMediaStream* stream )
 {
 	if ( m_encodeing ) return false;
     if ( nullptr == stream )
@@ -46,7 +46,7 @@ bool CVideoEncoder::bindStream( CMediaStream* stream )
 	return true;
 }
 
-bool CVideoEncoder::startEncode( const SVideoParams* videoParams )
+bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 {
 	if ( m_encodeing ) return false;
 	if ( videoParams )
@@ -85,7 +85,7 @@ bool CVideoEncoder::startEncode( const SVideoParams* videoParams )
 }
 
 
-void CVideoEncoder::endEncode()
+void GueeVideoEncoder::endEncode()
 {
 	if ( !m_encodeing ) return;
     switch( m_videoParams.encoder )
@@ -113,7 +113,7 @@ void CVideoEncoder::endEncode()
 	}
 }
 
-bool CVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch )
+bool GueeVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch )
 {
 	if ( !m_encodeing ) return false;
     switch( m_videoParams.encoder )
@@ -130,7 +130,7 @@ bool CVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_t p
 	return false;
 }
 
-bool CVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, int32_t pitch )
+bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, int32_t pitch )
 {
 
 	if ( !m_encodeing ) return false;
@@ -168,14 +168,14 @@ bool CVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, int32
 	return	true;
 }
 
-void CVideoEncoder::run()
+void GueeVideoEncoder::run()
 {
 	int32_t			ret		= 0;
     x264_nal_t*		nalBuf	= nullptr;
     int32_t			nalNum  = 0;
     x264_picture_t	picout;
 
-    CMediaStream::H264Frame*   frame = reinterpret_cast<CMediaStream::H264Frame*>(malloc(sizeof(CMediaStream::H264Frame) + sizeof(CMediaStream::H264Frame::NAL) * 256));
+    GueeMediaStream::H264Frame*   frame = reinterpret_cast<GueeMediaStream::H264Frame*>(malloc(sizeof(GueeMediaStream::H264Frame) + sizeof(GueeMediaStream::H264Frame::NAL) * 256));
 
     memset(&picout, 0, sizeof(picout));
 
@@ -193,7 +193,7 @@ void CVideoEncoder::run()
         return m_mediaStream->putVideoFrame(frame);
     };
 
-    m_mediaStream->startParse();
+
 	if ( !m_x264Param.b_repeat_headers )
 	{
         ret	= x264_encoder_headers( m_x264Handle, &nalBuf, &nalNum );
@@ -246,10 +246,10 @@ void CVideoEncoder::run()
 		}
 		iDelayedFrames		= x264_encoder_delayed_frames( m_x264Handle );
 	}
-    m_mediaStream->endParse();
+
 }
 
-x264_picture_t* CVideoEncoder::popCachePool()
+x264_picture_t* GueeVideoEncoder::popCachePool()
 {
     x264_picture_t* picin = nullptr;
     m_mtxIdlePool.lock();
@@ -264,23 +264,25 @@ x264_picture_t* CVideoEncoder::popCachePool()
         if (m_picPendQueue.count() < m_maxPendQueue)
         {
             picin = new x264_picture_t;
-            const s_csp_tab&	csp_tab	= getCspTable( m_videoParams.outputCSP );
-            int32_t pitch = m_x264Param.i_width * csp_tab.widthFix[0];
-            int32_t	sizeb[3]	= {0};
-            sizeb[0] = pitch * m_x264Param.i_height;
-            if ( csp_tab.planes > 1 )
-                sizeb[1] = ( pitch / csp_tab.widthFix[1] ) * ( m_x264Param.i_height / csp_tab.heightFix );
-            if ( csp_tab.planes > 2 )
-                sizeb[2] = ( pitch / csp_tab.widthFix[2] ) * ( m_x264Param.i_height / csp_tab.heightFix );
+            x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
+            //x264_picture_init(picin);
+//            const s_csp_tab&	csp_tab	= getCspTable( m_videoParams.outputCSP );
+//            int32_t pitch = m_x264Param.i_width * csp_tab.widthFix[0];
+//            int32_t	sizeb[3]	= {0};
+//            sizeb[0] = pitch * m_x264Param.i_height;
+//            if ( csp_tab.planes > 1 )
+//                sizeb[1] = ( pitch / csp_tab.widthFix[1] ) * ( m_x264Param.i_height / csp_tab.heightFix );
+//            if ( csp_tab.planes > 2 )
+//                sizeb[2] = ( pitch / csp_tab.widthFix[2] ) * ( m_x264Param.i_height / csp_tab.heightFix );
 
-            picin->img.i_csp		= m_x264Param.i_csp;
-            picin->img.i_plane		= csp_tab.planes;
-            picin->img.i_stride[0]	= pitch;
-            picin->img.plane[0]		= reinterpret_cast<uint8_t*>(malloc( static_cast<ulong>(sizeb[0] + sizeb[1] + sizeb[2]) ));
-            picin->img.i_stride[1]	= pitch / csp_tab.widthFix[1];
-            picin->img.plane[1]		= picin->img.plane[0] + sizeb[0];
-            picin->img.i_stride[2]	= pitch / csp_tab.widthFix[2];
-            picin->img.plane[2]		= picin->img.plane[0] + sizeb[0] + sizeb[1];
+//            picin->img.i_csp		= m_x264Param.i_csp;
+//            picin->img.i_plane		= csp_tab.planes;
+//            picin->img.i_stride[0]	= pitch;
+//            picin->img.plane[0]		= reinterpret_cast<uint8_t*>(malloc( static_cast<ulong>(sizeb[0] + sizeb[1] + sizeb[2]) ));
+//            picin->img.i_stride[1]	= pitch / csp_tab.widthFix[1];
+//            picin->img.plane[1]		= picin->img.plane[0] + sizeb[0];
+//            picin->img.i_stride[2]	= pitch / csp_tab.widthFix[2];
+//            picin->img.plane[2]		= picin->img.plane[0] + sizeb[0] + sizeb[1];
         }
         else if(m_videoParams.onlineMode)
         {
@@ -302,7 +304,7 @@ x264_picture_t* CVideoEncoder::popCachePool()
     return picin;
 }
 
-const CVideoEncoder::s_csp_tab& CVideoEncoder::getCspTable( EVideoCSP eFormat )
+const GueeVideoEncoder::s_csp_tab& GueeVideoEncoder::getCspTable( EVideoCSP eFormat )
 {
 	static const s_csp_tab csp_tab[] =
 	{
@@ -328,7 +330,7 @@ const CVideoEncoder::s_csp_tab& CVideoEncoder::getCspTable( EVideoCSP eFormat )
 	return csp_tab[eFormat];
 }
 
-int32_t CVideoEncoder::EVideoCSP_To_x264CSP( EVideoCSP eFormat )
+int32_t GueeVideoEncoder::EVideoCSP_To_x264CSP( EVideoCSP eFormat )
 {
 	switch( eFormat )
 	{
@@ -356,7 +358,7 @@ int32_t CVideoEncoder::EVideoCSP_To_x264CSP( EVideoCSP eFormat )
 	return X264_CSP_NONE;
 }
 
-bool CVideoEncoder::set264Params()
+bool GueeVideoEncoder::set264Params()
 {
 	if ( !set264BaseParams() ||
 		!set264FrameParams() ||
@@ -371,7 +373,7 @@ bool CVideoEncoder::set264Params()
 	return true;
 }
 
-bool CVideoEncoder::set264BaseParams()
+bool GueeVideoEncoder::set264BaseParams()
 {
 	int		iRet	= 0;
 	//x264_param_default_preset 内部会调用 x264_param_default，因此必须在其它参数设置之前调用它。
@@ -463,7 +465,7 @@ bool CVideoEncoder::set264BaseParams()
 	return true;
 }
 
-bool CVideoEncoder::set264FrameParams()
+bool GueeVideoEncoder::set264FrameParams()
 {
 	//比特流参数	/* Bitstream parameters */
 
@@ -533,7 +535,7 @@ bool CVideoEncoder::set264FrameParams()
 	return true;
 }
 
-bool CVideoEncoder::set264BitrateParams()
+bool GueeVideoEncoder::set264BitrateParams()
 {
 	//码率控制参数		/* Rate control parameters */
     if ( m_videoParams.bitrate ) m_x264Param.rc.i_bitrate	= m_videoParams.bitrate;
@@ -632,7 +634,7 @@ bool CVideoEncoder::set264BitrateParams()
 	return true;
 }
 
-bool CVideoEncoder::set264NalHrdParams()
+bool GueeVideoEncoder::set264NalHrdParams()
 {
 	/* NAL HRD
 	* Uses Buffering and Picture Timing SEIs to signal HRD
@@ -657,7 +659,7 @@ bool CVideoEncoder::set264NalHrdParams()
 	return true;
 }
 
-bool CVideoEncoder::set264AnalyserParams()
+bool GueeVideoEncoder::set264AnalyserParams()
 {
 	//编码分析参数		/* Encoder analyser parameters */
 //	m_x264Param.analyse.intra;		//帧内分区			/* intra partitions */
@@ -694,7 +696,7 @@ bool CVideoEncoder::set264AnalyserParams()
 	return true;
 }
 
-bool CVideoEncoder::set264StreamParams()
+bool GueeVideoEncoder::set264StreamParams()
 {
 
 	//帧打包填充标志	/* frame packing arrangement flag */
@@ -718,6 +720,15 @@ bool CVideoEncoder::set264StreamParams()
     int mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
     m_x264Param.i_fps_num /= mcd;
     m_x264Param.i_fps_den /= mcd;
+    if (m_videoParams.onlineMode)
+    {
+        m_maxPendQueue = 2;
+    }
+    else
+    {
+        m_maxPendQueue = static_cast<int>(m_videoParams.frameRate + 1);
+        m_maxPendQueue = std::min(std::max(m_maxPendQueue, 5), 30);
+    }
 //	if ( m_videoParams.bVfr && m_videoParams.isOnlineMode )
 //	{
 //		m_x264Param.i_timebase_num = 1;
@@ -732,7 +743,7 @@ bool CVideoEncoder::set264StreamParams()
 	return true;
 }
 
-bool  CVideoEncoder::set264OtherParams()
+bool  GueeVideoEncoder::set264OtherParams()
 {
     /* Pulldown:
 	 * The correct pic_struct must be passed with each input frame.
@@ -773,7 +784,7 @@ bool  CVideoEncoder::set264OtherParams()
 	return true;
 }
 
-int CVideoEncoder::maximumCommonDivisor(int num, int den)
+int GueeVideoEncoder::maximumCommonDivisor(int num, int den)
 {
     while(true)
     {

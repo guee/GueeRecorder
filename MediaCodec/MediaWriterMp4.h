@@ -2,16 +2,16 @@
 #include "MediaWriter.h"
 #include "mp4struct.h"
 
-class CMediaWriterMp4 :
-	public CMediaWriter, public Mp4Struct
+class GueeMediaWriterMp4 :
+    public GueeMediaWriter, public Mp4Struct
 {
 public:
-    CMediaWriterMp4(CMediaStream& stream);
-    virtual ~CMediaWriterMp4();
+    GueeMediaWriterMp4(GueeMediaStream& stream);
+    virtual ~GueeMediaWriterMp4();
 protected:
 	virtual bool onWriteHeader();
-	virtual bool onWriteVideo(const CMediaStream::H264Frame * frame);
-	virtual bool onWriteAudio(const CMediaStream::AUDFrame * frame);
+    virtual bool onWriteVideo(const GueeMediaStream::H264Frame * frame);
+    virtual bool onWriteAudio(const GueeMediaStream::AUDFrame * frame);
 	virtual	void onCloseWrite();
 private:
 	Mp4Box	m_boxRoot;

@@ -10,7 +10,7 @@
 #include "H264Codec.h"
 using namespace std;
 
-class CMediaWriter;
+class GueeMediaWriter;
 
 class IOnReadFile
 {
@@ -21,11 +21,11 @@ public:
 	virtual int32_t read(uint8_t* buf, int32_t size)	= 0;
 };
 
-class CMediaStream
+class GueeMediaStream
 {
 public:
-	CMediaStream();
-	virtual ~CMediaStream();
+    GueeMediaStream();
+    virtual ~GueeMediaStream();
 
 	struct H264Frame
 	{
@@ -61,15 +61,16 @@ public:
 		Seek_Near,		//定们到和指定位置最近的关键帧
 	};
 
-	bool setVideoParam(const SVideoParams& params);
+    bool setVideoParams(const SVideoParams& params);
 	bool setAudioParams(const SAudioParams& params);
 	const SVideoParams& videoParams() const { return m_videoParams; }
 	const SAudioParams& audioParams() const { return m_audioParams; }
 	bool hasVideo() const { return m_hasVideo; }
 	bool hasAudio() const { return m_hasAudio; }
 
-	int32_t writerCount() const { return (int32_t)m_writers.size(); }
-	CMediaWriter* writer(int32_t i) { return (i >= 0 && i < m_writers.size()) ? m_writers[i] : nullptr; }
+    int32_t writerCount() const { return static_cast<int32_t>(m_writers.size()); }
+    GueeMediaWriter* writer(int32_t i) { return (i >= 0 && i < static_cast<int32_t>(m_writers.size()))
+                ? m_writers[static_cast<size_t>(i)] : nullptr; }
 
 	//开始分解、另存音视频流
 	//如果 cbRead 有值，则是以文件方式读入，不能调用 putFileStream 接口。
@@ -102,7 +103,7 @@ public:
 			m_audioDuration;
 	}
 protected:
-	friend CMediaWriter;
+    friend GueeMediaWriter;
 	SVideoParams	m_videoParams;
 	SAudioParams	m_audioParams;
 	IOnReadFile*	m_onReadFile;
@@ -184,7 +185,7 @@ private:
 	map<int64_t, FrameCache>	m_frameCaches;
 	bool writeToCache(H264Frame* vid, AUDFrame* aud);
 	mutex			m_mutexWrite;
-	vector<CMediaWriter*>	m_writers;
+    vector<GueeMediaWriter*>	m_writers;
 	//解码SPS,获取视频图像宽、高和帧率信息
 	void h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen);
 	// H264的NAL起始码防竞争机制 @param buf SPS数据内容
@@ -235,6 +236,6 @@ private:
 		7350, 0, 0, 0 };
 
 	void restartMember();
-	bool appendWriter(CMediaWriter* writer);
-	bool removeWriter(CMediaWriter* writer);
+    bool appendWriter(GueeMediaWriter* writer);
+    bool removeWriter(GueeMediaWriter* writer);
 };

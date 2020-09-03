@@ -7,13 +7,13 @@
 
 using namespace std;
 
-class CMediaWriter;
-class CVideoEncoder : public QThread
+class GueeMediaWriter;
+class GueeVideoEncoder : public QThread
 {
 public:
-    CVideoEncoder(QObject* parent = nullptr);
-    ~CVideoEncoder();
-    bool bindStream( CMediaStream* stream );
+    GueeVideoEncoder(QObject* parent = nullptr);
+    ~GueeVideoEncoder();
+    bool bindStream( GueeMediaStream* stream );
 	bool startEncode( const SVideoParams* videoParams );
 	void endEncode();
     const SVideoParams* getParams() { return &m_videoParams; }
@@ -29,7 +29,7 @@ private:
 
     bool						m_encodeing;
 	SVideoParams				m_videoParams;
-    CMediaStream*               m_mediaStream = nullptr;
+    GueeMediaStream*               m_mediaStream = nullptr;
     s_csp_tab                   m_csp_tab;
 
 	x264_t*						m_x264Handle;

@@ -2,7 +2,11 @@
 #define VIDEOSYNTHESIZER_H
 #include "InputSource/BaseLayer.h"
 #include "MediaCodec/VideoEncoder.h"
+#include "MediaCodec/MediaWriterFlv.h"
 #include "ShaderProgramPool.h"
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
+#include <QOpenGLFramebufferObjectFormat>
 
 class VideoSynthesizer : public QThread, public BaseLayer
 {
@@ -25,40 +29,41 @@ public:
 
     bool resetDefaultOption();
     bool setSize(int32_t width, int32_t height);
-    int32_t width() const {return m_params.width;}
-    int32_t height() const {return m_params.height;}
+    int32_t width() const {return m_vidParams.width;}
+    int32_t height() const {return m_vidParams.height;}
     bool setFrameRate(float fps);
-    float frameRate() const override {return m_params.frameRate;}
+    float frameRate() const override {return m_vidParams.frameRate;}
     float renderFps() const {return m_frameRate.fps();}
     bool setProfile(EVideoProfile profile);
-    EVideoProfile profile() const {return m_params.profile;}
+    EVideoProfile profile() const {return m_vidParams.profile;}
     bool setPreset(EVideoPreset_x264 preset);
-    EVideoPreset_x264 perset() const {return m_params.presetX264;}
+    EVideoPreset_x264 perset() const {return m_vidParams.presetX264;}
     bool setCSP(EVideoCSP csp);
-    EVideoCSP csp() const {return m_params.outputCSP;}
+    EVideoCSP csp() const {return m_vidParams.outputCSP;}
     bool setPsyTune(EPsyTuneType psy);
-    EPsyTuneType psyTune() const {return m_params.psyTune;}
+    EPsyTuneType psyTune() const {return m_vidParams.psyTune;}
     bool setBitrateMode(EVideoRateMode rateMode);
-    EVideoRateMode bitrateMode() const {return m_params.rateMode;}
+    EVideoRateMode bitrateMode() const {return m_vidParams.rateMode;}
     bool setBitrate(int32_t bitrate);
-    int32_t bitrate() const {return m_params.bitrate;}
+    int32_t bitrate() const {return m_vidParams.bitrate;}
     bool setBitrateMin(int32_t bitrateMin);
-    int32_t bitrateMin() const {return m_params.bitrateMin;}
+    int32_t bitrateMin() const {return m_vidParams.bitrateMin;}
     bool setBitrateMax(int32_t bitrateMax);
-    int32_t bitrateMax() const {return m_params.bitrateMax;}
+    int32_t bitrateMax() const {return m_vidParams.bitrateMax;}
     bool setVbvBuffer(int32_t vbvBufferSize);
-    int32_t vbvBuffer() const {return m_params.vbvBuffer;}
+    int32_t vbvBuffer() const {return m_vidParams.vbvBuffer;}
     bool setGopMin(int32_t gopMin);
-    int32_t gopMin() const {return m_params.gopMin;}
+    int32_t gopMin() const {return m_vidParams.gopMin;}
     bool setGopMax(int32_t gopMax);
-    int32_t gopMax() const {return m_params.gopMax;}
+    int32_t gopMax() const {return m_vidParams.gopMax;}
     bool setRefFrames(int32_t refFrames);
-    int32_t refFrames() const {return m_params.refFrames;}
+    int32_t refFrames() const {return m_vidParams.refFrames;}
     bool setBFrames(int32_t bFrames);
-    int32_t bFrames() const {return m_params.BFrames;}
+    int32_t bFrames() const {return m_vidParams.BFrames;}
 private:
     VideoSynthesizer();
-    SVideoParams m_params;
+    SVideoParams m_vidParams;
+    SAudioParams m_audParams;
     FrameSynchronization    m_frameSync;
     FrameRateCalc           m_frameRate;
     struct FrameInfo
@@ -74,13 +79,17 @@ private:
         int dataSize;
         int planeCount;
         int stride[3];
-        QOpenGLBuffer*  buffer = nullptr;
-        QOpenGLFramebufferObject* fbo = nullptr;
+        QOpenGLBuffer*  buffer;
+        QOpenGLFramebufferObject* fbo;
     };
 
     FrameInfo    m_frameData;
 
-    CVideoEncoder*  m_encoder = nullptr;
+    GueeVideoEncoder m_vidEncoder;
+    GueeMediaStream m_medStream;
+    QVector<GueeMediaWriter*> m_writers;
+
+
     bool initYuvFbo();
     void uninitYubFbo();
 

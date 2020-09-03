@@ -1,13 +1,13 @@
 #include "MediaWriterMp4.h"
-CMediaWriterMp4::CMediaWriterMp4(CMediaStream& stream)
-        : CMediaWriter(stream)
+GueeMediaWriterMp4::GueeMediaWriterMp4(GueeMediaStream& stream)
+        : GueeMediaWriter(stream)
 {
 }
-CMediaWriterMp4::~CMediaWriterMp4()
+GueeMediaWriterMp4::~GueeMediaWriterMp4()
 {
 
 }
-bool CMediaWriterMp4::onWriteHeader()
+bool GueeMediaWriterMp4::onWriteHeader()
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
 	const SAudioParams&	audioParams = m_stream.audioParams();
@@ -142,7 +142,7 @@ bool CMediaWriterMp4::onWriteHeader()
 	}
     return true;
 }
-bool CMediaWriterMp4::onWriteVideo(const CMediaStream::H264Frame * frame)
+bool GueeMediaWriterMp4::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 {
 	TrackInfo&	trak = m_tracks[m_defaultVideoTrackId];
 
@@ -165,7 +165,7 @@ bool CMediaWriterMp4::onWriteVideo(const CMediaStream::H264Frame * frame)
 
         for ( int32_t i = 0; i < frame->nalCount; ++i )
         {
-            const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//dbg += (i == 0) ? "( " : ", ";
 			//dbg += nal_unit_names[nal.nalType];
 			//printf("%d : %d / %d, Type:%s\n", trak.sampleCount, i, frame->nalCount, nal_unit_names[nal.nalType]);
@@ -182,7 +182,7 @@ bool CMediaWriterMp4::onWriteVideo(const CMediaStream::H264Frame * frame)
     {
         for ( int32_t i = 0; i < frame->nalCount; ++i )
         {
-            const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//dbg += (i == 0) ? "( " : ", ";
 			//dbg += nal_unit_names[nal.nalType];
 			//if (nal.nalType == NalAud || nal.nalType == NalSps || nal.nalType == NalSei || nal.nalType == NalSps)
@@ -198,7 +198,7 @@ bool CMediaWriterMp4::onWriteVideo(const CMediaStream::H264Frame * frame)
 	trak.dataLength += cacheSize();
 	return flushData();
 }
-bool CMediaWriterMp4::onWriteAudio(const CMediaStream::AUDFrame * frame)
+bool GueeMediaWriterMp4::onWriteAudio(const GueeMediaStream::AUDFrame * frame)
 {
 	TrackInfo&	trak = m_tracks[m_defaultAudioTrackId];
 	add_trak_stts(trak, 1024);
@@ -217,7 +217,7 @@ bool CMediaWriterMp4::onWriteAudio(const CMediaStream::AUDFrame * frame)
     return flushData();
 }
 
-void CMediaWriterMp4::onCloseWrite()
+void GueeMediaWriterMp4::onCloseWrite()
 {
 	for (auto t = m_tracks.begin(); t != m_tracks.end(); ++t)
 	{
@@ -307,7 +307,7 @@ void CMediaWriterMp4::onCloseWrite()
 	writeBox(m_boxRoot.find('moov'), true);
 }
 
-bool CMediaWriterMp4::set_ftyp(const string& brands)
+bool GueeMediaWriterMp4::set_ftyp(const string& brands)
 {
 	int32_t brandCount = (int32_t)brands.size() / 4;
 	if (brandCount == 0) return false;
@@ -330,7 +330,7 @@ bool CMediaWriterMp4::set_ftyp(const string& brands)
 	return true;
 }
 
-bool CMediaWriterMp4::set_moov_mvhd()
+bool GueeMediaWriterMp4::set_moov_mvhd()
 {
 	Mp4Box*	moovBox = m_boxRoot.find('moov');
 	if (nullptr == moovBox)
@@ -389,7 +389,7 @@ bool CMediaWriterMp4::set_moov_mvhd()
 	return true;
 }
 
-uint32_t CMediaWriterMp4::add_trak(EMediaType type)
+uint32_t GueeMediaWriterMp4::add_trak(EMediaType type)
 {
 	Mp4Box*	moovBox = m_boxRoot.find('moov');
 	if (nullptr == moovBox) return 0;
@@ -447,7 +447,7 @@ uint32_t CMediaWriterMp4::add_trak(EMediaType type)
 	return info.tkhd.trackId;
 }
 
-bool CMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
+bool GueeMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 {
 	Mp4Box*	tkhdBox = trak.trakBox->find('tkhd');
 	if (nullptr == tkhdBox)
@@ -510,7 +510,7 @@ bool CMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 	return true;
 }
 
-bool CMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
+bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 {
 	Mp4Box*	mdiaBox = trak.trakBox->find('mdia');
 	if (nullptr == mdiaBox) return false;
@@ -557,7 +557,7 @@ bool CMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 	return true;
 }
 
-bool CMediaWriterMp4::set_mdia_hdlr(TrackInfo & trak, FourCC fcc, const string& name)
+bool GueeMediaWriterMp4::set_mdia_hdlr(TrackInfo & trak, FourCC fcc, const string& name)
 {
 	Mp4Box*	mdiaBox = trak.trakBox->find('mdia');
 	if (nullptr == mdiaBox) return false;
@@ -576,7 +576,7 @@ bool CMediaWriterMp4::set_mdia_hdlr(TrackInfo & trak, FourCC fcc, const string& 
 	return true;
 }
 
-bool CMediaWriterMp4::set_minf_vmhd(TrackInfo & trak, uint16_t mode, uint16_t r, uint16_t g, uint16_t b)
+bool GueeMediaWriterMp4::set_minf_vmhd(TrackInfo & trak, uint16_t mode, uint16_t r, uint16_t g, uint16_t b)
 {
 	Mp4Box*	minfBox = trak.trakBox->find('minf');
 	if (nullptr == minfBox) return false;
@@ -597,7 +597,7 @@ bool CMediaWriterMp4::set_minf_vmhd(TrackInfo & trak, uint16_t mode, uint16_t r,
 	return true;
 }
 
-bool CMediaWriterMp4::set_minf_smhd(TrackInfo & trak, int8_t leftOrRight)
+bool GueeMediaWriterMp4::set_minf_smhd(TrackInfo & trak, int8_t leftOrRight)
 {
 	Mp4Box*	minfBox = trak.trakBox->find('minf');
 	if (nullptr == minfBox) return false;
@@ -614,7 +614,7 @@ bool CMediaWriterMp4::set_minf_smhd(TrackInfo & trak, int8_t leftOrRight)
 	return true;
 }
 
-void CMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre)
+void GueeMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre)
 {
 	if (trak.sttsBox)
 	{
@@ -673,7 +673,7 @@ void CMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre)
 	}
 }
 
-void CMediaWriterMp4::add_trak_ctts(TrackInfo& trak, uint32_t dely)
+void GueeMediaWriterMp4::add_trak_ctts(TrackInfo& trak, uint32_t dely)
 {
 	if (trak.cttsBox)
 	{
@@ -695,7 +695,7 @@ void CMediaWriterMp4::add_trak_ctts(TrackInfo& trak, uint32_t dely)
 }
 
 
-void CMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offset, uint32_t size)
+void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offset, uint32_t size)
 {
 	//Box_stts *stts = (Box_stts*)&trak.sttsBox->data.front();
 	//Box_stts *stts = (Box_stts*)&trak.sttsBox->data.front();
@@ -761,13 +761,13 @@ void CMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offset,
 	}
 }
 
-bool CMediaWriterMp4::fix_mdat_size()
+bool GueeMediaWriterMp4::fix_mdat_size()
 {
 	return reputAviDwordToFile(m_mdatSizeOffset, endianFix32(uint32_t(m_totalBytes - m_mdatSizeOffset)));
 	return false;
 }
 
-bool CMediaWriterMp4::writeBox(Mp4Box * box, bool flush)
+bool GueeMediaWriterMp4::writeBox(Mp4Box * box, bool flush)
 {
 	if (flush) box->resetSize();
 	if (box->head.largeSize > 0xFFFFFFFF)

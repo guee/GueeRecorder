@@ -1,90 +1,90 @@
 #pragma once
 #include "MediaWriter.h"
-class CMediaWriterTs :
-	public CMediaWriter
+class GueeMediaWriterTs :
+    public GueeMediaWriter
 {
 public:
-	CMediaWriterTs(CMediaStream& stream);
-	~CMediaWriterTs();
+    GueeMediaWriterTs(GueeMediaStream& stream);
+    ~GueeMediaWriterTs();
 
 	virtual bool onWriteHeader();
-	virtual bool onWriteVideo(const CMediaStream::H264Frame * frame);
-	virtual bool onWriteAudio(const CMediaStream::AUDFrame * frame);
+    virtual bool onWriteVideo(const GueeMediaStream::H264Frame * frame);
+    virtual bool onWriteAudio(const GueeMediaStream::AUDFrame * frame);
 
 #pragma pack(push,1)
 	//http://www.cnblogs.com/tocy/p/media_container_6-mpegts.html
 	struct	TS_Packet_Header
 	{
-		uint32_t	sync_byte : 8;	//£¨Í¬²½×Ö½Ú£©£º¹Ì¶¨Îª0x47;¸Ã×Ö½ÚÓÉ½âÂëÆ÷Ê¶±ğ£¬Ê¹°üÍ·ºÍÓĞĞ§¸ºÔØ¿ÉÏà»¥·ÖÀë¡£
-		uint32_t	transport_error_indicator : 1;	//£¨´«Êä´íÎó±êÖ¾£©£º¡®1¡¯±íÊ¾ÔÚÏà¹ØµÄ´«Êä°üÖĞÖÁÉÙÓĞÒ»¸ö²»¿É¾ÀÕıµÄ´íÎóÎ»¡£µ±±»ÖÃ1ºó£¬ÔÚ´íÎó±»¾ÀÕıÖ®Ç°²»ÄÜÖØÖÃÎª0¡£
-		uint32_t	payload_unit_start_indicator : 1;	//£¨¸ºÔØÆğÊ¼±êÖ¾£©£ºÎª1Ê±£¬±íÊ¾µ±Ç°TS°üµÄÓĞĞ§ÔØºÉÖĞ°üº¬PES»òÕßPSIµÄÆğÊ¼Î»ÖÃ£»ÔÚÇ°4¸ö×Ö½ÚÖ®ºó»áÓĞÒ»¸öµ÷Õû×Ö½Ú£¬ÆäµÄÊıÖµÎªºóÃæµ÷Õû×Ö¶ÎµÄ³¤¶Èlength¡£Òò´ËÓĞĞ§ÔØºÉ¿ªÊ¼µÄÎ»ÖÃÓ¦ÔÙÆ«ÒÆ1+[length]¸ö×Ö½Ú¡£
-		uint32_t	transport_priority : 1;	//£¨´«ÊäÓÅÏÈ¼¶±êÖ¾£©£º¡®1¡¯±íÃ÷µ±Ç°TS°üµÄÓÅÏÈ¼¶±ÈÆäËû¾ßÓĞÏàÍ¬PID£¬ µ«´ËÎ»Ã»ÓĞ±»ÖÃ¡®1¡¯µÄTS°ü¸ß¡£
-		uint32_t	PID : 13;	// Ö¸Ê¾´æ´¢Óë·Ö×éÓĞĞ§¸ºÔØÖĞÊı¾İµÄÀàĞÍ¡£PIDÖµ0x0000¡ª0x000F±£Áô¡£ÆäÖĞ0x0000ÎªPAT±£Áô£»0x0001ÎªCAT±£Áô£»0x1fffÎª·Ö×é±£Áô£¬¼´¿Õ°ü¡£
-		uint32_t	transport_scrambling_control : 2;	//£¨¼ÓÈÅ¿ØÖÆ±êÖ¾£©£º±íÊ¾TSÁ÷·Ö×éÓĞĞ§¸ºÔØµÄ¼ÓÃÜÄ£Ê½¡£¿Õ°üÎª¡®00¡¯£¬Èç¹û´«Êä°ü°üÍ·ÖĞ°üÀ¨µ÷Õû×Ö¶Î£¬²»Ó¦±»¼ÓÃÜ¡£ÆäËûÈ¡Öµº¬ÒåÊÇÓÃ»§×Ô¶¨ÒåµÄ¡£
-		uint32_t	adaptation_field_control : 2;	//£¨ÊÊÅäÓò¿ØÖÆ±êÖ¾£©£º±íÊ¾°üÍ·ÊÇ·ñÓĞµ÷Õû×Ö¶Î»òÓĞĞ§¸ºÔØ¡£¡®00¡¯ÎªISO/IECÎ´À´Ê¹ÓÃ±£Áô£»¡®01¡¯½öº¬ÓĞĞ§ÔØºÉ£¬ÎŞµ÷Õû×Ö¶Î£»¡®10¡¯ ÎŞÓĞĞ§ÔØºÉ£¬½öº¬µ÷Õû×Ö¶Î£»¡®11¡¯ µ÷Õû×Ö¶ÎºóÎªÓĞĞ§ÔØºÉ£¬µ÷Õû×Ö¶ÎÖĞµÄÇ°Ò»¸ö×Ö½Ú±íÊ¾µ÷Õû×Ö¶ÎµÄ³¤¶Èlength£¬ÓĞĞ§ÔØºÉ¿ªÊ¼µÄÎ»ÖÃÓ¦ÔÙÆ«ÒÆ[length]¸ö×Ö½Ú¡£¿Õ°üÓ¦Îª¡®10¡¯¡£
-		uint32_t	continuity_counter : 4;	//£¨Á¬ĞøĞÔ¼ÆÊıÆ÷£©£ºËæ×ÅÃ¿Ò»¸ö¾ßÓĞÏàÍ¬PIDµÄTSÁ÷·Ö×é¶øÔö¼Ó£¬µ±Ëü´ïµ½×î´óÖµºóÓÖ»Ø¸´µ½0¡£·¶Î§Îª0~15¡£
+		uint32_t	sync_byte : 8;	//ï¼ˆåŒæ­¥å­—èŠ‚ï¼‰ï¼šå›ºå®šä¸º0x47;è¯¥å­—èŠ‚ç”±è§£ç å™¨è¯†åˆ«ï¼Œä½¿åŒ…å¤´å’Œæœ‰æ•ˆè´Ÿè½½å¯ç›¸äº’åˆ†ç¦»ã€‚
+		uint32_t	transport_error_indicator : 1;	//ï¼ˆä¼ è¾“é”™è¯¯æ ‡å¿—ï¼‰ï¼šâ€˜1â€™è¡¨ç¤ºåœ¨ç›¸å…³çš„ä¼ è¾“åŒ…ä¸­è‡³å°‘æœ‰ä¸€ä¸ªä¸å¯çº æ­£çš„é”™è¯¯ä½ã€‚å½“è¢«ç½®1åï¼Œåœ¨é”™è¯¯è¢«çº æ­£ä¹‹å‰ä¸èƒ½é‡ç½®ä¸º0ã€‚
+		uint32_t	payload_unit_start_indicator : 1;	//ï¼ˆè´Ÿè½½èµ·å§‹æ ‡å¿—ï¼‰ï¼šä¸º1æ—¶ï¼Œè¡¨ç¤ºå½“å‰TSåŒ…çš„æœ‰æ•ˆè½½è·ä¸­åŒ…å«PESæˆ–è€…PSIçš„èµ·å§‹ä½ç½®ï¼›åœ¨å‰4ä¸ªå­—èŠ‚ä¹‹åä¼šæœ‰ä¸€ä¸ªè°ƒæ•´å­—èŠ‚ï¼Œå…¶çš„æ•°å€¼ä¸ºåé¢è°ƒæ•´å­—æ®µçš„é•¿åº¦lengthã€‚å› æ­¤æœ‰æ•ˆè½½è·å¼€å§‹çš„ä½ç½®åº”å†åç§»1+[length]ä¸ªå­—èŠ‚ã€‚
+		uint32_t	transport_priority : 1;	//ï¼ˆä¼ è¾“ä¼˜å…ˆçº§æ ‡å¿—ï¼‰ï¼šâ€˜1â€™è¡¨æ˜å½“å‰TSåŒ…çš„ä¼˜å…ˆçº§æ¯”å…¶ä»–å…·æœ‰ç›¸åŒPIDï¼Œ ä½†æ­¤ä½æ²¡æœ‰è¢«ç½®â€˜1â€™çš„TSåŒ…é«˜ã€‚
+		uint32_t	PID : 13;	// æŒ‡ç¤ºå­˜å‚¨ä¸åˆ†ç»„æœ‰æ•ˆè´Ÿè½½ä¸­æ•°æ®çš„ç±»å‹ã€‚PIDå€¼0x0000â€”0x000Fä¿ç•™ã€‚å…¶ä¸­0x0000ä¸ºPATä¿ç•™ï¼›0x0001ä¸ºCATä¿ç•™ï¼›0x1fffä¸ºåˆ†ç»„ä¿ç•™ï¼Œå³ç©ºåŒ…ã€‚
+		uint32_t	transport_scrambling_control : 2;	//ï¼ˆåŠ æ‰°æ§åˆ¶æ ‡å¿—ï¼‰ï¼šè¡¨ç¤ºTSæµåˆ†ç»„æœ‰æ•ˆè´Ÿè½½çš„åŠ å¯†æ¨¡å¼ã€‚ç©ºåŒ…ä¸ºâ€˜00â€™ï¼Œå¦‚æœä¼ è¾“åŒ…åŒ…å¤´ä¸­åŒ…æ‹¬è°ƒæ•´å­—æ®µï¼Œä¸åº”è¢«åŠ å¯†ã€‚å…¶ä»–å–å€¼å«ä¹‰æ˜¯ç”¨æˆ·è‡ªå®šä¹‰çš„ã€‚
+		uint32_t	adaptation_field_control : 2;	//ï¼ˆé€‚é…åŸŸæ§åˆ¶æ ‡å¿—ï¼‰ï¼šè¡¨ç¤ºåŒ…å¤´æ˜¯å¦æœ‰è°ƒæ•´å­—æ®µæˆ–æœ‰æ•ˆè´Ÿè½½ã€‚â€˜00â€™ä¸ºISO/IECæœªæ¥ä½¿ç”¨ä¿ç•™ï¼›â€˜01â€™ä»…å«æœ‰æ•ˆè½½è·ï¼Œæ— è°ƒæ•´å­—æ®µï¼›â€˜10â€™ æ— æœ‰æ•ˆè½½è·ï¼Œä»…å«è°ƒæ•´å­—æ®µï¼›â€˜11â€™ è°ƒæ•´å­—æ®µåä¸ºæœ‰æ•ˆè½½è·ï¼Œè°ƒæ•´å­—æ®µä¸­çš„å‰ä¸€ä¸ªå­—èŠ‚è¡¨ç¤ºè°ƒæ•´å­—æ®µçš„é•¿åº¦lengthï¼Œæœ‰æ•ˆè½½è·å¼€å§‹çš„ä½ç½®åº”å†åç§»[length]ä¸ªå­—èŠ‚ã€‚ç©ºåŒ…åº”ä¸ºâ€˜10â€™ã€‚
+		uint32_t	continuity_counter : 4;	//ï¼ˆè¿ç»­æ€§è®¡æ•°å™¨ï¼‰ï¼šéšç€æ¯ä¸€ä¸ªå…·æœ‰ç›¸åŒPIDçš„TSæµåˆ†ç»„è€Œå¢åŠ ï¼Œå½“å®ƒè¾¾åˆ°æœ€å¤§å€¼ååˆå›å¤åˆ°0ã€‚èŒƒå›´ä¸º0~15ã€‚
 	};
-	//½ÚÄ¿¹ØÁª±íProgram Association Table (PAT) 0x0000	TSÁ÷ÖĞ°üº¬Ò»¸ö»òÕß¶à¸öPAT±í¡£PAT±íÓÉPIDÎª0x0000µÄTS°ü´«ËÍ£¬Æä×÷ÓÃÊÇÎª¸´ÓÃµÄÃ¿Ò»Â·´«ËÍÁ÷Ìá¹©³öËù°üº¬µÄ½ÚÄ¿ºÍ½ÚÄ¿±àºÅ£¬ÒÔ¼°¶ÔÓ¦½ÚÄ¿µÄPMTµÄÎ»ÖÃ¼´PMTµÄTS°üµÄPIDÖµ£¬Í¬Ê±»¹Ìá¹©NITµÄÎ»ÖÃ£¬¼´NITµÄTS°üµÄPIDµÄÖµ¡£
-	//½ÚÄ¿Ó³Éä±íProgram Map Tables (PMT)	PMTÔÚ´«ËÍÁ÷ÖĞÓÃÓÚÖ¸Ê¾×é³ÉÄ³Ò»Ì×½ÚÄ¿µÄÊÓÆµ¡¢ÒôÆµºÍÊı¾İÔÚ´«ËÍÁ÷ÖĞµÄÎ»ÖÃ£¬¼´¶ÔÓ¦µÄTS°üµÄPIDÖµ£¬ÒÔ¼°Ã¿Â·½ÚÄ¿µÄ½ÚÄ¿Ê±ÖÓ²Î¿¼£¨PCR£©×Ö¶ÎµÄÎ»ÖÃ¡£ 
-	//Ìõ¼ş½ÓÊÕ±íConditional Access Table (CAT) 0x0001
-	//ÍøÂçĞÅÏ¢±íNetwork Information Table(NIT) 0x0010
-	//´«ÊäÁ÷ÃèÊö±íTransport Stream Description Table(TSDT) 0x02
+	//èŠ‚ç›®å…³è”è¡¨Program Association Table (PAT) 0x0000	TSæµä¸­åŒ…å«ä¸€ä¸ªæˆ–è€…å¤šä¸ªPATè¡¨ã€‚PATè¡¨ç”±PIDä¸º0x0000çš„TSåŒ…ä¼ é€ï¼Œå…¶ä½œç”¨æ˜¯ä¸ºå¤ç”¨çš„æ¯ä¸€è·¯ä¼ é€æµæä¾›å‡ºæ‰€åŒ…å«çš„èŠ‚ç›®å’ŒèŠ‚ç›®ç¼–å·ï¼Œä»¥åŠå¯¹åº”èŠ‚ç›®çš„PMTçš„ä½ç½®å³PMTçš„TSåŒ…çš„PIDå€¼ï¼ŒåŒæ—¶è¿˜æä¾›NITçš„ä½ç½®ï¼Œå³NITçš„TSåŒ…çš„PIDçš„å€¼ã€‚
+	//èŠ‚ç›®æ˜ å°„è¡¨Program Map Tables (PMT)	PMTåœ¨ä¼ é€æµä¸­ç”¨äºæŒ‡ç¤ºç»„æˆæŸä¸€å¥—èŠ‚ç›®çš„è§†é¢‘ã€éŸ³é¢‘å’Œæ•°æ®åœ¨ä¼ é€æµä¸­çš„ä½ç½®ï¼Œå³å¯¹åº”çš„TSåŒ…çš„PIDå€¼ï¼Œä»¥åŠæ¯è·¯èŠ‚ç›®çš„èŠ‚ç›®æ—¶é’Ÿå‚è€ƒï¼ˆPCRï¼‰å­—æ®µçš„ä½ç½®ã€‚ 
+	//æ¡ä»¶æ¥æ”¶è¡¨Conditional Access Table (CAT) 0x0001
+	//ç½‘ç»œä¿¡æ¯è¡¨Network Information Table(NIT) 0x0010
+	//ä¼ è¾“æµæè¿°è¡¨Transport Stream Description Table(TSDT) 0x02
 
 	struct	TS_PAT
 	{
-		uint64_t	table_id : 8;	//¹Ì¶¨Îª0x00£¬±êÖ¾ÊÇ¸Ã±íÊÇPAT
-		uint64_t	section_syntax_indicator : 1;	//¶ÎÓï·¨±êÖ¾Î»£¬¹Ì¶¨Îª1
+		uint64_t	table_id : 8;	//å›ºå®šä¸º0x00ï¼Œæ ‡å¿—æ˜¯è¯¥è¡¨æ˜¯PAT
+		uint64_t	section_syntax_indicator : 1;	//æ®µè¯­æ³•æ ‡å¿—ä½ï¼Œå›ºå®šä¸º1
 		uint64_t	zero : 1;	//0
-		uint64_t	reserved_1 : 2;	//±£ÁôÎ»
-		uint64_t	section_length : 12;	//±íÊ¾ºóÃæµÄÓĞÓÃµÄ×Ö½ÚÊı£¬°üÀ¨CRC32
-		uint64_t	transport_stream_id : 16;	//¸Ã´«ÊäÁ÷µÄID£¬Çø±ğÓÚÒ»¸öÍøÂçÖĞÆäËü¶àÂ·¸´ÓÃµÄÁ÷
-		uint64_t	reserved_2 : 2;	//±£ÁôÎ»
-		uint64_t	version_number : 5;	//·¶Î§0-31£¬±íÊ¾PATµÄ°æ±¾ºÅ
-		uint64_t	current_next_indicator : 1;	//·¢ËÍµÄPATÊÇµ±Ç°ÓĞĞ§»¹ÊÇÏÂÒ»¸öPATÓĞĞ§
-		uint64_t	section_number : 8;	//·Ö¶ÎµÄºÅÂë¡£PAT¿ÉÄÜ·ÖÎª¶à¶Î´«Êä£¬µÚÒ»¶ÎÎª00£¬ÒÔºóÃ¿¸ö·Ö¶Î¼Ó1£¬×î¶à¿ÉÄÜÓĞ256¸ö·Ö¶Î
-		uint64_t	last_section_number : 8;	//±íÊ¾PAT×îºóÒ»¸ö·Ö¶ÎµÄºÅÂë¡£
+		uint64_t	reserved_1 : 2;	//ä¿ç•™ä½
+		uint64_t	section_length : 12;	//è¡¨ç¤ºåé¢çš„æœ‰ç”¨çš„å­—èŠ‚æ•°ï¼ŒåŒ…æ‹¬CRC32
+		uint64_t	transport_stream_id : 16;	//è¯¥ä¼ è¾“æµçš„IDï¼ŒåŒºåˆ«äºä¸€ä¸ªç½‘ç»œä¸­å…¶å®ƒå¤šè·¯å¤ç”¨çš„æµ
+		uint64_t	reserved_2 : 2;	//ä¿ç•™ä½
+		uint64_t	version_number : 5;	//èŒƒå›´0-31ï¼Œè¡¨ç¤ºPATçš„ç‰ˆæœ¬å·
+		uint64_t	current_next_indicator : 1;	//å‘é€çš„PATæ˜¯å½“å‰æœ‰æ•ˆè¿˜æ˜¯ä¸‹ä¸€ä¸ªPATæœ‰æ•ˆ
+		uint64_t	section_number : 8;	//åˆ†æ®µçš„å·ç ã€‚PATå¯èƒ½åˆ†ä¸ºå¤šæ®µä¼ è¾“ï¼Œç¬¬ä¸€æ®µä¸º00ï¼Œä»¥åæ¯ä¸ªåˆ†æ®µåŠ 1ï¼Œæœ€å¤šå¯èƒ½æœ‰256ä¸ªåˆ†æ®µ
+		uint64_t	last_section_number : 8;	//è¡¨ç¤ºPATæœ€åä¸€ä¸ªåˆ†æ®µçš„å·ç ã€‚
 		uint32_t	CRC_32 : 32;
 	};
 	struct	TS_PAT_PROGRAM
 	{
-		uint32_t	program_number : 16;	//½ÚÄ¿ºÅ
+		uint32_t	program_number : 16;	//èŠ‚ç›®å·
 		uint32_t	reserved_3 : 3;
 		union {
-			uint32_t	program_map_PID : 13;	//½ÚÄ¿Ó³Éä±í£¨PMT£©µÄPIDºÅ£¬½ÚÄ¿ºÅÎª´óÓÚµÈÓÚ1Ê±£¬¶ÔÓ¦µÄIDÎªprogram_map_PID¡£Ò»¸öPATÖĞ¿ÉÒÔÓĞ¶à¸öprogram_map_PID¡£
-			uint32_t	network_PID : 13;	//ÍøÂçĞÅÏ¢±í£¨NIT£©µÄPID,½ÚÄ¿ºÅÎª0Ê±¶ÔÓ¦IDÎªnetwork_PID¡£
+			uint32_t	program_map_PID : 13;	//èŠ‚ç›®æ˜ å°„è¡¨ï¼ˆPMTï¼‰çš„PIDå·ï¼ŒèŠ‚ç›®å·ä¸ºå¤§äºç­‰äº1æ—¶ï¼Œå¯¹åº”çš„IDä¸ºprogram_map_PIDã€‚ä¸€ä¸ªPATä¸­å¯ä»¥æœ‰å¤šä¸ªprogram_map_PIDã€‚
+			uint32_t	network_PID : 13;	//ç½‘ç»œä¿¡æ¯è¡¨ï¼ˆNITï¼‰çš„PID,èŠ‚ç›®å·ä¸º0æ—¶å¯¹åº”IDä¸ºnetwork_PIDã€‚
 		};
 	};
 
 	struct TS_PMT
 	{
-		uint64_t	table_id : 8;	//¹Ì¶¨Îª0x02£¬±êÖ¾¸Ã±íÊÇPMT ±í¡£
-		uint64_t	section_syntax_indicator : 1;	//¶ÔÓÚPMT±í£¬ÉèÖÃÎª1 ¡£
+		uint64_t	table_id : 8;	//å›ºå®šä¸º0x02ï¼Œæ ‡å¿—è¯¥è¡¨æ˜¯PMT è¡¨ã€‚
+		uint64_t	section_syntax_indicator : 1;	//å¯¹äºPMTè¡¨ï¼Œè®¾ç½®ä¸º1 ã€‚
 		uint64_t	zero : 1;	//0
 		uint64_t	reserved_1 : 2;	//
-		uint64_t	section_length : 12;	//±íÊ¾Õâ¸ö×Ö½ÚºóÃæÓĞÓÃµÄ×Ö½ÚÊı£¬°üÀ¨CRC32 ¡£
-		uint64_t	program_number : 16;	//ËüÖ¸³ö¸Ã½ÚÄ¿¶ÔÓ¦ÓÚ¿ÉÓ¦ÓÃµÄProgram map PID ¡£
+		uint64_t	section_length : 12;	//è¡¨ç¤ºè¿™ä¸ªå­—èŠ‚åé¢æœ‰ç”¨çš„å­—èŠ‚æ•°ï¼ŒåŒ…æ‹¬CRC32 ã€‚
+		uint64_t	program_number : 16;	//å®ƒæŒ‡å‡ºè¯¥èŠ‚ç›®å¯¹åº”äºå¯åº”ç”¨çš„Program map PID ã€‚
 		uint64_t	reserved_2 : 2;
-		uint64_t	version_number : 5;	//Ö¸³öPMT µÄ°æ±¾ºÅ¡£
-		uint64_t	current_next_indicator : 1;	//µ±¸ÃÎ»ÖÃ¡¯1¡¯Ê±£¬µ±Ç°´«ËÍµÄProgram map section¿ÉÓÃ£»µ±¸ÃÎ»ÖÃ¡¯0¡¯Ê±£¬Ö¸Ê¾µ±Ç°´«ËÍµÄProgram map section²»¿ÉÓÃ£¬ÏÂÒ»¸öTSÁ÷µÄProgrammap section ÓĞĞ§¡£
-		uint64_t	section_number : 8;	//×ÜÊÇÖÃÎª0x00£¨ÒòÎªPMT±íÀï±íÊ¾Ò»¸öserviceµÄĞÅÏ¢£¬Ò»¸ösection µÄ³¤¶È×ã¹»£©¡£
-		uint64_t	last_section_number : 8;	//¸ÃÓòµÄÖµ×ÜÊÇ0x00 ¡£
+		uint64_t	version_number : 5;	//æŒ‡å‡ºPMT çš„ç‰ˆæœ¬å·ã€‚
+		uint64_t	current_next_indicator : 1;	//å½“è¯¥ä½ç½®â€™1â€™æ—¶ï¼Œå½“å‰ä¼ é€çš„Program map sectionå¯ç”¨ï¼›å½“è¯¥ä½ç½®â€™0â€™æ—¶ï¼ŒæŒ‡ç¤ºå½“å‰ä¼ é€çš„Program map sectionä¸å¯ç”¨ï¼Œä¸‹ä¸€ä¸ªTSæµçš„Programmap section æœ‰æ•ˆã€‚
+		uint64_t	section_number : 8;	//æ€»æ˜¯ç½®ä¸º0x00ï¼ˆå› ä¸ºPMTè¡¨é‡Œè¡¨ç¤ºä¸€ä¸ªserviceçš„ä¿¡æ¯ï¼Œä¸€ä¸ªsection çš„é•¿åº¦è¶³å¤Ÿï¼‰ã€‚
+		uint64_t	last_section_number : 8;	//è¯¥åŸŸçš„å€¼æ€»æ˜¯0x00 ã€‚
 
 		uint32_t	reserved_3 : 3;
-		uint32_t	PCR_PID : 13;	//½ÚÄ¿Ê±ÖÓ²Î¿¼ËùÔÚTS·Ö×éµÄPID¡£½ÚÄ¿ÖĞ°üº¬ÓĞĞ§PCR×Ö¶ÎµÄ´«ËÍÁ÷ÖĞPID ¡£
+		uint32_t	PCR_PID : 13;	//èŠ‚ç›®æ—¶é’Ÿå‚è€ƒæ‰€åœ¨TSåˆ†ç»„çš„PIDã€‚èŠ‚ç›®ä¸­åŒ…å«æœ‰æ•ˆPCRå­—æ®µçš„ä¼ é€æµä¸­PID ã€‚
 		uint32_t	reserved_4 : 4;
-		uint32_t	program_info_length : 12;	//12bitÓò£¬Ç°Á½Î»Îª00¡£¸ÃÓòÖ¸³ö¸úËæÆäºó¶Ô½ÚÄ¿ĞÅÏ¢µÄÃèÊöµÄbyte Êı¡£
+		uint32_t	program_info_length : 12;	//12bitåŸŸï¼Œå‰ä¸¤ä½ä¸º00ã€‚è¯¥åŸŸæŒ‡å‡ºè·Ÿéšå…¶åå¯¹èŠ‚ç›®ä¿¡æ¯çš„æè¿°çš„byte æ•°ã€‚
 
 		uint32_t	CRC_32 : 32;
 	};
 	struct	TS_PMT_STREAM
 	{
-		uint64_t	stream_type : 8;	//Ö¸Ê¾ÌØ¶¨PIDµÄ½ÚÄ¿ÔªËØ°üµÄÀàĞÍ¡£¸Ã´¦PIDÓÉelementary PID Ö¸¶¨¡£
+		uint64_t	stream_type : 8;	//æŒ‡ç¤ºç‰¹å®šPIDçš„èŠ‚ç›®å…ƒç´ åŒ…çš„ç±»å‹ã€‚è¯¥å¤„PIDç”±elementary PID æŒ‡å®šã€‚
 		uint64_t	reserved_5 : 3;
 		uint64_t	elementary_PID : 13;
 		uint64_t	reserved_6 : 4;
 		uint64_t	ES_info_length : 12;
 	};
-	//PESÏà¹Ø×ÊÁÏ
+	//PESç›¸å…³èµ„æ–™
 	//http://blog.csdn.net/cabbage2008/article/details/49848937
 	//http://blog.csdn.net/u013354805/article/details/51591229
 	struct TS_PES
@@ -94,14 +94,14 @@ public:
 
 		uint16_t	PES_packet_length;
 
-		uint8_t		fix_bit : 2;		//±êÖ¾Î»£¬¹Ì¶¨Îª 10
-		uint8_t		PES_scrambling_control : 2;		//PES ¼ÓÈÅ¿ØÖÆ
-		uint8_t		PES_priority : 1;		//PES ÓÅÏÈ¼¶
-		uint8_t		data_alignment_indicator : 1;		//Êı¾İ¶¨Î»Ö¸Ê¾·û
-		uint8_t		copyright : 1;		//°æÈ¨
-		uint8_t		original_or_copy : 1;		//Ô­Ê¼µÄ»ò¸´ÖÆµÄ
+		uint8_t		fix_bit : 2;		//æ ‡å¿—ä½ï¼Œå›ºå®šä¸º 10
+		uint8_t		PES_scrambling_control : 2;		//PES åŠ æ‰°æ§åˆ¶
+		uint8_t		PES_priority : 1;		//PES ä¼˜å…ˆçº§
+		uint8_t		data_alignment_indicator : 1;		//æ•°æ®å®šä½æŒ‡ç¤ºç¬¦
+		uint8_t		copyright : 1;		//ç‰ˆæƒ
+		uint8_t		original_or_copy : 1;		//åŸå§‹çš„æˆ–å¤åˆ¶çš„
 
-		uint8_t		PTS_DTS_flags : 2;		//Ê±¼ä´Á±ê¼Ç
+		uint8_t		PTS_DTS_flags : 2;		//æ—¶é—´æˆ³æ ‡è®°
 		uint8_t		ESCR_flag : 1;
 		uint8_t		ES_rate_flag : 1;
 		uint8_t		DSM_trick_mode_flag : 1;
@@ -116,7 +116,7 @@ public:
 	struct TS_Stream
 	{
 		uint16_t	programNumber;
-		uint16_t	stream_type;	//Ö¸Ê¾ÌØ¶¨PIDµÄ½ÚÄ¿ÔªËØ°üµÄÀàĞÍ¡£¸Ã´¦PIDÓÉelementary PID Ö¸¶¨¡£
+		uint16_t	stream_type;	//æŒ‡ç¤ºç‰¹å®šPIDçš„èŠ‚ç›®å…ƒç´ åŒ…çš„ç±»å‹ã€‚è¯¥å¤„PIDç”±elementary PID æŒ‡å®šã€‚
 		uint16_t	elementary_PID;
 		vector<uint8_t>	ES_info;
 	};
@@ -135,4 +135,5 @@ public:
 	void makeTsPmt(uint16_t programNumber);
 	void writeBits(uint8_t bits, uint32_t data);
 };
+
 

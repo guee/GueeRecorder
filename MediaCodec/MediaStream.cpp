@@ -5,7 +5,7 @@
 //#include "stdlib.h"
 #include "string.h"
 
-CMediaStream::CMediaStream()
+GueeMediaStream::GueeMediaStream()
 {
 	memset(&m_videoParams, 0, sizeof(m_videoParams));
 	memset(&m_audioParams, 0, sizeof(m_audioParams));
@@ -15,13 +15,13 @@ CMediaStream::CMediaStream()
 }
 
 
-CMediaStream::~CMediaStream()
+GueeMediaStream::~GueeMediaStream()
 {
 	if (m_curFrame ) free(m_curFrame);
 	m_curFrame = nullptr;
 }
 
-void CMediaStream::restartMember()
+void GueeMediaStream::restartMember()
 {
 	m_onReadFile = nullptr;
 	m_hasVideo = false;
@@ -58,19 +58,19 @@ void CMediaStream::restartMember()
 	if (m_curFrame) memset(m_curFrame, 0, sizeof(H264Frame) + sizeof(H264Frame::NAL) * 256);
 }
 
-bool CMediaStream::setVideoParam(const SVideoParams & params)
+bool GueeMediaStream::setVideoParams(const SVideoParams & params)
 {
 	m_videoParams = params;
 	return true;
 }
 
-bool CMediaStream::setAudioParams(const SAudioParams & params)
+bool GueeMediaStream::setAudioParams(const SAudioParams & params)
 {
 	m_audioParams = params;
 	return true;
 }
 
-bool CMediaStream::appendWriter(CMediaWriter * writer)
+bool GueeMediaStream::appendWriter(GueeMediaWriter * writer)
 {
 	if (writer == nullptr) return false;
 	for (auto i = m_writers.begin(); i != m_writers.end(); ++i)
@@ -81,7 +81,7 @@ bool CMediaStream::appendWriter(CMediaWriter * writer)
 	return true;
 }
 
-bool CMediaStream::removeWriter(CMediaWriter * writer)
+bool GueeMediaStream::removeWriter(GueeMediaWriter * writer)
 {
 	if (writer == nullptr) return false;
 	for (auto i = m_writers.begin(); i != m_writers.end(); ++i)
@@ -95,7 +95,7 @@ bool CMediaStream::removeWriter(CMediaWriter * writer)
 	return false;
 }
 
-bool CMediaStream::startParse(IOnReadFile* cbRead)
+bool GueeMediaStream::startParse(IOnReadFile* cbRead)
 {
 	m_mutexWrite.lock();
 	if (m_isOpened)
@@ -105,13 +105,15 @@ bool CMediaStream::startParse(IOnReadFile* cbRead)
 	}
 	restartMember();
 	m_onReadFile = cbRead;
-	int32_t	failCount = 0;
-	for (int32_t i = 0; i < m_writers.size(); ++i)
-		if (!m_writers[i]->onOpenWrite())
-		{
-			//LOGD("open file fail: %s, error=%d", file.c_str(), errno);
-			++failCount;
-		}
+    int32_t	failCount = 0;
+    for ( auto w : m_writers)
+    {
+        if (!w->m_isEnabled) continue;
+        if (!w->onOpenWrite())
+        {
+            ++failCount;
+        }
+    }
 	if (failCount == m_writers.size())
 	{
 		m_mutexWrite.unlock();
@@ -130,7 +132,7 @@ bool CMediaStream::startParse(IOnReadFile* cbRead)
 	return m_isOpened;
 }
 
-void CMediaStream::endParse()
+void GueeMediaStream::endParse()
 {
 	if (m_isOpened)
 	{
@@ -160,27 +162,27 @@ void CMediaStream::endParse()
 	}
 }
 
-bool CMediaStream::getNextFrame()
+bool GueeMediaStream::getNextFrame()
 {
 	return m_onReadFile ? onGetNextFrame() : false;
 }
 
-bool CMediaStream::putFileStream(const uint8_t * data, int32_t length)
+bool GueeMediaStream::putFileStream(const uint8_t * data, int32_t length)
 {
 	return m_onReadFile ? false : onPutFileStream(data, length);
 }
 
-bool CMediaStream::onGetNextFrame()
+bool GueeMediaStream::onGetNextFrame()
 {
 	return false;
 }
 
-bool CMediaStream::onPutFileStream(const uint8_t * data, int32_t length)
+bool GueeMediaStream::onPutFileStream(const uint8_t * data, int32_t length)
 {
 	return false;
 }
 
-bool CMediaStream::putVideoStream(const uint8_t * data, int32_t length)
+bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 {
 	if (!m_isOpened || data == nullptr || length <= 0) return false;
 	if (!m_videoParams.enabled) return true;
@@ -291,7 +293,7 @@ bool CMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 	return true;
 }
 
-bool CMediaStream::putAudioStream(const uint8_t * data, int32_t length)
+bool GueeMediaStream::putAudioStream(const uint8_t * data, int32_t length)
 {
 	if (!m_isOpened ) return false;
 	if (!m_audioParams.enabled) return true;
@@ -371,7 +373,7 @@ bool CMediaStream::putAudioStream(const uint8_t * data, int32_t length)
 	return true;
 }
 
-bool CMediaStream::putVideoFrame(H264Frame * frame)
+bool GueeMediaStream::putVideoFrame(H264Frame * frame)
 {
 	if (!m_isOpened ||
 		frame == nullptr || frame->payload <= 0 ||
@@ -437,7 +439,7 @@ bool CMediaStream::putVideoFrame(H264Frame * frame)
 	return true;
 }
 
-bool CMediaStream::putAudioFrame(AUDFrame * frame)
+bool GueeMediaStream::putAudioFrame(AUDFrame * frame)
 {
 	if (!m_isOpened ||
 		frame == nullptr || frame->size <= 0 || frame->data == nullptr ) return false;
@@ -468,7 +470,7 @@ bool CMediaStream::putAudioFrame(AUDFrame * frame)
 	return true;
 }
 
-bool CMediaStream::writeToCache(H264Frame* vid, AUDFrame* aud)
+bool GueeMediaStream::writeToCache(H264Frame* vid, AUDFrame* aud)
 {
 	bool	append = false;
 	bool	success = true;
@@ -579,7 +581,7 @@ bool CMediaStream::writeToCache(H264Frame* vid, AUDFrame* aud)
 	return success;
 }
 
-bool CMediaStream::putVideoFrame(const uint8_t * frame, int32_t length, int64_t pts, int64_t dts)
+bool GueeMediaStream::putVideoFrame(const uint8_t * frame, int32_t length, int64_t pts, int64_t dts)
 {
 	if (!m_isOpened || frame == nullptr || length <= 4) return false;
 	if (!m_videoParams.enabled) return true;
@@ -622,7 +624,7 @@ bool CMediaStream::putVideoFrame(const uint8_t * frame, int32_t length, int64_t 
 	return putVideoSlice(nullptr, 0);
 }
 
-bool CMediaStream::putAudioFrame(const uint8_t * frame, int32_t length, int64_t timestamp)
+bool GueeMediaStream::putAudioFrame(const uint8_t * frame, int32_t length, int64_t timestamp)
 {
 	if (!m_isOpened || frame == nullptr || length <= 0) return false;
 	if (!m_audioParams.enabled) return true;
@@ -630,7 +632,7 @@ bool CMediaStream::putAudioFrame(const uint8_t * frame, int32_t length, int64_t 
 	return putAudioFrame(&aud);
 }
 
-bool CMediaStream::putVideoSlice(const uint8_t * data, int32_t length)
+bool GueeMediaStream::putVideoSlice(const uint8_t * data, int32_t length)
 {
 	int32_t	prefixOrg = 0;
 	int32_t	prefix = 0;
@@ -751,27 +753,41 @@ bool CMediaStream::putVideoSlice(const uint8_t * data, int32_t length)
 	return success;
 }
 
-bool CMediaStream::onWriteHeader() {
+bool GueeMediaStream::onWriteHeader()
+{
+    for ( auto w : m_writers)
+    {
+        if (!w->m_isEnabled) continue;
+        if (!w->onWriteHeader())
+        {
+        }
+    }
+	return true;
+}
+bool GueeMediaStream::onWriteVideo(const H264Frame * frame)
+{
+    for ( auto w : m_writers)
+    {
+        if (!w->m_isEnabled) continue;
+        if (!w->onWriteVideo(frame))
+        {
+        }
+    }
+	return true;
+}
+bool GueeMediaStream::onWriteAudio(const AUDFrame * frame)
+{
+    for ( auto w : m_writers)
+    {
+        if (!w->m_isEnabled) continue;
+        if (!w->onWriteAudio(frame))
+        {
+        }
+    }
+	return true;
+}
 
-	for (int32_t i = 0; i < m_writers.size(); ++i)
-		if (!m_writers[i]->onWriteHeader()) {
-		}
-	return true;
-}
-bool CMediaStream::onWriteVideo(const H264Frame * frame) {
-	for (int32_t i = 0; i < m_writers.size(); ++i)
-		if (!m_writers[i]->onWriteVideo(frame)) {
-		}
-	return true;
-}
-bool CMediaStream::onWriteAudio(const AUDFrame * frame) {
-	for (int32_t i = 0; i < m_writers.size(); ++i)
-		if (!m_writers[i]->onWriteAudio(frame)) {
-		}
-	return true;
-}
-
-void CMediaStream::checkSpsPpsSei(NalUnitType type, const uint8_t * data, int32_t length)
+void GueeMediaStream::checkSpsPpsSei(NalUnitType type, const uint8_t * data, int32_t length)
 {
 	switch (type)
 	{
@@ -798,10 +814,12 @@ void CMediaStream::checkSpsPpsSei(NalUnitType type, const uint8_t * data, int32_
 			memcpy(&m_pps.front(), data, length);
 		}
 		break;
+    default:
+        break;
 	}
 }
 
-uint32_t CMediaStream::Ue(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
+uint32_t GueeMediaStream::Ue(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
 {
 	//计算0bit的个数  
 	uint32_t nZeroNum = 0;
@@ -832,7 +850,7 @@ uint32_t CMediaStream::Ue(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
 }
 
 
-int32_t CMediaStream::Se(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
+int32_t GueeMediaStream::Se(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
 {
 	int UeVal = Ue(pBuff, nLen, nStartBit);
 	double k = UeVal;
@@ -843,7 +861,7 @@ int32_t CMediaStream::Se(uint8_t *pBuff, uint32_t nLen, uint32_t &nStartBit)
 }
 
 
-uint32_t CMediaStream::u(uint32_t BitCount, uint8_t * buf, uint32_t &nStartBit)
+uint32_t GueeMediaStream::u(uint32_t BitCount, uint8_t * buf, uint32_t &nStartBit)
 {
 	uint32_t dwRet = 0;
 	for (uint32_t i = 0; i<BitCount; i++)
@@ -865,7 +883,7 @@ uint32_t CMediaStream::u(uint32_t BitCount, uint8_t * buf, uint32_t &nStartBit)
 *
 * @无返回值
 */
-void CMediaStream::de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
+void GueeMediaStream::de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
 {
 	uint32_t i = 0, j = 0;
 	uint8_t* tmp_ptr = NULL;
@@ -900,7 +918,7 @@ void CMediaStream::de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
 
 * @成功则返回true , 失败则返回false
 */
-void CMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
+void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 {
 	uint32_t StartBit = 0;
 
@@ -1049,7 +1067,7 @@ void CMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 	free(buf);
 }
 
-void CMediaStream::parseADTS(const uint8_t* data)
+void GueeMediaStream::parseADTS(const uint8_t* data)
 {
 	SADTS	adts = { 0 };
 	adts.syncword = data[0] << 4 | data[1] >> 4;
@@ -1084,7 +1102,7 @@ void CMediaStream::parseADTS(const uint8_t* data)
 	makeAAC_SequenceHeader();
 }
 
-void CMediaStream::parseAAC_SequenceHeader(const uint8_t * data)
+void GueeMediaStream::parseAAC_SequenceHeader(const uint8_t * data)
 {
 	uint16_t spec = (data[0] << 8) | data[1];
 	uint16_t samp = (spec >> 7) & 0x0f;
@@ -1095,7 +1113,7 @@ void CMediaStream::parseAAC_SequenceHeader(const uint8_t * data)
 	makeAAC_SequenceHeader();
 }
 
-void CMediaStream::makeAAC_SequenceHeader()
+void GueeMediaStream::makeAAC_SequenceHeader()
 {
 	int32_t	sampIndex = 0;
 	int32_t	minSub = INT_MAX;

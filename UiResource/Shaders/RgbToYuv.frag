@@ -13,22 +13,44 @@ void main(void)
 {
     vec2 pos = qt_TexCoord0.st * texureSize;
 
-    //if (0 == PlaneType)     //Vid_CSP_I420
-//    {
-//        if (pos.y < alignSize.y)
-//        {
-//            pos.y /= alignSize.y;
-//            gl_FragColor = vec4(texture2D(qt_Texture0, pos).rgb, 1.0);
-//            gl_FragColor.r = dot(gl_FragColor, RGB_Y);
-//        }
-//        else
-//        {
-
-//            gl_FragColor.r = 1.0;
-//            gl_FragColor.g = 0.0;
-//            gl_FragColor.b = 0.0;
-//            gl_FragColor.a = 1.0;
-//        }
-//    }
-gl_FragColor = vec4(texture2D(qt_Texture0, qt_TexCoord0.st).rgb, 1.0);
+    if (0 == PlaneType)     //Vid_CSP_I420
+    {
+        if (pos.y < alignSize.y)
+        {
+            pos.x = qt_TexCoord0.x;
+            pos.y = 1.0 - (pos.y / alignSize.y);
+            gl_FragColor = vec4(texture2D(qt_Texture0, pos).rgb, 1.0);
+            gl_FragColor.r = dot(gl_FragColor, RGB_Y);
+        }
+        else if (pos.y < alignSize.y * 1.25)
+        {
+            if (pos.x < alignSize.x * 0.5)
+            {
+                pos.x = (floor(pos.x) * 2.0 + 0.5) / alignSize.x;
+                pos.y = (floor(pos.y - alignSize.y) * 4.0 + 0.5 ) / alignSize.y;
+            }
+            else
+            {
+                pos.x = (floor(pos.x - alignSize.x * 0.5) * 2.0 + 0.5) / alignSize.x;
+                pos.y = (floor(pos.y - alignSize.y) * 4.0 + 2.5 ) / alignSize.y;
+            }
+            gl_FragColor = vec4(texture2D(qt_Texture0, pos).rgb, 1.0);
+            gl_FragColor.r = dot(gl_FragColor, RGB_U);
+        }
+        else
+        {
+            if (pos.x < alignSize.x * 0.5)
+            {
+                pos.x = (floor(pos.x) * 2.0 + 0.5) / alignSize.x;
+                pos.y = (floor(pos.y - alignSize.y * 1.25) * 4.0 + 1.5 ) / alignSize.y;
+            }
+            else
+            {
+                pos.x = (floor(pos.x - alignSize.x * 0.5) * 2.0 + 0.5) / alignSize.x;
+                pos.y = (floor(pos.y - alignSize.y * 1.25) * 4.0 + 3.5 ) / alignSize.y;
+            }
+            gl_FragColor = vec4(texture2D(qt_Texture0, pos).rgb, 1.0);
+            gl_FragColor.r = dot(gl_FragColor, RGB_V);
+        }
+    }
 }

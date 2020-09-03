@@ -1,6 +1,7 @@
 #ifndef SHADERPROGRAMPOOL_H
 #define SHADERPROGRAMPOOL_H
-
+#include<QtCore>
+#include <QOpenGLShaderProgram>
 
 class ShaderProgramPool : public QObject
 {

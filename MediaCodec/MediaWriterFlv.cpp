@@ -1,7 +1,7 @@
 #include "MediaWriterFlv.h"
 
-CMediaWriterFlv::CMediaWriterFlv(CMediaStream& stream)
-	: CMediaWriter(stream)
+GueeMediaWriterFlv::GueeMediaWriterFlv(GueeMediaStream& stream)
+    : GueeMediaWriter(stream)
 {
 	m_writeFramerateOffset	= 0;
 	m_writeDurationOffset	= 0;
@@ -11,11 +11,11 @@ CMediaWriterFlv::CMediaWriterFlv(CMediaStream& stream)
 	m_aacTagHeader			= 0;
 }
 
-CMediaWriterFlv::~CMediaWriterFlv(void)
+GueeMediaWriterFlv::~GueeMediaWriterFlv(void)
 {
 }
 
-bool CMediaWriterFlv::onWriteHeader()
+bool GueeMediaWriterFlv::onWriteHeader()
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
 	const SAudioParams&	audioParams = m_stream.audioParams();
@@ -212,7 +212,7 @@ bool CMediaWriterFlv::onWriteHeader()
 	return flushData();
 }
 
-bool CMediaWriterFlv::onWriteVideo(const CMediaStream::H264Frame * frame)
+bool GueeMediaWriterFlv::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
 	// A new frame - write packet header
@@ -236,7 +236,7 @@ bool CMediaWriterFlv::onWriteVideo(const CMediaStream::H264Frame * frame)
 	{
 		for ( int32_t i = 0; i < frame->nalCount; ++i )
 		{
-			const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if ( nal[i].i_type == NAL_AUD || nal[i].i_type == NAL_SPS || nal[i].i_type == NAL_SEI || nal[i].i_type == NAL_PPS ) continue;
 			int32_t	sizeAnnexb	= nal.nalData[2] == 1 ? 3 : 4;
 			putBE32(nal.nalSize - sizeAnnexb );
@@ -247,7 +247,7 @@ bool CMediaWriterFlv::onWriteVideo(const CMediaStream::H264Frame * frame)
 	{
 		for ( int32_t i = 0; i < frame->nalCount; ++i )
 		{
-			const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if ( nal[i].i_type == NAL_AUD || nal[i].i_type == NAL_SPS || nal[i].i_type == NAL_SEI || nal[i].i_type == NAL_PPS ) continue;
 			appendData(nal.nalData, nal.nalSize);
 		}
@@ -258,7 +258,7 @@ bool CMediaWriterFlv::onWriteVideo(const CMediaStream::H264Frame * frame)
 	return flushData();
 }
 
-bool CMediaWriterFlv::onWriteAudio(const CMediaStream::AUDFrame * frame)
+bool GueeMediaWriterFlv::onWriteAudio(const GueeMediaStream::AUDFrame * frame)
 {
 	putByte( FLV_TAG_TYPE_AUDIO );
 	putBE24(frame->size + 2 );	// data size
@@ -280,7 +280,7 @@ bool CMediaWriterFlv::onWriteAudio(const CMediaStream::AUDFrame * frame)
 	return flushData();
 }
 
-void CMediaWriterFlv::onCloseWrite()
+void GueeMediaWriterFlv::onCloseWrite()
 {
 	while ( flushData() )
 	{
@@ -308,5 +308,5 @@ void CMediaWriterFlv::onCloseWrite()
 		}
 		break;
 	}
-	CMediaWriter::onCloseWrite();//清除数据
+    GueeMediaWriter::onCloseWrite();//清除数据
 }

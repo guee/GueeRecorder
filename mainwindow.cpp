@@ -351,11 +351,16 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_pushButtonRecStart_clicked()
 {
     ui->stackedWidgetRecControl->setCurrentIndex(1);
+    if (m_video.open("/home/guee/Videos/test.flv"))
+    {
+        m_video.play();
+    }
 }
 
 void MainWindow::on_pushButtonRecStop_clicked()
 {
     ui->stackedWidgetRecControl->setCurrentIndex(0);
+    m_video.close();
 }
 
 void MainWindow::on_videoSynthesizer_initDone(bool success)

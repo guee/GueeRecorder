@@ -1,6 +1,6 @@
 #include "MediaWriter.h"
 
-CMediaWriter::CMediaWriter(CMediaStream& stream)
+GueeMediaWriter::GueeMediaWriter(GueeMediaStream& stream)
 	: m_stream(stream)
 {
 	m_isOpened = false;
@@ -11,25 +11,25 @@ CMediaWriter::CMediaWriter(CMediaStream& stream)
 	m_stream.appendWriter(this);
 }
 
-CMediaWriter::~CMediaWriter(void)
+GueeMediaWriter::~GueeMediaWriter(void)
 {
 	onCloseWrite();
 	m_stream.removeWriter(this);
 }
 
-bool CMediaWriter::setFilePath( const string& szPath )
+bool GueeMediaWriter::setFilePath( const string& szPath )
 {
-	if ( m_isOpened || szPath.empty() ) return false;
-	m_filePath	= szPath;
+    if ( m_isOpened || szPath.empty() ) return false;
+    m_filePath	= szPath;
 	return true;
 }
 
-void CMediaWriter::setEnable(bool enable)
+void GueeMediaWriter::setEnable(bool enable)
 {
 	m_isEnabled = enable;
 }
 
-bool CMediaWriter::onWriteHeader()
+bool GueeMediaWriter::onWriteHeader()
 {
 	putBE32( 1 );
 	if ( !appendData((unsigned char*)&m_stream.m_sps.front(), (int32_t)m_stream.m_sps.size() ) ) return false;
@@ -41,7 +41,7 @@ bool CMediaWriter::onWriteHeader()
 	return flushData();
 }
 
-bool CMediaWriter::onWriteVideo(const H264Frame * frame)
+bool GueeMediaWriter::onWriteVideo(const H264Frame * frame)
 {
 	if (m_stream.videoParams().annexb )
 	{
@@ -61,23 +61,23 @@ bool CMediaWriter::onWriteVideo(const H264Frame * frame)
 	return flushData();
 }
 
-bool CMediaWriter::onWriteAudio(const AUDFrame * frame)
+bool GueeMediaWriter::onWriteAudio(const AUDFrame * frame)
 {
 	if ( !appendData(frame->data, frame->size) ) return false;
 	return flushData();
 }
 
-bool CMediaWriter::onOpenWrite()
+bool GueeMediaWriter::onOpenWrite()
 {
 	if ( m_isOpened ) return false;
-//	if (m_isEnabled)
+    if ( !m_isEnabled ) return false;
 	m_fileWrite.open(m_filePath, ios::out | ios::binary);
 	m_isOpened = m_fileWrite.is_open();
 	m_totalBytes = 0;
 	return m_isOpened;
 }
 
-void CMediaWriter::onCloseWrite()
+void GueeMediaWriter::onCloseWrite()
 {
 	if ( !m_isOpened ) return;
 	if ( m_fileWrite.is_open() )

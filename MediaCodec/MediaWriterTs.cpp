@@ -2,21 +2,21 @@
 
 
 
-CMediaWriterTs::CMediaWriterTs(CMediaStream& stream)
-	: CMediaWriter(stream)
+GueeMediaWriterTs::GueeMediaWriterTs(GueeMediaStream& stream)
+    : GueeMediaWriter(stream)
 {
 }
 
 
-CMediaWriterTs::~CMediaWriterTs()
+GueeMediaWriterTs::~GueeMediaWriterTs()
 {
 
 }
 
-void CMediaWriterTs::writeBits(uint8_t bits, uint32_t data )
+void GueeMediaWriterTs::writeBits(uint8_t bits, uint32_t data )
 {
 	int32_t i = m_startBit / 8;
-	uint8_t left = m_startBit - i * 8;
+    uint8_t left = static_cast<uint8_t>(m_startBit - i * 8);
 	m_startBit += bits;
 	while (bits)
 	{
@@ -30,7 +30,7 @@ void CMediaWriterTs::writeBits(uint8_t bits, uint32_t data )
 	}
 }
 
-bool CMediaWriterTs::onWriteHeader()
+bool GueeMediaWriterTs::onWriteHeader()
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
 	const SAudioParams&	audioParams = m_stream.audioParams();
@@ -84,7 +84,7 @@ bool CMediaWriterTs::onWriteHeader()
 	return true;
 }
 
-bool CMediaWriterTs::onWriteVideo(const CMediaStream::H264Frame * frame)
+bool GueeMediaWriterTs::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
 
@@ -93,7 +93,7 @@ bool CMediaWriterTs::onWriteVideo(const CMediaStream::H264Frame * frame)
 	{
 		for (int32_t i = 0; i < frame->nalCount; ++i)
 		{
-			const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if ( nal.nalType == NalAud || nal.nalType == NalSps || nal.nalType == NalSei || nal.nalType == NalPps) continue;
 			m_videoCache.append((const char*)frame->nals[i].nalData, frame->nals[i].nalSize);
 		}
@@ -102,7 +102,7 @@ bool CMediaWriterTs::onWriteVideo(const CMediaStream::H264Frame * frame)
 	{
 		for (int32_t i = 0; i < frame->nalCount; ++i)
 		{
-			const CMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if (nal.nalType == NalAud || nal.nalType == NalSps || nal.nalType == NalSei || nal.nalType == NalPps) continue;
 			m_videoCache.append("\0\0\1", 3);
 			m_videoCache.append((const char*)frame->nals[i].nalData + 4, frame->nals[i].nalSize - 4);
@@ -113,7 +113,7 @@ bool CMediaWriterTs::onWriteVideo(const CMediaStream::H264Frame * frame)
 
 	setTsPacketHeader(0x100, true, 0xFF, frame->dtsTimeMS);
 	writeBits(24, 1);	//packet_start_code_prefix
-	writeBits(8, 0xe0);	//stream_id	 ”∆µ»°÷µ£®0xe0-0xef£©£¨Õ®≥£Œ™0xe0
+    writeBits(8, 0xe0);	//stream_id	 ËßÜÈ¢ëÂèñÂÄºÔºà0xe0-0xefÔºâÔºåÈÄöÂ∏∏‰∏∫0xe0
 
 	writeBits(16, frameSize < 65536 ? frameSize : 0);	//PES_packet_length
 	writeBits(2, 2);	//fix_bit
@@ -165,7 +165,7 @@ bool CMediaWriterTs::onWriteVideo(const CMediaStream::H264Frame * frame)
 	return true;
 }
 
-bool CMediaWriterTs::onWriteAudio(const CMediaStream::AUDFrame * frame)
+bool GueeMediaWriterTs::onWriteAudio(const GueeMediaStream::AUDFrame * frame)
 {
 	if (m_audioTime < 0)
 	{
@@ -179,7 +179,7 @@ bool CMediaWriterTs::onWriteAudio(const CMediaStream::AUDFrame * frame)
 	const char*	framePtr = m_audioCache.data();
 
 	writeBits(24, 1);	//packet_start_code_prefix
-	writeBits(8, 0xc0);	//stream_id	“Ù∆µ»°÷µ£®0xc0-0xdf£©£¨Õ®≥£Œ™0xc0
+	writeBits(8, 0xc0);	//stream_id	Èü≥È¢ëÂèñÂÄºÔºà0xc0-0xdfÔºâÔºåÈÄöÂ∏∏‰∏∫0xc0
 
 	writeBits(16, frameSize < 65536 ? frameSize : 0);	//PES_packet_length
 	writeBits(2, 2);	//fix_bit
@@ -226,7 +226,7 @@ bool CMediaWriterTs::onWriteAudio(const CMediaStream::AUDFrame * frame)
 	return true;
 }
 
-void CMediaWriterTs::setTsPacketHeader(uint16_t pid, bool isStart, uint8_t startBytes, int64_t pcr)
+void GueeMediaWriterTs::setTsPacketHeader(uint16_t pid, bool isStart, uint8_t startBytes, int64_t pcr)
 {
 	memset(m_pack, 0xFF, sizeof(m_pack));
 	m_startBit = 0;
@@ -262,7 +262,7 @@ void CMediaWriterTs::setTsPacketHeader(uint16_t pid, bool isStart, uint8_t start
 	}
 }
 
-void CMediaWriterTs::makeTsPat()
+void GueeMediaWriterTs::makeTsPat()
 {
 	setTsPacketHeader(0);
 	int32_t patStart = m_startBit;
@@ -291,7 +291,7 @@ void CMediaWriterTs::makeTsPat()
 	flushData();
 }
 
-void CMediaWriterTs::makeTsPmt(uint16_t programNumber)
+void GueeMediaWriterTs::makeTsPmt(uint16_t programNumber)
 {
 	int32_t sectLength = 0;
 	int32_t pcrPID = 0;
@@ -339,7 +339,7 @@ void CMediaWriterTs::makeTsPmt(uint16_t programNumber)
 	flushData();
 }
 
-uint32_t CMediaWriterTs::crc32(const uint8_t* data, uint32_t size)
+uint32_t GueeMediaWriterTs::crc32(const uint8_t* data, uint32_t size)
 {
 	static	uint32_t		crc32Table[256];
 	static	bool			created = false;
@@ -364,3 +364,4 @@ uint32_t CMediaWriterTs::crc32(const uint8_t* data, uint32_t size)
 	}
 	return crc32;
 }
+

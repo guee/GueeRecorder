@@ -1,22 +1,22 @@
 #pragma once
 #include "MediaStream.h"
 
-class CMediaWriter
+class GueeMediaWriter
 {
 public:
-	CMediaWriter(CMediaStream& stream);
-	virtual ~CMediaWriter(void);
+    GueeMediaWriter(GueeMediaStream& stream);
+    virtual ~GueeMediaWriter(void);
 
-	bool setFilePath( const string& szPath );
+    bool setFilePath( const string& szPath );
 	void setEnable( bool enable = true );
 protected:
-	friend CMediaStream;
-	CMediaStream&	m_stream;
-	typedef CMediaStream::H264Frame H264Frame;
-	typedef CMediaStream::AUDFrame AUDFrame;
+    friend GueeMediaStream;
+    GueeMediaStream&	m_stream;
+    typedef GueeMediaStream::H264Frame H264Frame;
+    typedef GueeMediaStream::AUDFrame AUDFrame;
 	ofstream		m_fileWrite;
-	string			m_filePath;
-	bool			m_isOpened;
+    string			m_filePath;
+    bool			m_isOpened;
 	bool			m_isEnabled;
 	bool			m_isAdtsAAC;
 
