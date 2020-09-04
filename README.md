@@ -33,25 +33,25 @@
 　　OS：统信 UOS 专业版、龙梦 Fedora28</br>
 　　开发工具：Qt 5.x</br>
 #### 开发环境配置：
-　　因为我对Linux还不熟悉，特别是被VisualStudio养成了懒人，对GCC这类编译器以及编译各种开源库都缺少经验，于是只要是软件源中存在的库，我就直接安装使用。即使库的版本老一点，即使编译参数不是最优……只要能凑合用就行。
-　　统信 UOS 专业版：
-　　　　sudo apt-get install g++ gdb
-　　　　sudo apt-get install libgl1-mesa-dev
-　　　　sudo apt-get install libqt5x11extras5-dev
-　　　　sudo apt-get install libxinerama-dev
-　　　　sudo apt-get install libx264-dev
-　　　　sudo apt-get install qt5-default
-　　　　sudo apt-get install qt5creator
-
-　　龙梦 Fedora28：
-　　　　sudo dnf inatall g++ gdb
-　　　　sudo dnf install libgl1-mesa-dev
-　　　　sudo dnf install libqt5x11extras5-dev
-　　　　sudo dnf install libxinerama-dev
-　　　　sudo dnf install libx264-dev
-　　　　sudo dnf inatall qt5-devel
-　　　　sudo dnf inatall qt-creator
-
+　　因为我对Linux还不熟悉，特别是被VisualStudio养成了懒人，对GCC这类编译器以及编译各种开源库都缺少经验，于是只要是软件源中存在的库，我就直接安装使用。即使库的版本老一点，即使编译参数不是最优……只要能凑合用就行。</br>
+　　统信 UOS 专业版：</br>
+　　　　sudo apt-get install g++ gdb</br>
+　　　　sudo apt-get install libgl1-mesa-dev</br>
+　　　　sudo apt-get install libqt5x11extras5-dev</br>
+　　　　sudo apt-get install libxinerama-dev</br>
+　　　　sudo apt-get install libx264-dev</br>
+　　　　sudo apt-get install qt5-default</br>
+　　　　sudo apt-get install qt5creator</br>
+</br>
+　　龙梦 Fedora28：</br>
+　　　　sudo dnf inatall g++ gdb</br>
+　　　　sudo dnf install libgl1-mesa-dev</br>
+　　　　sudo dnf install libqt5x11extras5-dev</br>
+　　　　sudo dnf install libxinerama-dev</br>
+　　　　sudo dnf install libx264-dev</br>
+　　　　sudo dnf inatall qt5-devel</br>
+　　　　sudo dnf inatall qt-creator</br>
+</br>
 
 # 开发日记（日期顺序）：
 
