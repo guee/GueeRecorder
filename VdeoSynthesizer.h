@@ -88,7 +88,7 @@ private:
     GueeVideoEncoder m_vidEncoder;
     GueeMediaStream m_medStream;
     QVector<GueeMediaWriter*> m_writers;
-
+uint8_t * m_tempBuff = nullptr;
 
     bool initYuvFbo();
     void uninitYubFbo();

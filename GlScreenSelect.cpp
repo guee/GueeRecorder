@@ -82,7 +82,6 @@ void GlScreenSelect::mousePressEvent(QMouseEvent *event)
 void GlScreenSelect::mouseReleaseEvent(QMouseEvent *event)
 {
     QPoint pos = ScreenLayer::mousePhysicalCoordinates();
-   // fprintf( stderr, "mouseReleaseEvent: buts:%X, but:%X\n", event->buttons(), event->button());
     if (m_boxEditing)
     {
         if (event->button() == Qt::LeftButton && m_leftDown)
@@ -134,7 +133,6 @@ void GlScreenSelect::mouseReleaseEvent(QMouseEvent *event)
                 m_boxEditing = true;
                 m_infoHide = true;
                 m_leftDown = false;
-                //fprintf(stderr, "Wind TO Box: Hit:%d\n", m_hitType );
                 QRegion rgn(rect());
                 parentWidget()->setMask(rgn);
                 emit editing(true, QRectF(m_realBox.left() / m_mainScale,
@@ -180,7 +178,6 @@ void GlScreenSelect::mouseMoveEvent(QMouseEvent *event)
                 Qt::WindowFrameSection hit = hitTest(pos);
                 if ( m_hitType != hit )
                 {
-                    //fprintf(stderr,"Pos(%d,%d), hit:%d\n", pos.x(), pos.y(), hit);
                     m_hitType = hit;
                     setHitCursor(hit);
                 }
@@ -248,7 +245,7 @@ void GlScreenSelect::initializeGL()
     QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
     if ( !vshader->compileSourceFile(":/Shaders/SelectScreen.vert") )
     {
-        fprintf(stderr, "compileSourceFile vert log:%s\n", vshader->log().toUtf8().data());
+        qDebug() << "compileSourceFile error log:" << vshader->log().toUtf8().data();
     }
     m_programScreen = new QOpenGLShaderProgram;
     m_programScreen->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/SelectScreen.vert" );

@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
-    m_fpsTimer->setInterval(100);
+    m_fpsTimer->setInterval(700);
     m_fpsTimer->start();
 
     ui->setupUi(this);
@@ -40,7 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->widgetPreview->setVideoObject(&m_video);
     connect(&m_video, &VideoSynthesizer::initDone, this, &MainWindow::on_videoSynthesizer_initDone);
-    connect(&m_video, &VideoSynthesizer::frameReady, ui->widgetPreview, &GlWidgetPreview::on_videoSynthesizer_frameReady);
+    connect(&m_video, &VideoSynthesizer::frameReady, ui->widgetPreview,
+            &GlWidgetPreview::on_videoSynthesizer_frameReady, Qt::QueuedConnection);
 
     QList<QPushButton*> buts = ui->widgetTitle->findChildren<QPushButton*>();
     for ( auto but:buts )
@@ -56,6 +57,10 @@ MainWindow::MainWindow(QWidget *parent)
         QPoint offset((screen.width() - width()) / 2, (screen.height() - height()) / 2);
         move(offset + screen.topLeft());
     }
+
+    m_menu = new QMenu(this);
+    QActionGroup gp(this);
+    gp.addAction(new QAction());
 
 }
 
@@ -232,6 +237,13 @@ void MainWindow::setHitCursor(Qt::WindowFrameSection hit)
     }
 }
 
+void MainWindow::initMenu()
+{
+//    QList<int>
+//    QAction ss;
+//    ss.setData()
+}
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     if ( event->button() == Qt::LeftButton )
@@ -322,7 +334,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::on_widgetPreview_initGL()
 {
     m_video.init(ui->widgetPreview->context());
-    m_video.setFrameRate(15.0f);
+    m_video.setFrameRate(30.0f);
     m_video.setSize(1920, 1080);
 
  //       ScreenLayer* scr = static_cast<ScreenLayer*>(m_video.createLayer("screen"));

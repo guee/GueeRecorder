@@ -184,8 +184,14 @@ bool VideoSynthesizer::open(const QString &sourceName)
 
 void VideoSynthesizer::close()
 {
+    m_vidEncoder.endEncode();
     m_medStream.endParse();
     m_status = NoOpen;
+    for (auto w:m_writers)
+    {
+        delete w;
+    }
+    m_writers.clear();
 }
 
 bool VideoSynthesizer::play()
@@ -201,29 +207,30 @@ bool VideoSynthesizer::play()
 bool VideoSynthesizer::resetDefaultOption()
 {
     m_vidParams.encoder       = VE_X264;
-    m_vidParams.profile       = VF_BaseLine;
+    m_vidParams.profile       = VF_High;
     m_vidParams.presetX264    = VP_x264_VeryFast;
     m_vidParams.presetNvenc   = VP_Nvenc_LowLatencyDefault;
     m_vidParams.outputCSP     = Vid_CSP_I420;
-    m_vidParams.psyTune       = eTuneStillimage;
+    m_vidParams.psyTune       = eTuneAnimation;
     m_vidParams.width         = 1920;
     m_vidParams.height        = 1080;
     m_vidParams.frameRate     = 25.0f;
     m_vidParams.vfr           = false;
     m_vidParams.onlineMode    = false;
     m_vidParams.annexb        = true;
-    m_vidParams.threadNum     = 0;
+    m_vidParams.threadNum     = 4;
     m_vidParams.optimizeStill = false;
     m_vidParams.fastDecode    = false;
-    m_vidParams.rateMode      = VR_VariableBitrate;
-    m_vidParams.bitrate       = 1000 * 1024;
+    m_vidParams.rateMode      = VR_ConstantBitrate;
+    m_vidParams.bitrate       = 2000;
     m_vidParams.bitrateMax    = 0;
     m_vidParams.bitrateMin    = 0;
     m_vidParams.vbvBuffer     = 0;
-    m_vidParams.gopMin        = 0;
-    m_vidParams.gopMax        = 0;
-    m_vidParams.BFrames       = 0;
-    m_vidParams.BFramePyramid = 0;
+    m_vidParams.gopMin        = 30;
+    m_vidParams.gopMax        = 300;
+    m_vidParams.refFrames     = 4;
+    m_vidParams.BFrames       = 3;
+    m_vidParams.BFramePyramid = 2;
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     return true;
@@ -408,7 +415,8 @@ void VideoSynthesizer::renderThread()
                 isUpdated = false;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        msleep(2);
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     delete fboRgba;
@@ -556,7 +564,7 @@ bool VideoSynthesizer::initYuvFbo()
     m_frameData.buffer->setUsagePattern(QOpenGLBuffer::StreamRead);
     m_frameData.buffer->allocate(m_frameData.dataSize);
     m_frameData.buffer->release();
-
+//m_tempBuff = new uint8_t[m_frameData.dataSize];
     m_vbo = new QOpenGLBuffer();
     if ( !m_vbo->create() )
     {
@@ -636,6 +644,7 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
 //        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);
 //        img.save(fn, "png");
         m_vidEncoder.putFrame(m_frameData.timestamp, reinterpret_cast<uint8_t*>(dat), m_frameData.stride[0]);
+        //memcpy(m_tempBuff, reinterpret_cast<uint8_t*>(dat), m_frameData.dataSize);
         m_frameData.buffer->unmap();
     }
     m_frameData.buffer->release();

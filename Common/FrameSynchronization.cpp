@@ -115,7 +115,6 @@ int64_t FrameSynchronization::isNextFrame()
         return -1;
     }
     m_nextFrame = frameIndex + 1;
-    //fprintf( stderr, "%d, Frame=%d (%f), curr: %f,\n", int(frameIndex), (int)m_nextFrame, m_nextFrame / m_fps, microSecond / 1000000.0 );
 
     if (m_durationFrame && frameIndex >= m_durationFrame)
     {
@@ -160,18 +159,15 @@ int64_t FrameSynchronization::waitNextFrame(bool compact)
     if (m_nextFrame >= nearFrame)
     {
         ++m_nextFrame;
-        //fprintf( stderr, "Frame=%d (%f), curr: %f, sleep:%f\n", (int)m_nextFrame, m_nextFrame / m_fps, microSecond / 1000000.0, (m_nextFrame / m_fps * 1000000.0 - microSecond) / 1000000.0 );
         std::this_thread::sleep_for(microseconds(static_cast<int64_t>(m_nextFrame / m_fps * 1000000.0) - microSecond));
     }
     else if (compact && round(frameIndex) == nearFrame )
     {
         m_nextFrame = nearFrame;
-        //fprintf( stderr, "Frame=%d (%f), curr: %f, no sleep\n",(int)m_nextFrame, m_nextFrame / m_fps, microSecond / 1000000.0);
     }
     else
     {
         m_nextFrame = static_cast<int64_t>(ceil(frameIndex));
-        //fprintf( stderr, "Frame=%d (%f), curr: %f, sleep:%f\n", (int)m_nextFrame, m_nextFrame / m_fps, microSecond / 1000000.0, (m_nextFrame / m_fps * 1000000.0 - microSecond) / 1000000.0 );
         std::this_thread::sleep_for(microseconds(static_cast<int64_t>(m_nextFrame / m_fps * 1000000.0) - microSecond));
     }
     ++m_frameCount;

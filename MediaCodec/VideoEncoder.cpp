@@ -215,9 +215,12 @@ void GueeVideoEncoder::run()
         m_mtxPendQueue.unlock();
         if ( m_encodeing == false ) break;
         ret	= x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, picin, &picout );
+        //ret = 0;
+        //sleep(1);
         picout.i_pts = picin->i_pts;
         m_mtxIdlePool.lock();
         m_picIdlePool.push_back(picin);
+        qDebug() << "push to idle Frame:" << m_picIdlePool.size();
         m_waitIdlePool.wakeAll();
         m_mtxIdlePool.unlock();
 
@@ -265,27 +268,10 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         {
             picin = new x264_picture_t;
             x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
-            //x264_picture_init(picin);
-//            const s_csp_tab&	csp_tab	= getCspTable( m_videoParams.outputCSP );
-//            int32_t pitch = m_x264Param.i_width * csp_tab.widthFix[0];
-//            int32_t	sizeb[3]	= {0};
-//            sizeb[0] = pitch * m_x264Param.i_height;
-//            if ( csp_tab.planes > 1 )
-//                sizeb[1] = ( pitch / csp_tab.widthFix[1] ) * ( m_x264Param.i_height / csp_tab.heightFix );
-//            if ( csp_tab.planes > 2 )
-//                sizeb[2] = ( pitch / csp_tab.widthFix[2] ) * ( m_x264Param.i_height / csp_tab.heightFix );
-
-//            picin->img.i_csp		= m_x264Param.i_csp;
-//            picin->img.i_plane		= csp_tab.planes;
-//            picin->img.i_stride[0]	= pitch;
-//            picin->img.plane[0]		= reinterpret_cast<uint8_t*>(malloc( static_cast<ulong>(sizeb[0] + sizeb[1] + sizeb[2]) ));
-//            picin->img.i_stride[1]	= pitch / csp_tab.widthFix[1];
-//            picin->img.plane[1]		= picin->img.plane[0] + sizeb[0];
-//            picin->img.i_stride[2]	= pitch / csp_tab.widthFix[2];
-//            picin->img.plane[2]		= picin->img.plane[0] + sizeb[0] + sizeb[1];
         }
         else if(m_videoParams.onlineMode)
         {
+            qDebug() << "Skip Frame";
             m_mtxPendQueue.lock();
             picin = m_picPendQueue.first();
             m_picPendQueue.pop_front();
@@ -293,11 +279,18 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         }
         else
         {
+            qDebug() << "Wait Frame begin";
             m_mtxIdlePool.lock();
             m_waitIdlePool.wait(&m_mtxIdlePool);
+            if ( m_encodeing == false )
+            {
+                m_mtxIdlePool.unlock();
+                return nullptr;
+            }
             picin = m_picIdlePool.last();
+            qDebug() << "Waited idle Frame:" << m_picIdlePool.size();
             m_picIdlePool.pop_back();
-            m_mtxIdlePool.unlock();
+
         }
     }
 
@@ -360,13 +353,14 @@ int32_t GueeVideoEncoder::EVideoCSP_To_x264CSP( EVideoCSP eFormat )
 
 bool GueeVideoEncoder::set264Params()
 {
-	if ( !set264BaseParams() ||
-		!set264FrameParams() ||
-		!set264BitrateParams() ||
-		!set264NalHrdParams() ||
-		!set264AnalyserParams() ||
-		!set264StreamParams() ||
-		!set264OtherParams() )
+    if ( !set264BaseParams()
+         || !set264FrameParams()
+         || !set264BitrateParams()
+         || !set264NalHrdParams()
+         || !set264AnalyserParams()
+         || !set264StreamParams()
+         || !set264OtherParams()
+         )
 	{
 		return false;
 	}
@@ -393,8 +387,13 @@ bool GueeVideoEncoder::set264BaseParams()
 	{
 		if ( !tuneString.empty() ) tuneString	+= "+";
 		tuneString	+= x264_tune_names[7];
-	}
-
+        m_maxPendQueue = 2;
+    }
+    else
+    {
+        m_maxPendQueue = static_cast<int>(m_videoParams.frameRate + 1);
+        m_maxPendQueue = std::min(std::max(m_maxPendQueue, 5), 30);
+    }
     iRet	= x264_param_default_preset( &m_x264Param, x264_preset_names[m_videoParams.presetX264], tuneString.c_str() );
 	if ( 0 != iRet )
 		return false;
@@ -416,19 +415,19 @@ bool GueeVideoEncoder::set264BaseParams()
 		return false;
     m_x264Param.i_threads = m_videoParams.threadNum;	//设置为 1 是单线程，0 是自动线程数。
 
-	//if ( m_videoParams.isOnlineMode )
-	//{
+    if ( m_videoParams.onlineMode )
+    {
         //是否使用线程来分片			/* Whether to use slice-based threading. */
         //								//当 i_threads 不为1，但 b_sliced_threads 为 0 时，输入的帧数要达到 i_threads 帧，才会有编码数据输出。
         //								//因此，要么 i_threads 设置为1，要么给 b_sliced_threads 也设置值，否则在实时的流编码时，会有延迟。
         //多个线程编码时，同时使用分片线程，可以降低内存消耗，并对编码时CPU消耗也有一定程度的降低。
         m_x264Param.b_sliced_threads	= 1;
-    //}
-	//else
-	//{
-	//	m_x264Param.b_sliced_threads	= 0;
-	//}
-//	m_x264Param.i_lookahead_threads;//多个线程进行预测分析			/* multiple threads for lookahead analysis */
+    }
+    else
+    {
+        m_x264Param.b_sliced_threads	= 0;
+    }
+    m_x264Param.i_lookahead_threads = 1;//多个线程进行预测分析			/* multiple threads for lookahead analysis */
 //    m_x264Param.b_deterministic;	//是否使用线程进行未确定的优化	/* whether to allow non-deterministic optimizations when threaded */
 //	m_x264Param.b_cpu_independent;	//强制规范行为，而不是依赖于 cpu 的优化算法	/* force canonical behavior rather than cpu-dependent optimal algorithms */
 //	m_x264Param.i_sync_lookahead;	//同步预测缓冲区大小			/* threaded lookahead buffer */
@@ -439,8 +438,8 @@ bool GueeVideoEncoder::set264BaseParams()
     //（看x264源码得知）x264 要求必须宽高必须是 YUV 宏像素的整数倍。
     int alignW = m_csp_tab.planes > 1 ? m_csp_tab.widthFix[1] : 1;
     int alignH = m_csp_tab.heightFix;
-    m_x264Param.i_width	= m_videoParams.width / alignW * alignW;
-    m_x264Param.i_height = m_videoParams.height / alignH * alignH;
+    m_x264Param.i_width	= (m_videoParams.width + alignW - 1) / alignW * alignW;
+    m_x264Param.i_height = (m_videoParams.height + alignH -1) / alignH * alignH;
 
 	//裁剪矩形参数: 添加到那些隐式定义的非 mod16 的视频分辨率。
 	/* Cropping Rectangle parameters: added to those implicitly defined by
@@ -450,6 +449,11 @@ bool GueeVideoEncoder::set264BaseParams()
 	//m_x264Param.crop_rect.i_top		= 0;
 	//m_x264Param.crop_rect.i_right	= 2;
 	//m_x264Param.crop_rect.i_bottom	= 2;
+    m_x264Param.i_fps_num = static_cast<uint32_t>(m_videoParams.frameRate * 10000.0f); //帧率的分子
+    m_x264Param.i_fps_den = 10000;	//帧率的分母
+    int mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
+    m_x264Param.i_fps_num /= mcd;
+    m_x264Param.i_fps_den /= mcd;
 
 	////日志
 	//m_x264Param.pf_log;				//日志回调函数
@@ -470,17 +474,17 @@ bool GueeVideoEncoder::set264FrameParams()
 	//比特流参数	/* Bitstream parameters */
 
 	//参考帧的最大数量				/* Maximum number of reference frames */
-    if ( m_videoParams.refFrames >= 0 ) m_x264Param.i_frame_reference = m_videoParams.refFrames;
+    if ( m_videoParams.refFrames > 0 ) m_x264Param.i_frame_reference = m_videoParams.refFrames;
     //m_x264Param.i_dpb_size;
     /* Force a DPB size larger than that implied by B-frames and reference frames.
 										 * Useful in combination with interactive error resilience. */
 	//IDR关键帧最大间隔。			/* Force an IDR keyframe at this interval */
-    if ( m_videoParams.gopMax >= 0 )
+    if ( m_videoParams.gopMax > 0 )
 	{
         m_x264Param.i_keyint_max	= m_videoParams.gopMax;
 	}
 	//场景切换时，与前一个IDR帧间隔小于此值时，编码为 I 帧，而不是 IDR	/* Scenecuts closer together than this are coded as I, not IDR. */
-    if ( m_videoParams.gopMin >= 0 && m_videoParams.gopMin < m_videoParams.gopMax )
+    if ( m_videoParams.gopMin > 0 && m_videoParams.gopMin < m_videoParams.gopMax )
 	{
         m_x264Param.i_keyint_min	= m_videoParams.gopMin;
 	}
@@ -553,8 +557,8 @@ bool GueeVideoEncoder::set264BitrateParams()
 		break;
 	case VR_ConstantBitrate:
 		m_x264Param.rc.i_rc_method	= X264_RC_CRF;
-        m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrate;
-        m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.bitrate;
+        //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrate;
+        //m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.bitrate;
 		break;
 	case VR_ConstantQP:
 		m_x264Param.rc.i_rc_method			= X264_RC_CQP;
@@ -616,7 +620,7 @@ bool GueeVideoEncoder::set264BitrateParams()
 //								//在MB-tree的码率控制下，如果aq-mode为Disabled，强制aq-mode为Variance AQ，aq-strength为0。
 
 //	m_x264Param.rc.b_mb_tree;		//是否开启基于 macroblock 的qp控制方法		/* Macroblock-tree ratecontrol. */
-//	m_x264Param.rc.i_lookahead;		//决定 mbtree 向前预测的帧数
+    m_x264Param.rc.i_lookahead = 10;		//决定 mbtree 向前预测的帧数
 
 //	/* 2pass */
 //	m_x264Param.rc.b_stat_write;		//是否将统计数据写入到文件psz_stat_out中	/* Enable stat writing in psz_stat_out */
@@ -715,20 +719,7 @@ bool GueeVideoEncoder::set264StreamParams()
 								/* VFR input.  If 1, use timebase and timestamps for ratecontrol purposes. If 0, use fps only. */
 	//如果 b_vfr_input 和 b_pulldown 同时为 0(false)，x264 内部会重设时间基为帧率的倒数。
     m_x264Param.b_pulldown	= m_videoParams.onlineMode;		/* use explicity set timebase for CFR */
-    m_x264Param.i_fps_num = static_cast<uint32_t>(m_videoParams.frameRate * 10000.0f); //帧率的分子
-    m_x264Param.i_fps_den = 10000;	//帧率的分母
-    int mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
-    m_x264Param.i_fps_num /= mcd;
-    m_x264Param.i_fps_den /= mcd;
-    if (m_videoParams.onlineMode)
-    {
-        m_maxPendQueue = 2;
-    }
-    else
-    {
-        m_maxPendQueue = static_cast<int>(m_videoParams.frameRate + 1);
-        m_maxPendQueue = std::min(std::max(m_maxPendQueue, 5), 30);
-    }
+
 //	if ( m_videoParams.bVfr && m_videoParams.isOnlineMode )
 //	{
 //		m_x264Param.i_timebase_num = 1;

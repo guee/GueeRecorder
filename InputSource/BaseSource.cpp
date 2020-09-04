@@ -325,6 +325,7 @@ bool BaseSource::updateToTexture()
     }
     m_intputYuvFormat = 0;
     m_texture->setData(m_pixFormatGL, QOpenGLTexture::UInt8, static_cast<const void*>(m_imageBuffer), nullptr);
+    //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_BGRA, GL_UNSIGNED_BYTE, m_imageBuffer);
     m_imageLock.unlock();
     return true;
 }

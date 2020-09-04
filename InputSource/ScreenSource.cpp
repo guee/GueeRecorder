@@ -63,7 +63,7 @@ bool ScreenSource::static_init()
     m_x11_Display = XOpenDisplay(nullptr); //QX11Info::display();
     if ( m_x11_Display == nullptr)
     {
-        fprintf(stderr, "Error: Can't open X display! Don't translate 'display'");
+        qDebug() << "can't open X display!";
         return false;
     }
 
@@ -294,7 +294,7 @@ void ScreenSource::shotThread()
             if (shotScreen())
             {
                 m_imageChanged = true;
-                //fprintf(stderr, "m_timestamp:%f\n", m_timestamp / 1000000.0);
+                //qDebug() << "shot screen m_timestamp:" << m_timestamp / 1000000.0;
             }
         }
         m_timestamp = m_frameSync.waitNextFrame();

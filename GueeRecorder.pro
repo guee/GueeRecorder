@@ -84,9 +84,9 @@ FORMS += \
     StackedWidgetAddLayer.ui \
     mainwindow.ui
 #QMAKE_CXXFLAGS += -fopenmp -march='mips64r5'
-QMAKE_CXXFLAGS += -fopenmp
+#QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS_RELEASE += -O3
-LIBS += -lgomp
+#LIBS += -lgomp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

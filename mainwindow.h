@@ -2,6 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMenu>
+#include <QAction>
+#include <QActionGroup>
 #include "VdeoSynthesizer.h"
 #include "./InputSource/ScreenLayer.h"
 #undef Bool
@@ -45,11 +48,13 @@ private slots:
 private:
     Ui::MainWindow *ui;
     VideoSynthesizer& m_video;
-    QTimer* m_fpsTimer;
+    QTimer* m_fpsTimer = nullptr;
     QPoint m_pressKeyGlobalPos;
     QRect m_pressKeyGeometry;
     QPoint m_pressLeftWndOffset;
     Qt::WindowFrameSection m_hitMain = Qt::NoSection;
+    QMenu* m_menu = nullptr;
     void setHitCursor(Qt::WindowFrameSection hit);
+    void initMenu();
 };
 #endif // MAINWINDOW_H

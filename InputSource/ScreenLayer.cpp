@@ -9,7 +9,6 @@ ScreenLayer::ScreenLayer()
 ScreenLayer::~ScreenLayer()
 {
     close();
-    fprintf(stderr, "ScreenLayer::~ScreenLayer()\n");
 }
 
 int32_t ScreenLayer::screenCount()
