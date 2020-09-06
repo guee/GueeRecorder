@@ -1,8 +1,12 @@
 #ifndef VIDEOSYNTHESIZER_H
 #define VIDEOSYNTHESIZER_H
 #include "InputSource/BaseLayer.h"
+
 #include "MediaCodec/VideoEncoder.h"
 #include "MediaCodec/MediaWriterFlv.h"
+#include "MediaCodec/MediaWriterMp4.h"
+#include "MediaCodec/MediaWriterTs.h"
+
 #include "ShaderProgramPool.h"
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
@@ -34,10 +38,13 @@ public:
     bool setFrameRate(float fps);
     float frameRate() const override {return m_vidParams.frameRate;}
     float renderFps() const {return m_frameRate.fps();}
+    float encodeFps() const {return m_vidEncoder.encodeFps();}
+    uint32_t encodeMSec() const {return m_vidEncoder.encodeMSec();}
+
     bool setProfile(EVideoProfile profile);
     EVideoProfile profile() const {return m_vidParams.profile;}
     bool setPreset(EVideoPreset_x264 preset);
-    EVideoPreset_x264 perset() const {return m_vidParams.presetX264;}
+    EVideoPreset_x264 preset() const {return m_vidParams.presetX264;}
     bool setCSP(EVideoCSP csp);
     EVideoCSP csp() const {return m_vidParams.outputCSP;}
     bool setPsyTune(EPsyTuneType psy);
@@ -76,9 +83,10 @@ private:
         int textureHeight;
         GLenum internalFormat;
         GLenum dateType;
-        int dataSize;
         int planeCount;
         int stride[3];
+        int byteNum[3];
+
         QOpenGLBuffer*  buffer;
         QOpenGLFramebufferObject* fbo;
     };
@@ -95,6 +103,7 @@ uint8_t * m_tempBuff = nullptr;
 
     bool m_immediateUpdate = false;
     bool m_threadWorking = false;
+    bool m_videoSizeChanged = false;
     QOpenGLContext* m_context = nullptr;
     QOffscreenSurface* m_surface = nullptr;
     QVector4D m_backgroundColor;

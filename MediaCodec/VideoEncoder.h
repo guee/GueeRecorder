@@ -4,6 +4,7 @@
 #include "VideoCodec.h"
 #include <QtCore>
 #include "MediaStream.h"
+#include "./Common/FrameRateCalc.h"
 
 using namespace std;
 
@@ -16,8 +17,12 @@ public:
     bool bindStream( GueeMediaStream* stream );
 	bool startEncode( const SVideoParams* videoParams );
 	void endEncode();
+    void pauseEncode();
     const SVideoParams* getParams() { return &m_videoParams; }
     bool putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch);
+    bool putFrame( int64_t millisecond, uint8_t* const plane[3], int32_t* pitch);
+    float encodeFps() const { return m_encodeing ? m_frameRate.fps() : 0;}
+    uint32_t encodeMSec() const { return m_encodeing ? m_frameRate.elapsed() : 0;}
 private:
 
     struct	s_csp_tab
@@ -29,22 +34,25 @@ private:
 
     bool						m_encodeing;
 	SVideoParams				m_videoParams;
-    GueeMediaStream*               m_mediaStream = nullptr;
+    GueeMediaStream*            m_mediaStream = nullptr;
     s_csp_tab                   m_csp_tab;
 
 	x264_t*						m_x264Handle;
 	x264_param_t				m_x264Param;
 
-    QWaitCondition              m_waitPendQueue;
+    QSemaphore                  m_waitPendQueue;
     QMutex                      m_mtxPendQueue;
     QVector<x264_picture_t*>	m_picPendQueue;
     int32_t                     m_maxPendQueue = 0;
 
-    QWaitCondition              m_waitIdlePool;
+    QSemaphore                  m_waitIdlePool;
     QMutex                      m_mtxIdlePool;
     QVector<x264_picture_t*>	m_picIdlePool;
 
+    int64_t m_prevFrameTime = 0;
+    int64_t m_prevFramePts = 0;
 
+    FrameRateCalc               m_frameRate;
 	struct s_rect
 	{
 		int32_t		x, y, width, height;
@@ -70,7 +78,7 @@ private:
 
     bool putFrameX264(int64_t millisecond, const uint8_t* buf, int32_t pitch);
 
-
+    bool putFrameX264(int64_t millisecond, uint8_t* const plane[3], int32_t* pitch);
 
     x264_picture_t*	popCachePool();
     static inline int maximumCommonDivisor(int num, int den);

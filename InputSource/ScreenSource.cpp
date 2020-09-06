@@ -8,23 +8,25 @@ Visual* ScreenSource::m_x11_Visual = nullptr;
 int ScreenSource::m_x11_Depth = 0;
 bool ScreenSource::m_x11_UseShm = false;
 QVector<QRect> ScreenSource::m_screenRects;
-QVector<QRect> ScreenSource::m_screenDeadRects;
+//QVector<QRect> ScreenSource::m_screenDeadRects;
 QRect ScreenSource::m_screenBound;
 bool ScreenSource::m_recordCursor = false;
+bool ScreenSource::m_cursorUseable = false;
 
 ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     : BaseSource(typeName, sourceName)
 {
-    m_recordCursor = false;
     m_x11_image = nullptr;
     memset( &m_x11_shm_info, 0, sizeof(m_x11_shm_info) );
     m_x11_shm_server_attached = false;
+    qDebug() << "ScreenSource 构造";
 }
 
 ScreenSource::~ScreenSource()
 {
     onClose();
     freeImage();
+    qDebug() << "ScreenSource 析构";
 }
 
 bool ScreenSource::onOpen()
@@ -63,7 +65,7 @@ bool ScreenSource::static_init()
     m_x11_Display = XOpenDisplay(nullptr); //QX11Info::display();
     if ( m_x11_Display == nullptr)
     {
-        qDebug() << "can't open X display!";
+        qCritical() << "XOpenDisplay(nullptr) 调用返回 nullptr!";
         return false;
     }
 
@@ -74,19 +76,23 @@ bool ScreenSource::static_init()
     m_x11_UseShm = XShmQueryExtension(m_x11_Display);
     if(m_x11_UseShm)
     {
-        fprintf(stderr, "[X11Input::Init] Using X11 shared memory.");
+        qDebug() << "X11 截屏可以使用共享内存。";
     }
     else
     {
-        fprintf(stderr, "[X11Input::Init] Not using X11 shared memory.");
+        qWarning() << "X11 截屏不能使用共享内存。";
     }
-    if(m_recordCursor)
+    if(!m_cursorUseable)
     {
         int event, error;
         if(!XFixesQueryExtension(m_x11_Display, &event, &error))
         {
-            fprintf(stderr, "[X11Input::Init] Warning: XFixes is not supported by X server, the cursor has been hidden. Don't translate 'XFixes'");
-            m_recordCursor = false;
+            qWarning() << "初始化鼠标录制失败，不能录制鼠标。";
+            m_cursorUseable = false;
+        }
+        else
+        {
+            m_cursorUseable = true;
         }
     }
     readScreenConfig();
@@ -99,6 +105,21 @@ void ScreenSource::static_uninit()
         XCloseDisplay(m_x11_Display);
         m_x11_Display = nullptr;
     }
+}
+
+bool ScreenSource::setRecordCursor(bool record)
+{
+    if (m_cursorUseable)
+    {
+        m_recordCursor = record;
+        return true;
+    }
+    return false;
+}
+
+bool ScreenSource::isRecordCursor()
+{
+    return m_cursorUseable && m_recordCursor;
 }
 
 bool ScreenSource::readScreenConfig()
@@ -138,39 +159,39 @@ bool ScreenSource::readScreenConfig()
         return false;
     }
     // calculate dead space
-    m_screenDeadRects = {m_screenBound};
-    for(int i = 0; i < m_screenRects.size(); ++i)
-    {
-        QRect &subtract = m_screenRects[i];
-        QVector<QRect> result;
-        for(QRect &rect : m_screenDeadRects)
-        {
-            if (rect.intersects(subtract))
-            {
-                if (rect.y() < subtract.y())
-                {
-                    result.push_back(QRect(rect.x(), rect.y(), rect.width(), subtract.y() - rect.y()));
-                }
-                if (rect.x() < subtract.x())
-                {
-                    result.push_back(QRect(rect.x(), std::max(rect.y(), subtract.y()), subtract.x() - rect.x(), subtract.height()));
-                }
-                if (subtract.right() < rect.right())
-                {
-                    result.push_back(QRect(subtract.right() + 1, std::max(rect.y(), subtract.y()), rect.right() - subtract.right(), subtract.height()));
-                }
-                if (subtract.bottom() < rect.bottom())
-                {
-                    result.push_back(QRect(rect.x(), subtract.bottom() + 1, rect.width(), rect.bottom() - subtract.bottom()));
-                }
-            }
-            else
-            {
-                result.push_back(rect);
-            }
-        }
-        m_screenDeadRects = std::move(result);
-    }
+//    m_screenDeadRects = {m_screenBound};
+//    for(int i = 0; i < m_screenRects.size(); ++i)
+//    {
+//        QRect &subtract = m_screenRects[i];
+//        QVector<QRect> result;
+//        for(QRect &rect : m_screenDeadRects)
+//        {
+//            if (rect.intersects(subtract))
+//            {
+//                if (rect.y() < subtract.y())
+//                {
+//                    result.push_back(QRect(rect.x(), rect.y(), rect.width(), subtract.y() - rect.y()));
+//                }
+//                if (rect.x() < subtract.x())
+//                {
+//                    result.push_back(QRect(rect.x(), std::max(rect.y(), subtract.y()), subtract.x() - rect.x(), subtract.height()));
+//                }
+//                if (subtract.right() < rect.right())
+//                {
+//                    result.push_back(QRect(subtract.right() + 1, std::max(rect.y(), subtract.y()), rect.right() - subtract.right(), subtract.height()));
+//                }
+//                if (subtract.bottom() < rect.bottom())
+//                {
+//                    result.push_back(QRect(rect.x(), subtract.bottom() + 1, rect.width(), rect.bottom() - subtract.bottom()));
+//                }
+//            }
+//            else
+//            {
+//                result.push_back(rect);
+//            }
+//        }
+//        m_screenDeadRects = std::move(result);
+//    }
     return true;
 }
 
@@ -198,7 +219,7 @@ QImage::Format ScreenSource::checkPixelFormat(XImage* image)
         if(image->red_mask == 0xff0000 && image->green_mask == 0x00ff00 && image->blue_mask == 0x0000ff)
             pixFmt = QImage::Format_RGB888;
         else if(image->red_mask == 0x0000ff && image->green_mask == 0x00ff00 && image->blue_mask == 0xff0000)
-            pixFmt = QImage::Format_RGB888;
+            pixFmt = QImage::Format_RGB888; //??Qt 没有对应的格式。
         break;
     case 32:
         if(image->red_mask == 0x00ff0000 && image->green_mask == 0x0000ff00 && image->blue_mask == 0x000000ff)
@@ -279,10 +300,6 @@ void ScreenSource::freeImage()
 
 void ScreenSource::shotThread()
 {
-//    m_frameSync.start();
-//    m_frameSync.pause();
-//    m_frameRate.start();
- //   m_timestamp = m_frameRate.elapsed();
     while(m_status != BaseLayer::NoOpen)
     {
         if (m_timestamp < 0)
@@ -298,6 +315,11 @@ void ScreenSource::shotThread()
             }
         }
         m_timestamp = m_frameSync.waitNextFrame();
+        if (qAbs(m_frameSync.fps() - m_neededFps) > 0.1f)
+        {
+            m_frameSync.init(m_neededFps);
+            m_frameSync.start();
+        }
     }
 }
 
@@ -321,9 +343,11 @@ bool ScreenSource::shotScreen(const QRect* rect)
         m_imageLock.unlock();
         return false;
     }
+//    static int64_t timInit = 0;
+//    int64_t tim1 = m_frameSync.elapsed();
     if(m_x11_UseShm)
     {
-        if ( !allocImage(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)) )
+        if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
         {
             m_imageLock.unlock();
             return false;
@@ -332,8 +356,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
         if(!XShmGetImage(m_x11_Display, m_x11_RootWindow, m_x11_image,
                          m_shotRect.x(), m_shotRect.y(), AllPlanes))
         {
-            fprintf(stderr, "[X11Input::InputThread] Error: Can't get image (using shared memory)!\n"
-                             "    Usually this means the recording area is not completely inside the screen. Or did you change the screen resolution?");
+            qWarning() << "截取x11屏幕失败。";
             m_imageLock.unlock();
             return false;
         }
@@ -347,19 +370,22 @@ bool ScreenSource::shotScreen(const QRect* rect)
         }
         m_x11_image = XGetImage(m_x11_Display, m_x11_RootWindow,
                                 m_shotRect.x(), m_shotRect.y(),
-                                static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height), AllPlanes, ZPixmap);
+                                uint32_t(m_width), uint32_t(m_height), AllPlanes, ZPixmap);
         if(m_x11_image == nullptr)
         {
-            fprintf(stderr, "[X11Input::InputThread] Error: Can't get image (not using shared memory)!\n"
-                             "    Usually this means the recording area is not completely inside the screen. Or did you change the screen resolution?");
+            qWarning() << "截取x11屏幕失败。";
             m_imageLock.unlock();
             return false;
         }
         m_pixFormat = checkPixelFormat(m_x11_image);
     }
+//    int64_t tim2 = m_frameSync.elapsed();
+//    qDebug() <<"截屏时间：" << tim1 << " 距离上帧：" << tim1 - timInit << " , 截屏耗时：" << tim2 - tim1;
+//    timInit = tim1;
+
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_x11_image->data);
     m_stride = m_x11_image->bytes_per_line;
-
+    if (m_recordCursor) drawCursor();
     m_imageLock.unlock();
 
     for (auto it:m_layers)
@@ -420,4 +446,66 @@ QRect ScreenSource::calcShotRect()
 
     }
     return bound;
+}
+
+void ScreenSource::drawCursor()
+{
+    XFixesCursorImage * ci = XFixesGetCursorImage(m_x11_Display);
+    if ( nullptr == ci ) return;
+    int bytePerPix = 0, ro, go, bo;
+    switch(m_pixFormat)
+    {
+    case QImage::Format_RGB888:
+        bytePerPix = 3;
+        ro = 2; go = 1; bo = 0;
+        break;
+    case QImage::Format_ARGB32:
+        bytePerPix = 4;
+        ro = 2; go = 1; bo = 0;
+        break;
+    case QImage::Format_RGBA8888:
+        bytePerPix = 4;
+        ro = 0; go = 1; bo = 2;
+        break;
+    default:
+        return;
+    }
+
+
+    QRect curRect(ci->x - ci->xhot, ci->y - ci->yhot, ci->width, ci->height);
+    QRect ovrRect = m_shotRect.intersected(curRect);
+
+    ulong* curRow = ci->pixels + ci->width * (ovrRect.top() - curRect.top())
+            + (ovrRect.left() - curRect.left());
+    uint8_t* scrRow = const_cast<uint8_t*>(m_imageBuffer) + m_stride * (ovrRect.top() - m_shotRect.top())
+            + (ovrRect.left() - m_shotRect.left()) * m_x11_image->bits_per_pixel / 8;
+
+    for (int y = 0; y < ovrRect.height(); ++y)
+    {
+        ulong* curPix = curRow;
+        uint8_t* scrPix = scrRow;
+        for (int x = 0; x < ovrRect.width(); ++x)
+        {
+            uint8_t ca = uint8_t(*curPix >> 24);
+            uint8_t cr = uint8_t(*curPix >> 16);
+            uint8_t cg = uint8_t(*curPix >> 8);
+            uint8_t cb = uint8_t(*curPix);
+            if (ca == 255)
+            {
+                scrPix[ro] = cr;
+                scrPix[go] = cg;
+                scrPix[bo] = cb;
+            }
+            else
+            {
+                scrPix[ro] = (scrPix[ro] * (255 - ca) + 127) / 255 + cr;
+                scrPix[go] = (scrPix[go] * (255 - ca) + 127) / 255 + cg;
+                scrPix[bo] = (scrPix[bo] * (255 - ca) + 127) / 255 + cb;
+            }
+            scrPix += bytePerPix;
+            ++curPix;
+        }
+        curRow += ci->width;
+        scrRow += m_stride;
+    }
 }

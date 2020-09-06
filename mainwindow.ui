@@ -40,10 +40,14 @@ QWidget#listViewContents{
 border: none;
 background-color: rgb(64, 64, 64,0);
 }
+QPushButton{
+outline: none;
+}
 QPushButton#pushButtonRecStart{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butStart_normal.png);
 }
+
 QPushButton#pushButtonRecStart:hover{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butStart_enter.png);
@@ -81,15 +85,15 @@ border-image: url(:/butPause_disable.png);
 
 QPushButton#pushButtonRecPause:checked{
 border-width: 0px  0px 0px 0px;
-border-image: url(:/butContinue_normal.png);
+border-image: url(:/butPause_checked_normal.png);
 }
 QPushButton#pushButtonRecPause:checked:hover{
 border-width: 0px  0px 0px 0px;
-border-image: url(:/butContinue_enter.png);
+border-image: url(:/butPause_checked_enter.png);
 }
 QPushButton#pushButtonRecPause:checked:disabled{
 border-width: 0px  0px 0px 0px;
-border-image: url(:/butContinue_disable.png);
+border-image: url(:/butPause_checked_disable.png);
 }
 
 QLabel#labelRecordTime
@@ -148,7 +152,46 @@ QPushButton#pushButtonMediaSelect:checked
 background-color: rgb(0, 0, 0);
 color: rgb(255, 255, 255);
 }
-</string>
+
+QPushButton#pushButtonClose
+{
+border: 1px solid rgb(160, 160, 160);
+border-radius: 5px;
+color: rgb(160, 160, 160);
+}
+QPushButton#pushButtonClose:hover
+{
+background-color: rgb(240, 240, 240);
+border: 1px solid rgb(240, 240, 240);
+color: rgb(160, 160, 160);
+}
+
+QPushButton#pushButtonMinimize
+{
+border: 1px solid rgb(160, 160, 160);
+border-radius: 5px;
+color: rgb(160, 160, 160);
+}
+QPushButton#pushButtonMinimize:hover
+{
+background-color: rgb(240, 240, 240);
+border: 1px solid rgb(240, 240, 240);
+color: rgb(160, 160, 160);
+}
+
+QPushButton#pushButtonMenu
+{
+border: 1px solid rgb(160, 160, 160);
+border-radius: 5px;
+color: rgb(160, 160, 160);
+}
+
+QPushButton#pushButtonMenu:hover
+{
+background-color: rgb(240, 240, 240);
+border: 1px solid rgb(240, 240, 240);
+color: rgb(160, 160, 160);
+}</string>
   </property>
   <property name="animated">
    <bool>false</bool>
@@ -301,7 +344,10 @@ color: rgb(255, 255, 255);
               </size>
              </property>
              <property name="focusPolicy">
-              <enum>Qt::TabFocus</enum>
+              <enum>Qt::NoFocus</enum>
+             </property>
+             <property name="toolTip">
+              <string>点击按钮开始录像</string>
              </property>
              <property name="text">
               <string/>
@@ -354,6 +400,12 @@ color: rgb(255, 255, 255);
                <height>50</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
+             </property>
+             <property name="toolTip">
+              <string>停止录像</string>
+             </property>
              <property name="text">
               <string/>
              </property>
@@ -390,6 +442,12 @@ color: rgb(255, 255, 255);
                  <width>24</width>
                  <height>24</height>
                 </size>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>暂停、继续录像</string>
                </property>
                <property name="text">
                 <string/>
@@ -468,7 +526,23 @@ color: rgb(255, 255, 255);
              </widget>
             </item>
             <item>
+             <widget class="QLabel" name="labelVideoInfo">
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="pushButton">
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
               <property name="text">
                <string>PushButton</string>
               </property>
@@ -481,6 +555,12 @@ color: rgb(255, 255, 255);
                 <width>16</width>
                 <height>16</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>打开设置界面</string>
               </property>
               <property name="text">
                <string>=</string>
@@ -501,8 +581,14 @@ color: rgb(255, 255, 255);
                 <height>16</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>窗口最小化</string>
+              </property>
               <property name="text">
-               <string>_</string>
+               <string>-</string>
               </property>
              </widget>
             </item>
@@ -519,6 +605,12 @@ color: rgb(255, 255, 255);
                 <width>16</width>
                 <height>16</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>关闭程序</string>
               </property>
               <property name="text">
                <string>X</string>
@@ -792,6 +884,16 @@ color: rgb(255, 255, 255);
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>pushButtonScreenSelect</tabstop>
+  <tabstop>pushButtonCameraSelect</tabstop>
+  <tabstop>pushButtonMediaSelect</tabstop>
+  <tabstop>pushButton_3</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>pushButtonRecStop</tabstop>
+  <tabstop>pushButtonRecPause</tabstop>
+ </tabstops>
  <resources>
   <include location="UiResource/recorder.qrc"/>
  </resources>

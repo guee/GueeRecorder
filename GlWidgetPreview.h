@@ -58,6 +58,7 @@ private:
     QRect m_boxOfEditing;  //当前编辑的层在预览画面上的区域（像素单位）
     QRect m_boxOfPressKey;
     QPoint m_posOfPressKey;
+    QMatrix4x4 m_matrixView;
     bool m_boxEditing = false;
     Qt::WindowFrameSection m_hitType = Qt::NoSection;
     FormLayerTools* m_layerTools = nullptr;

@@ -19,7 +19,7 @@ public:
     //durationMS   持续时间，单位为秒，默认值0，表示永远持续。如果参数设置小于0，则自动修正为0。
     //autoRestart  表示在时间超过了持续时间后，是否又从头开始，默认 false 置为停止状态。
     bool init(float fps, double startSecond = 0.0, double durationSecond = 0.0, bool autoRestart = false);
-    float fps() const {return static_cast<float>(m_fps);}
+    float fps() const {return float(m_fps);}
     //开始计时，以及在暂停计时后恢复计时
     void start();
     //把时间点设置为指定的秒

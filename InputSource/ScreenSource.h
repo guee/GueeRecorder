@@ -17,27 +17,15 @@ public:
 
     static bool static_init();
     static void static_uninit();
-    static Display *m_x11_Display;
-    static int m_x11_Screen;
-    static Window m_x11_RootWindow;
-    static Visual *m_x11_Visual;
-    static int m_x11_Depth;
-    static bool m_x11_UseShm;
-    static QVector<QRect> m_screenRects;
-    static QVector<QRect> m_screenDeadRects;
-    static QRect m_screenBound;
-    static bool m_recordCursor;
 
+    static bool setRecordCursor(bool record);
+    static bool isRecordCursor();
     static bool readScreenConfig();
     static QImage::Format checkPixelFormat(XImage* image);
-
-    XImage *m_x11_image;
-    XShmSegmentInfo m_x11_shm_info;
-    bool m_x11_shm_server_attached;
-    QRect m_shotRect;
-    std::thread m_thread;
-    FrameSynchronization    m_frameSync;
-    FrameRateCalc           m_frameRate;
+    static QVector<QRect>& screenRects() {return m_screenRects;}
+    static QRect& screenBound() {return m_screenBound;}
+    static Display* xDisplay() { return m_x11_Display;}
+    static Window xRootWindow() {return m_x11_RootWindow;}
 
     bool allocImage(uint width, uint height);
     void freeImage();
@@ -45,6 +33,27 @@ public:
     bool shotScreen(const QRect* rect = nullptr);
     QRect calcShotRect();
 protected:
+    static Display *m_x11_Display;
+    static int m_x11_Screen;
+    static Window m_x11_RootWindow;
+    static Visual *m_x11_Visual;
+    static int m_x11_Depth;
+    static bool m_x11_UseShm;
+    static QVector<QRect> m_screenRects;
+    //static QVector<QRect> m_screenDeadRects;
+    static QRect m_screenBound;
+    static bool m_recordCursor;
+    static bool m_cursorUseable;
+
+    XImage *m_x11_image;
+    XShmSegmentInfo m_x11_shm_info;
+    bool m_x11_shm_server_attached;
+    QRect m_shotRect;
+    std::thread m_thread;
+    FrameSynchronization    m_frameSync;
+
+    void drawCursor();
+
     virtual bool onClose();
     virtual bool onPlay();
     virtual bool onPause();

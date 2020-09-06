@@ -375,6 +375,7 @@ void BaseLayer::setViewportSize(const QSizeF &s, bool childs)
             it->setViewportSize(s, childs);
         }
     }
+    onSizeChanged();
 }
 
 void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)

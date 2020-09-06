@@ -78,6 +78,7 @@ void GlWidgetPreview::paintGL()
     glEnable(GL_LINE_SMOOTH);
 
     m_program->bind();
+    m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     m_vbo.bind();
 
 
@@ -173,12 +174,31 @@ void GlWidgetPreview::resizeGL(int width, int height)
     float sx = static_cast<float>((m_viewportSize.width() - m_displayOfSceeen.width())) / m_displayOfSceeen.width();
     float sy = static_cast<float>((m_viewportSize.height() - m_displayOfSceeen.height())) / m_displayOfSceeen.height();
 
-    QMatrix4x4 m;
-    m.ortho(-1.0f - sx, +1.0f + sx, +1.0f + sy, -1.0f - sy, -1.0f, 1.0f);
-    m_program->bind();
-    m_program->setUniformValue("qt_ModelViewProjectionMatrix", m);
+    if (m_program->bind())
+    {
+        QMatrix4x4 m;
+        m.ortho(-1.0f - sx, +1.0f + sx, +1.0f + sy, -1.0f - sy, -1.0f, 1.0f);
+        m_matrixView = m;
+    }
+    if ( m_enterLayer )
+    {
+        QRectF rt = m_enterLayer->rect();
+        m_boxEnterLayer.setRect(qRound(rt.x() * m_displayOfSceeen.width()),
+                                qRound(rt.y() * m_displayOfSceeen.height()),
+                                qRound(rt.width() * m_displayOfSceeen.width()),
+                                qRound(rt.height() * m_displayOfSceeen.height()));
+    }
+    if ( m_editingLayer )
+    {
+        QRectF rt = m_editingLayer->rect();
+        m_boxOfEditing.setRect(qRound(rt.x() * m_displayOfSceeen.width()),
+                                qRound(rt.y() * m_displayOfSceeen.height()),
+                                qRound(rt.width() * m_displayOfSceeen.width()),
+                                qRound(rt.height() * m_displayOfSceeen.height()));
+    }
 
-    resetToolboxPos(false);
+
+    if (width && height) resetToolboxPos(false);
 }
 
 void GlWidgetPreview::fixOffsetAsScreen()
@@ -481,9 +501,10 @@ void GlWidgetPreview::makeObject()
 
     QMatrix4x4 m;
     m.ortho(0.0f, +1.0f, +1.0f, 0.0f, -1.0f, 1.0f);
+    m_matrixView = m;
     m_program = VideoSynthesizer::instance().programPool().createProgram("base");
     m_program->bind();
-    m_program->setUniformValue("qt_ModelViewProjectionMatrix", m);
+    m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     m_program->setUniformValue("qt_Texture0", 0);
 
 
@@ -663,7 +684,13 @@ void GlWidgetPreview::on_videoSynthesizer_frameReady(uint textureId)
 {
     m_sharedTextureId = textureId;
     if (m_sharedTextureId)
+    {
         update();
+    }
+    else
+    {
+        resizeGL(0,0);
+    }
 }
 
 void GlWidgetPreview::on_layerToolbox_removeLayer(BaseLayer *layer)

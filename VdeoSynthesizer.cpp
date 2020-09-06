@@ -77,6 +77,7 @@ void VideoSynthesizer::init(QOpenGLContext* shardContext)
 
         }
 
+        m_videoSizeChanged = false;
         m_threadWorking = true;
         m_frameSync.init(m_vidParams.frameRate);
         m_frameSync.start();
@@ -165,6 +166,18 @@ bool VideoSynthesizer::open(const QString &sourceName)
             m_writers.append(flv);
             flv->setFilePath(fn.toStdString());
         }
+        else if (fn.endsWith(".mp4", Qt::CaseInsensitive))
+        {
+            GueeMediaWriterMp4* mp4 = new GueeMediaWriterMp4(m_medStream);
+            m_writers.append(mp4);
+            mp4->setFilePath(fn.toStdString());
+        }
+        else if (fn.endsWith(".ts", Qt::CaseInsensitive))
+        {
+            GueeMediaWriterTs* ts = new GueeMediaWriterTs(m_medStream);
+            m_writers.append(ts);
+            ts->setFilePath(fn.toStdString());
+        }
     }
     m_vidParams.enabled = true;
     m_medStream.setVideoParams(m_vidParams);
@@ -196,29 +209,48 @@ void VideoSynthesizer::close()
 
 bool VideoSynthesizer::play()
 {
-    if (m_status == Opened || m_status == Paused)
+    if(m_status == Palying) return true;
+    if(m_status == Paused)
+    {
+        m_status = Palying;
+        m_vidEncoder.startEncode(nullptr);
+        return true;
+    }
+    else if (m_status == Opened)
     {
         m_status = Palying;
         return true;
     }
-    return true;
+    return false;
+}
+
+bool VideoSynthesizer::pause()
+{
+    if(m_status == Paused) return true;
+    if (m_status == Palying || m_status == Opened)
+    {
+        m_status = Paused;
+        m_vidEncoder.pauseEncode();
+        return true;
+    }
+    return false;
 }
 
 bool VideoSynthesizer::resetDefaultOption()
 {
     m_vidParams.encoder       = VE_X264;
     m_vidParams.profile       = VF_High;
-    m_vidParams.presetX264    = VP_x264_VeryFast;
+    m_vidParams.presetX264    = VP_x264_SuperFast;
     m_vidParams.presetNvenc   = VP_Nvenc_LowLatencyDefault;
     m_vidParams.outputCSP     = Vid_CSP_I420;
     m_vidParams.psyTune       = eTuneAnimation;
-    m_vidParams.width         = 1920;
-    m_vidParams.height        = 1080;
-    m_vidParams.frameRate     = 25.0f;
+    m_vidParams.width         = 0;
+    m_vidParams.height        = 0;
+    m_vidParams.frameRate     = 0.0f;
     m_vidParams.vfr           = false;
     m_vidParams.onlineMode    = false;
     m_vidParams.annexb        = true;
-    m_vidParams.threadNum     = 4;
+    m_vidParams.threadNum     = 0;
     m_vidParams.optimizeStill = false;
     m_vidParams.fastDecode    = false;
     m_vidParams.rateMode      = VR_ConstantBitrate;
@@ -233,13 +265,21 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.BFramePyramid = 2;
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
+    setSize( 1920, 1080);
+    setFrameRate(5.0f);
     return true;
 }
 
 bool VideoSynthesizer::setSize(int32_t width, int32_t height)
 {
-    if ( width < 16 || width > 4096 || height < 16 || height > 4096 )
+    if ( width < 16 || width > 5120 || height < 16 || height > 5120 )
         return false;
+    if ( m_vidParams.width == width && m_vidParams.height == height)
+    {
+        return true;
+    }
+    qDebug() << "set size to:" << width << "x" << height;
+    //if ()
     m_vidParams.width = width;
     m_vidParams.height = height;
 
@@ -253,7 +293,7 @@ bool VideoSynthesizer::setSize(int32_t width, int32_t height)
         m_glViewportSize.setHeight(height * 2.0 / width);
         m_glViewportSize.setWidth(2.0);
     }
-    setViewportSize(m_glViewportSize);
+    m_videoSizeChanged = true;
     return true;
 }
 
@@ -366,15 +406,34 @@ void VideoSynthesizer::renderThread()
 
     emit initDone(true);
     int64_t preTimer = 0;
-
+    int64_t curTimer = 0;
     while(m_threadWorking)
     {
-        if ( updateSourceTextures() ) isUpdated = true;
-        m_frameData.timestamp = m_frameSync.isNextFrame();
-        if ( m_frameData.timestamp - preTimer > 1000000 ) isUpdated = true;
-        if ( ( m_frameData.timestamp >= 0 && isUpdated ) || m_immediateUpdate )
+        m_frameData.timestamp = m_vidEncoder.encodeMSec();
+        if ( m_videoSizeChanged &&
+             (fboRgba->width() != m_vidParams.width || fboRgba->height() != m_vidParams.height ))
         {
-            preTimer = m_frameData.timestamp;
+            delete fboRgba;
+            fboRgba = new QOpenGLFramebufferObject(m_vidParams.width, m_vidParams.height, fboFmt);
+            glBindTexture(GL_TEXTURE_2D, fboRgba->texture());
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+            setViewportSize(m_glViewportSize, true);
+            m_videoSizeChanged = false;
+            emit frameReady(0);
+            qDebug() << "resize to:" << fboRgba->size();
+        }
+
+        if ( updateSourceTextures() ) isUpdated = true;
+        curTimer = m_frameSync.isNextFrame();
+
+
+
+        if ( curTimer - preTimer > 1000000 ) isUpdated = true;
+        if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
+        {
+        qDebug() <<"帧时间：" << curTimer << " 距离上帧：" << curTimer - preTimer;
+            preTimer = curTimer;
             bool fromImm = m_immediateUpdate;
             fboRgba->bind();
             glViewport(0, 0, m_vidParams.width, m_vidParams.height);
@@ -394,6 +453,7 @@ void VideoSynthesizer::renderThread()
                     if (!initYuvFbo())
                         break;
                 }
+
                 putFrameToEncoder(fboRgba->texture());
             }
             else if ( m_status < Opened && m_frameData.fbo )
@@ -403,7 +463,7 @@ void VideoSynthesizer::renderThread()
 
             glFlush();
             fboRgba->release();
-            //fboRgba->toImage().save(QString("/home/guee/Pictures/Temp/%1.jpg").arg(m_frameData.timestamp) );
+            //fboRgba->toImage().save(QString("/home/guee/Pictures/Temp/%1.jpg").arg(m_frameData.timestamp), nullptr, 100 );
             emit frameReady(fboRgba->texture());
             if ( fromImm )
             {
@@ -465,57 +525,65 @@ bool VideoSynthesizer::initYuvFbo()
     case Vid_CSP_I420:
     case Vid_CSP_YV12:
         m_frameData.alignWidth = ( m_vidParams.width + 1 ) / 2 * 2;
-        m_frameData.alignHeight = ( m_vidParams.height + 1 ) / 2 * 2;
-        m_frameData.textureWidth = m_frameData.alignWidth;
+        m_frameData.alignHeight = ( m_vidParams.height + 3 ) / 4 * 4;
+        m_frameData.textureWidth = ( m_vidParams.width + 3 ) / 4 * 4;
         m_frameData.textureHeight = m_frameData.alignHeight + m_frameData.alignHeight / 2;
         m_frameData.internalFormat = GL_LUMINANCE;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight;
         m_frameData.planeCount = 3;
-        m_frameData.stride[0] = m_frameData.alignWidth;
-        m_frameData.stride[1] = m_frameData.alignWidth / 2;
-        m_frameData.stride[2] = m_frameData.alignWidth / 2;
+        m_frameData.stride[0] = m_frameData.textureWidth;
+        m_frameData.stride[1] = m_frameData.textureWidth / 2;
+        m_frameData.stride[2] = m_frameData.textureWidth / 2;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = m_frameData.stride[1] * m_frameData.alignHeight / 2;
+        m_frameData.byteNum[2] = m_frameData.stride[2] * m_frameData.alignHeight / 2;
         break;
     case Vid_CSP_NV12:
     case Vid_CSP_NV21:
         m_frameData.alignWidth = ( m_vidParams.width + 1 ) / 2 * 2;
         m_frameData.alignHeight = ( m_vidParams.height + 1 ) / 2 * 2;
-        m_frameData.textureWidth = m_frameData.alignWidth;
+        m_frameData.textureWidth = ( m_vidParams.width + 3 ) / 4 * 4;
         m_frameData.textureHeight = m_frameData.alignHeight + m_frameData.alignHeight / 2;
         m_frameData.internalFormat = GL_LUMINANCE;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight;
         m_frameData.planeCount = 2;
-        m_frameData.stride[0] = m_frameData.alignWidth;
-        m_frameData.stride[1] = m_frameData.alignWidth;
+        m_frameData.stride[0] = m_frameData.textureWidth;
+        m_frameData.stride[1] = m_frameData.textureWidth;
         m_frameData.stride[2] = 0;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = m_frameData.stride[1] * m_frameData.alignHeight / 2;
+        m_frameData.byteNum[2] = 0;
         break;
     case Vid_CSP_I422:
     case Vid_CSP_YV16:
         m_frameData.alignWidth = ( m_vidParams.width + 1 ) / 2 * 2;
-        m_frameData.alignHeight = m_vidParams.height;
-        m_frameData.textureWidth = m_frameData.alignWidth;
+        m_frameData.alignHeight = ( m_vidParams.height + 1 ) / 2 * 2;
+        m_frameData.textureWidth = ( m_vidParams.width + 3 ) / 4 * 4;
         m_frameData.textureHeight = m_frameData.alignHeight * 2;
         m_frameData.internalFormat = GL_LUMINANCE;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight;
         m_frameData.planeCount = 3;
-        m_frameData.stride[0] = m_frameData.alignWidth;
-        m_frameData.stride[1] = m_frameData.alignWidth / 2;
-        m_frameData.stride[2] = m_frameData.alignWidth / 2;
+        m_frameData.stride[0] = m_frameData.textureWidth;
+        m_frameData.stride[1] = m_frameData.textureWidth / 2;
+        m_frameData.stride[2] = m_frameData.textureWidth / 2;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = m_frameData.stride[1] * m_frameData.alignHeight;
+        m_frameData.byteNum[2] = m_frameData.stride[2] * m_frameData.alignHeight;
         break;
     case Vid_CSP_NV16:
         m_frameData.alignWidth = ( m_vidParams.width + 1 ) / 2 * 2;
         m_frameData.alignHeight = m_vidParams.height;
-        m_frameData.textureWidth = m_frameData.alignWidth;
+        m_frameData.textureWidth = ( m_vidParams.width + 3 ) / 4 * 4;
         m_frameData.textureHeight = m_frameData.alignHeight * 2;
         m_frameData.internalFormat = GL_LUMINANCE;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight;
         m_frameData.planeCount = 2;
-        m_frameData.stride[0] = m_frameData.alignWidth;
-        m_frameData.stride[1] = m_frameData.alignWidth;
+        m_frameData.stride[0] = m_frameData.textureWidth;
+        m_frameData.stride[1] = m_frameData.textureWidth;
         m_frameData.stride[2] = 0;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = m_frameData.stride[1] * m_frameData.alignHeight;
+        m_frameData.byteNum[2] = 0;
         break;
     case Vid_CSP_YUY2:
     case Vid_CSP_UYVY:
@@ -525,24 +593,28 @@ bool VideoSynthesizer::initYuvFbo()
         m_frameData.textureHeight = m_frameData.alignHeight;
         m_frameData.internalFormat = GL_LUMINANCE_ALPHA;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight * 2;
         m_frameData.planeCount = 1;
-        m_frameData.stride[0] = m_frameData.alignWidth * 2;
+        m_frameData.stride[0] = m_frameData.textureWidth * 2;
         m_frameData.stride[1] = 0;
         m_frameData.stride[2] = 0;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = 0;
+        m_frameData.byteNum[2] = 0;
         break;
     case Vid_CSP_I444:
         m_frameData.alignWidth = m_vidParams.width;
         m_frameData.alignHeight = m_vidParams.height;
-        m_frameData.textureWidth = m_frameData.alignWidth;
+        m_frameData.textureWidth = ( m_vidParams.width + 3 ) / 4 * 4;
         m_frameData.textureHeight = m_frameData.alignHeight * 3;
         m_frameData.internalFormat = GL_LUMINANCE;
         m_frameData.dateType = GL_UNSIGNED_BYTE;
-        m_frameData.dataSize = m_frameData.alignWidth * m_frameData.textureHeight;
         m_frameData.planeCount = 3;
-        m_frameData.stride[0] = m_frameData.alignWidth;
-        m_frameData.stride[1] = m_frameData.alignWidth;
-        m_frameData.stride[2] = m_frameData.alignWidth;
+        m_frameData.stride[0] = m_frameData.textureWidth;
+        m_frameData.stride[1] = m_frameData.textureWidth;
+        m_frameData.stride[2] = m_frameData.textureWidth;
+        m_frameData.byteNum[0] = m_frameData.stride[0] * m_frameData.alignHeight;
+        m_frameData.byteNum[1] = m_frameData.stride[1] * m_frameData.alignHeight;
+        m_frameData.byteNum[2] = m_frameData.stride[2] * m_frameData.alignHeight;
         break;
     default:
         return false;
@@ -560,11 +632,11 @@ bool VideoSynthesizer::initYuvFbo()
         uninitYubFbo();
         return false;
     }
+
     m_frameData.buffer->bind();
     m_frameData.buffer->setUsagePattern(QOpenGLBuffer::StreamRead);
-    m_frameData.buffer->allocate(m_frameData.dataSize);
+    m_frameData.buffer->allocate(m_frameData.byteNum[0] + m_frameData.byteNum[1] + m_frameData.byteNum[2]);
     m_frameData.buffer->release();
-//m_tempBuff = new uint8_t[m_frameData.dataSize];
     m_vbo = new QOpenGLBuffer();
     if ( !m_vbo->create() )
     {
@@ -581,8 +653,9 @@ bool VideoSynthesizer::initYuvFbo()
     m_program->setUniformValue("qt_ModelViewProjectionMatrix",m);
     m_program->setUniformValue("qt_Texture0", 0);
     m_program->setUniformValue("PlaneType", m_frameData.csp);
-    m_program->setUniformValue("texureSize", m_frameData.textureWidth, m_frameData.textureHeight);
+    m_program->setUniformValue("surfaceSize", m_frameData.textureWidth, m_frameData.textureHeight);
     m_program->setUniformValue("alignSize", m_frameData.alignWidth, m_frameData.alignHeight);
+    m_program->setUniformValue("imageSize", m_vidParams.width, m_vidParams.height);
 
     m_program->release();
     m_vbo->release();
@@ -632,19 +705,20 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
     glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
    // glFlush();
-  //  m_frameData.fbo->toImage().save(QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp));
+    //m_frameData.fbo->toImage().save(QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp));
     m_frameData.buffer->bind();
     glReadPixels(0, 0, m_frameData.fbo->width(), m_frameData.fbo->height(),
                  m_frameData.internalFormat, m_frameData.dateType, offset);
 
-    void* dat = m_frameData.buffer->map(QOpenGLBuffer::ReadOnly);
+    uint8_t* dat = static_cast<uint8_t*>(m_frameData.buffer->map(QOpenGLBuffer::ReadOnly));
     if (dat)
     {
-//        QImage img((const uchar*)dat, m_frameData.fbo->width(), m_frameData.fbo->height(), m_frameData.fbo->width(), QImage::Format_Grayscale8);
+//        QImage img((const uchar*)dat, m_frameData.textureWidth, m_frameData.textureHeight, m_frameData.stride[0], QImage::Format_Grayscale8);
 //        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);
 //        img.save(fn, "png");
-        m_vidEncoder.putFrame(m_frameData.timestamp, reinterpret_cast<uint8_t*>(dat), m_frameData.stride[0]);
-        //memcpy(m_tempBuff, reinterpret_cast<uint8_t*>(dat), m_frameData.dataSize);
+        uint8_t* plane[3] = {dat, dat + m_frameData.byteNum[0], dat + m_frameData.byteNum[0] + m_frameData.byteNum[1]};
+        m_vidEncoder.putFrame(m_frameData.timestamp, plane, m_frameData.stride);
+        //m_vidEncoder.putFrame(m_frameData.timestamp, reinterpret_cast<uint8_t*>(dat), m_frameData.stride[0]);
         m_frameData.buffer->unmap();
     }
     m_frameData.buffer->release();

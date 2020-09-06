@@ -43,7 +43,8 @@ SOURCES += \
     MediaCodec/MediaWriter.cpp \
     MediaCodec/MediaWriterFlv.cpp \
     MediaCodec/MediaWriterMp4.cpp \
-    MediaCodec/MediaWriterTs.cpp
+    MediaCodec/MediaWriterTs.cpp \
+    DialogSetting.cpp
 
 
 HEADERS += \
@@ -76,14 +77,16 @@ HEADERS += \
     MediaCodec/MediaWriterTs.h \
     MediaCodec/VideoCodec.h \
     MediaCodec/VideoEncoder.h \
-    MediaCodec/mp4struct.h
+    MediaCodec/mp4struct.h \
+    DialogSetting.h
 
 FORMS += \
     DialogSelectScreen.ui \
     FormLayerTools.ui \
     StackedWidgetAddLayer.ui \
-    mainwindow.ui
-#QMAKE_CXXFLAGS += -fopenmp -march='mips64r5'
+    mainwindow.ui \
+    DialogSetting.ui
+QMAKE_CXXFLAGS += -march='mips64r5'
 #QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS_RELEASE += -O3
 #LIBS += -lgomp

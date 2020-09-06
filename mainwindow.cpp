@@ -5,7 +5,7 @@
 #include "GlWidgetPreview.h"
 
 #include "stdio.h"
-//#include "./GueeGL/GLShaderProgram.h"
+#include "DialogSetting.h"
 
 #include <QDesktopWidget>
 
@@ -58,9 +58,9 @@ MainWindow::MainWindow(QWidget *parent)
         move(offset + screen.topLeft());
     }
 
-    m_menu = new QMenu(this);
-    QActionGroup gp(this);
-    gp.addAction(new QAction());
+    DialogSetting::loadProfile();
+
+    ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
 
 }
 
@@ -79,6 +79,10 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         {
            // if (!mouseOnAddContents)
             {
+                ui->pushButtonScreenSelect->setChecked(watched == ui->pushButtonScreenSelect);
+                ui->pushButtonCameraSelect->setChecked(watched == ui->pushButtonCameraSelect);
+                ui->pushButtonMediaSelect->setChecked(watched == ui->pushButtonMediaSelect);
+
                 static_cast<QPushButton*>(watched)->setChecked(true);
                 if (watched == ui->pushButtonScreenSelect)
                     ui->stackedWidgetAddContents->setCurrentIndex(0);
@@ -334,36 +338,27 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::on_widgetPreview_initGL()
 {
     m_video.init(ui->widgetPreview->context());
-    m_video.setFrameRate(30.0f);
-    m_video.setSize(1920, 1080);
-
- //       ScreenLayer* scr = static_cast<ScreenLayer*>(m_video.createLayer("screen"));
-
-//        ScreenLayer::Option opt;
-//        opt.mode = ScreenLayer::specScreen;
-//        opt.screenIndex = 0;
-
-//        scr->setShotOption(opt);
-//        scr->open();
-//        scr->play();
-//        Guee::GLShaderProgram   prg;
-//        prg.addShaderFromSourceFile(Guee::GlShader::Fragment, ":/Shaders/Test.frag");
-//        prg.addShaderFromSourceFile(Guee::GlShader::Vertex, ":/Shaders/Test.vert");
-//        prg.link();
 }
 
 void MainWindow::on_pushButton_clicked()
 {
   //  ScreenLayer* scr = static_cast<ScreenLayer*>(m_video.childLayer(0));
   //  scr->setRect(QRectF(0.3333, 0.3333, 0.5555, 0.5555));
-
-        m_video.uninit();
+    m_video.close();
+    m_video.uninit();
 }
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
     ui->stackedWidgetRecControl->setCurrentIndex(1);
-    if (m_video.open("/home/guee/Videos/test.flv"))
+    QString path = DialogSetting::userSetting().videoDir;
+    if (!path.endsWith("/")) path.append("/");
+    path.append(DialogSetting::userSetting().fileName);
+    path.append("-");
+    path.append(QDateTime::currentDateTime().toString());
+    path.append(".");
+    path.append(DialogSetting::userSetting().fileType);
+    if (m_video.open(path))
     {
         m_video.play();
     }
@@ -375,6 +370,17 @@ void MainWindow::on_pushButtonRecStop_clicked()
     m_video.close();
 }
 
+void MainWindow::on_pushButtonRecPause_clicked(bool checked)
+{
+    if (checked)
+    {
+        m_video.pause();
+    }
+    else
+    {
+        m_video.play();
+    }
+}
 void MainWindow::on_videoSynthesizer_initDone(bool success)
 {
     if ( success )
@@ -392,13 +398,44 @@ void MainWindow::on_videoSynthesizer_initDone(bool success)
 
 void MainWindow::on_fpsTimerView_timeout()
 {
-    ui->labelRenderFps->setText(QString::number(m_video.renderFps()));
+    QString str;
+    if (m_video.status() >= VideoSynthesizer::Opened)
+    {
+        str = QString("渲染fps:%1  编码fps：%2").arg(double(m_video.renderFps()), 0, 'f', 1).arg(double(m_video.encodeFps()), 0, 'f', 1);
+        uint tim = m_video.encodeMSec();
+        uint h = tim / 3600000;
+        tim %= 3600000;
+        uint m = tim / 60000;
+        tim %= 60000;
+        uint s = tim / 1000;
+        static bool sw = false;
+        if (m_video.status() == VideoSynthesizer::Paused)
+        {
+            sw = !sw;
+            if (sw)
+            {
+                ui->labelRecordTime->setText("已暂停");
+            }
+        }
+        else
+        {
+            sw = false;
+        }
+        if (!sw)
+            ui->labelRecordTime->setText(QString("%1:%2:%3").arg(h,2,10,QChar('0')).arg(m,2,10,QChar('0')).arg(s,2,10,QChar('0')));
+    }
+    else
+    {
+        str = QString("渲染fps:%1").arg(double(m_video.renderFps()), 0, 'f', 1);
+    }
+    ui->labelRenderFps->setText(str);
 }
 
 void MainWindow::on_pushButtonClose_clicked()
 {
     close();
 }
+
 
 void MainWindow::on_pushButtonMinimize_clicked()
 {
@@ -430,4 +467,12 @@ void MainWindow::on_pushButtonMediaSelect_clicked(bool checked)
 {
     if (!checked && ui->stackedWidgetAddContents->isVisible() && ui->stackedWidgetAddContents->currentIndex() == 2)
         ui->pushButtonMediaSelect->setChecked(true);
+}
+
+void MainWindow::on_pushButtonMenu_clicked()
+{
+    DialogSetting dlg(this);
+    dlg.exec();
+    dlg.saveProfile();
+    ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
 }

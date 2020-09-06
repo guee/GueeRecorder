@@ -12,35 +12,72 @@ public:
     //keepMS    计算帧率的时间窗口，单位为毫秒
     void start(uint32_t keepMS = 1000)
     {
-        m_keepMS = std::min(uint32_t(1000*10), std::max(uint32_t(1), keepMS));
-        m_initPoint = std::chrono::steady_clock::now();
-        if (m_frames)
+        if (m_isPaused)
         {
-            free(m_frames);
-            m_frames = nullptr;
+            m_initPoint += std::chrono::steady_clock::now() - m_pausePoint;
+            m_isPaused = false;
         }
-        m_size = 0;
-        m_count = 0;
-        m_index = 0;
-        m_beginMS = 0;
-        m_pointMS = 0;
+        else
+        {
+            m_keepMS = std::min(uint32_t(1000*10), std::max(uint32_t(1), keepMS));
+            m_initPoint = std::chrono::steady_clock::now();
+            if (m_frames)
+            {
+                free(m_frames);
+                m_frames = nullptr;
+            }
+            m_size = 0;
+            m_count = 0;
+            m_index = 0;
+            m_beginMS = 0;
+            m_pointMS = 0;
+        }
     }
+
+    void pause()
+    {
+        if (!m_isPaused)
+        {
+            m_isPaused = true;
+            m_pausePoint = std::chrono::steady_clock::now();
+        }
+    }
+
+    bool isPaused() {return m_isPaused;}
+
     //从开始至今经过的毫秒数
     uint32_t elapsed() const
     {
+        if (m_isPaused)
+        {
+            return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(m_pausePoint - m_initPoint).count());
+        }
         return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_initPoint).count());
     }
     //取得用当前时间计算的帧率
     float fps() const
     {
         if (m_count == 0) return 0.0f;
-        uint32_t ms = elapsed();
-        float seconds = static_cast<float>(std::max(m_pointMS, ms) - m_beginMS) / 1000.0f;
+        float seconds;
+        if (m_isPaused)
+        {
+            seconds = static_cast<float>(m_pointMS - m_beginMS) / 1000.0f;
+        }
+        else
+        {
+            uint32_t ms = elapsed();
+            seconds = static_cast<float>(std::max(m_pointMS, ms) - m_beginMS) / 1000.0f;
+        }
         return static_cast<float>(m_count) / seconds;
     }
     //添加一帧，并返回帧率
     float add()
     {
+        if (m_isPaused)
+        {
+            float seconds = static_cast<float>(m_pointMS - m_beginMS) / 1000.0f;
+            return static_cast<float>(m_count) / seconds;
+        }
         if (m_count == m_size)
         {
             uint32_t* f = static_cast<uint32_t*>(malloc(static_cast<size_t>(m_size + 1024) * sizeof(uint32_t)));
@@ -96,6 +133,8 @@ private:
     uint32_t m_pointMS = 0;
     typedef	std::chrono::steady_clock::time_point	TimePoint;
     TimePoint	m_initPoint;	//初始的系统计时器数，用于计算已经经过的时间。
+    TimePoint   m_pausePoint;
+    bool m_isPaused = false;
 };
 
 #endif // FRAMERATECALC_H

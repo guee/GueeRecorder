@@ -30,8 +30,8 @@ private slots:
     void on_pushButton_clicked();
 
     void on_pushButtonRecStart_clicked();
-
     void on_pushButtonRecStop_clicked();
+    void on_pushButtonRecPause_clicked(bool checked);
 
     void on_videoSynthesizer_initDone(bool success);
     void on_fpsTimerView_timeout();
@@ -45,6 +45,9 @@ private slots:
     void on_pushButtonCameraSelect_clicked(bool checked);
 
     void on_pushButtonMediaSelect_clicked(bool checked);
+    void on_pushButtonMenu_clicked();
+
+
 private:
     Ui::MainWindow *ui;
     VideoSynthesizer& m_video;
