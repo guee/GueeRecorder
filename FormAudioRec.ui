@@ -6,85 +6,201 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>140</width>
+    <height>24</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>140</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="pushButtonSndCallback">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>24</width>
-     <height>24</height>
-    </rect>
+  <property name="styleSheet">
+   <string notr="true">QPushButton#pushButtonSndCallback{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_normal.png);
+}
+QPushButton#pushButtonSndCallback:hover{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_enter.png);
+}
+QPushButton#pushButtonSndCallback:disabled{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_disable.png);
+}
+
+QPushButton#pushButtonSndCallback:checked{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_checked_normal.png);
+}
+QPushButton#pushButtonSndCallback:checked:hover{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_checked_enter.png);
+}
+QPushButton#pushButtonSndCallback:checked:disabled{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecSpeak_checked_disable.png);
+}
+
+QPushButton#pushButtonSndInput{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_normal.png);
+}
+QPushButton#pushButtonSndInput:hover{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_enter.png);
+}
+QPushButton#pushButtonSndInput:disabled{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_disable.png);
+}
+
+QPushButton#pushButtonSndInput:checked{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_checked_normal.png);
+}
+QPushButton#pushButtonSndInput:checked:hover{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_checked_enter.png);
+}
+QPushButton#pushButtonSndInput:checked:disabled{
+border-width: 0px  0px 0px 0px;
+border-image: url(:/butRecMicrophone_checked_disable.png);
+}
+
+QLabel#labelVolCallback
+{
+border: 1px solid rgb(160, 160, 160);
+border-radius: 5px;
+color: rgb(160, 160, 160);
+}
+QLabel#labelVolCallback:hover
+{
+background-color: rgb(240, 240, 240);
+border: 1px solid rgb(240, 240, 240);
+color: rgb(160, 160, 160);
+}
+QLabel#labelVolInput
+{
+border: 1px solid rgb(160, 160, 160);
+border-radius: 5px;
+color: rgb(160, 160, 160);
+}
+QLabel#labelVolInput:hover
+{
+background-color: rgb(240, 240, 240);
+border: 1px solid rgb(240, 240, 240);
+color: rgb(160, 160, 160);
+}
+</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>2</number>
    </property>
-   <property name="minimumSize">
-    <size>
-     <width>24</width>
-     <height>24</height>
-    </size>
+   <property name="leftMargin">
+    <number>12</number>
    </property>
-   <property name="maximumSize">
-    <size>
-     <width>24</width>
-     <height>24</height>
-    </size>
+   <property name="topMargin">
+    <number>0</number>
    </property>
-   <property name="text">
-    <string>PushButton</string>
+   <property name="rightMargin">
+    <number>12</number>
    </property>
-   <property name="checkable">
-    <bool>true</bool>
+   <property name="bottomMargin">
+    <number>0</number>
    </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButtonSndInput">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>10</y>
-     <width>24</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>24</width>
-     <height>24</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>24</width>
-     <height>24</height>
-    </size>
-   </property>
-   <property name="text">
-    <string>PushButton</string>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEdit">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>50</y>
-     <width>113</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
+   <item>
+    <widget class="QPushButton" name="pushButtonSndCallback">
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelVolCallback">
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>12</width>
+       <height>1</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButtonSndMicInput">
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelVolMicInput">
+     <property name="minimumSize">
+      <size>
+       <width>24</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

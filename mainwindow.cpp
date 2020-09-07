@@ -160,10 +160,12 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             else if ( movEvt->x() >= ui->widgetTitle->width() - 5)
             {
                 hit = ( hit == Qt::TopSection ) ? Qt::TopRightSection : Qt::RightSection;
+
             }
             if ( hit != m_hitMain )
             {
                 m_hitMain = hit;
+                qDebug() << "Hit:" << m_hitMain;
                 setHitCursor(m_hitMain);
             }
         }
@@ -284,38 +286,41 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
             move( m_pressKeyGeometry.topLeft() + offset );
             break;
         case Qt::LeftSection:
-            w = qMax(m_pressKeyGeometry.width() - offset.x(), sizeHint().width());
-            h = qMax(m_pressKeyGeometry.height(), sizeHint().height());
+            w = qMax(m_pressKeyGeometry.width() - offset.x(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height(), minimumHeight());
             setGeometry(m_pressKeyGeometry.x() + m_pressKeyGeometry.width() - w, m_pressKeyGeometry.y(), w, h);
             break;
         case Qt::RightSection:
-            resize(m_pressKeyGeometry.width() + offset.x(), m_pressKeyGeometry.height());
+            w = qMax(m_pressKeyGeometry.width() + offset.x(), minimumWidth());
+            resize(w, m_pressKeyGeometry.height());
             break;
         case Qt::TopSection:
-            w = qMax(m_pressKeyGeometry.width(), sizeHint().width());
-            h = qMax(m_pressKeyGeometry.height() - offset.y(), sizeHint().height());
+            w = qMax(m_pressKeyGeometry.width(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height() - offset.y(), minimumHeight());
             setGeometry(m_pressKeyGeometry.x(), m_pressKeyGeometry.y() + m_pressKeyGeometry.height() - h, w, h);
             break;
         case Qt::BottomSection:
             resize(m_pressKeyGeometry.width(), m_pressKeyGeometry.height() + offset.y());
             break;
         case Qt::TopLeftSection:
-            w = qMax(m_pressKeyGeometry.width() - offset.x(), sizeHint().width());
-            h = qMax(m_pressKeyGeometry.height() - offset.y(), sizeHint().height());
+            w = qMax(m_pressKeyGeometry.width() - offset.x(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height() - offset.y(), minimumHeight());
             setGeometry(m_pressKeyGeometry.x() + m_pressKeyGeometry.width() - w, m_pressKeyGeometry.y() + m_pressKeyGeometry.height() - h, w, h);
             break;
         case Qt::TopRightSection:
-            w = qMax(m_pressKeyGeometry.width() + offset.x(), sizeHint().width());
-            h = qMax(m_pressKeyGeometry.height() - offset.y(), sizeHint().height());
+            w = qMax(m_pressKeyGeometry.width() + offset.x(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height() - offset.y(), minimumHeight());
             setGeometry(m_pressKeyGeometry.x(), m_pressKeyGeometry.y() + m_pressKeyGeometry.height() - h, w, h);
             break;
         case Qt::BottomLeftSection:
-            w = qMax(m_pressKeyGeometry.width() - offset.x(), sizeHint().width());
-            h = qMax(m_pressKeyGeometry.height() + offset.y(), sizeHint().height());
+            w = qMax(m_pressKeyGeometry.width() - offset.x(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height() + offset.y(), minimumHeight());
             setGeometry(m_pressKeyGeometry.x() + m_pressKeyGeometry.width() - w, m_pressKeyGeometry.y(), w, h);
             break;
         case Qt::BottomRightSection:
-            resize(m_pressKeyGeometry.width() + offset.x(), m_pressKeyGeometry.height() + offset.y());
+            w = qMax(m_pressKeyGeometry.width() + offset.x(), minimumWidth());
+            h = qMax(m_pressKeyGeometry.height() + offset.y(), minimumHeight());
+            resize(w, h);
             break;
         case Qt::NoSection:
             break;

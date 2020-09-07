@@ -170,6 +170,12 @@ QPushButton#pushButtonRemove:disabled
      <layout class="QFormLayout" name="formLayout">
       <item row="2" column="0" colspan="2">
        <widget class="QListView" name="listViewLayers">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>48</height>
+         </size>
+        </property>
         <property name="iconSize">
          <size>
           <width>16</width>
@@ -263,6 +269,9 @@ QPushButton#pushButtonRemove:disabled
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>当前选中的图层编号 / 所有图层的数量</string>
+          </property>
           <property name="text">
            <string>-/0</string>
           </property>
@@ -281,6 +290,9 @@ QPushButton#pushButtonRemove:disabled
             <width>16777215</width>
             <height>16</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>选择上一个图层</string>
           </property>
           <property name="iconSize">
            <size>
@@ -304,21 +316,8 @@ QPushButton#pushButtonRemove:disabled
             <height>16</height>
            </size>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButtonRemove">
-          <property name="minimumSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16</height>
-           </size>
+          <property name="toolTip">
+           <string>选择下一个图层</string>
           </property>
          </widget>
         </item>
@@ -339,6 +338,9 @@ QPushButton#pushButtonRemove:disabled
             <width>16777215</width>
             <height>16</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>把图层缩放到整个画面</string>
           </property>
           <property name="iconSize">
            <size>
@@ -368,6 +370,9 @@ QPushButton#pushButtonRemove:disabled
             <height>16</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>锁定选中图层的宽高比例</string>
+          </property>
           <property name="iconSize">
            <size>
             <width>24</width>
@@ -393,6 +398,9 @@ QPushButton#pushButtonRemove:disabled
             <height>16</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>把选中的图层上移一层</string>
+          </property>
           <property name="iconSize">
            <size>
             <width>32</width>
@@ -415,11 +423,33 @@ QPushButton#pushButtonRemove:disabled
             <height>16</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>把选中的图层下移一层</string>
+          </property>
           <property name="iconSize">
            <size>
             <width>24</width>
             <height>24</height>
            </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonRemove">
+          <property name="minimumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>删除选中的图层</string>
           </property>
          </widget>
         </item>
