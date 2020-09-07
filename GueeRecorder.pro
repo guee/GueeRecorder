@@ -22,6 +22,8 @@ DEFINES += QT_DEPRECATED_WARNINGS GL_GLEXT_PROTOTYPES
 SOURCES += \
     Common/FrameSynchronization.cpp \
     DialogSelectScreen.cpp \
+    FormAboutMe.cpp \
+    FormAudioRec.cpp \
     FormLayerTools.cpp \
     GlScreenSelect.cpp \
     GlWidgetPreview.cpp \
@@ -51,6 +53,8 @@ HEADERS += \
     Common/FrameRateCalc.h \
     Common/FrameSynchronization.h \
     DialogSelectScreen.h \
+    FormAboutMe.h \
+    FormAudioRec.h \
     FormLayerTools.h \
     GlScreenSelect.h \
     GlWidgetPreview.h \
@@ -82,11 +86,13 @@ HEADERS += \
 
 FORMS += \
     DialogSelectScreen.ui \
+    FormAboutMe.ui \
+    FormAudioRec.ui \
     FormLayerTools.ui \
     StackedWidgetAddLayer.ui \
     mainwindow.ui \
     DialogSetting.ui
-QMAKE_CXXFLAGS += -march='mips64r5'
+#QMAKE_CXXFLAGS += -march='mips64r5'
 #QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS_RELEASE += -O3
 #LIBS += -lgomp

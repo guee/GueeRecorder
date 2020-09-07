@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>524</width>
-    <height>321</height>
+    <width>526</width>
+    <height>370</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -142,10 +142,16 @@ background-color: rgb(255, 255, 255);
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-458</y>
-        <width>424</width>
-        <height>991</height>
+        <y>-334</y>
+        <width>414</width>
+        <height>704</height>
        </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
@@ -655,130 +661,12 @@ background-color: rgb(255, 255, 255);
          <property name="flat">
           <bool>false</bool>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <property name="topMargin">
            <number>0</number>
           </property>
-          <item alignment="Qt::AlignTop">
-           <widget class="QLabel" name="label_BigIcon">
-            <property name="minimumSize">
-             <size>
-              <width>64</width>
-              <height>64</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>64</width>
-              <height>64</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Icon</string>
-            </property>
-           </widget>
-          </item>
           <item>
-           <widget class="QWidget" name="widget_2" native="true">
-            <layout class="QGridLayout" name="gridLayout">
-             <item row="4" column="1">
-              <widget class="QLabel" name="label_Source">
-               <property name="text">
-                <string>查看源码……</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0" colspan="2">
-              <widget class="QLabel" name="label_17">
-               <property name="font">
-                <font>
-                 <pointsize>18</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Guee 录屏机 1.0.0</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_23">
-               <property name="text">
-                <string>版本日期：2020-09-05</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="label_Diary">
-               <property name="text">
-                <string>开发日记……</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-               <property name="openExternalLinks">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="label_Help">
-               <property name="text">
-                <string>使用说明……</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="label_22">
-               <property name="text">
-                <string>本程序基于 GPLv3 发布</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QGroupBox" name="groupBox_6">
-               <property name="title">
-                <string>开发及测试环境</string>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_5">
-                <item>
-                 <widget class="QLabel" name="label_18">
-                  <property name="text">
-                   <string>CPU：Loongson 3A4000</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>OS：统信UOS、龙梦Fedora28</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_21">
-                  <property name="text">
-                   <string>IDE：QtCreator 4.8.x（Qt 5.x+GCC）</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="5" column="0" colspan="2">
-              <widget class="QLabel" name="label_26">
-               <property name="text">
-                <string>作者：Guee</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
+           <widget class="FormAboutMe" name="widget_2" native="true"/>
           </item>
          </layout>
         </widget>
@@ -789,6 +677,14 @@ background-color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FormAboutMe</class>
+   <extends>QWidget</extends>
+   <header>FormAboutMe.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

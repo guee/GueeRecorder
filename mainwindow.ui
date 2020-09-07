@@ -560,7 +560,7 @@ color: rgb(160, 160, 160);
                <enum>Qt::NoFocus</enum>
               </property>
               <property name="toolTip">
-               <string>打开设置界面</string>
+               <string>弹出功能菜单</string>
               </property>
               <property name="text">
                <string>=</string>
@@ -739,44 +739,6 @@ color: rgb(160, 160, 160);
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_3">
-             <property name="minimumSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_2">
-             <property name="minimumSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -888,8 +850,6 @@ color: rgb(160, 160, 160);
   <tabstop>pushButtonScreenSelect</tabstop>
   <tabstop>pushButtonCameraSelect</tabstop>
   <tabstop>pushButtonMediaSelect</tabstop>
-  <tabstop>pushButton_3</tabstop>
-  <tabstop>pushButton_2</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>pushButtonRecStop</tabstop>
   <tabstop>pushButtonRecPause</tabstop>
