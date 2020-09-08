@@ -20,7 +20,12 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QPushButton#pushButtonSndCallback{
+   <string notr="true">QWidget#FormAudioRec
+{
+	background-color: rgb(0, 0, 0);
+}
+
+QPushButton#pushButtonSndCallback{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecSpeak_normal.png);
 }
@@ -46,28 +51,28 @@ border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecSpeak_checked_disable.png);
 }
 
-QPushButton#pushButtonSndInput{
+QPushButton#pushButtonSndMicInput{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_normal.png);
 }
-QPushButton#pushButtonSndInput:hover{
+QPushButton#pushButtonSndMicInput:hover{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_enter.png);
 }
-QPushButton#pushButtonSndInput:disabled{
+QPushButton#pushButtonSndMicInput:disabled{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_disable.png);
 }
 
-QPushButton#pushButtonSndInput:checked{
+QPushButton#pushButtonSndMicInput:checked{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_checked_normal.png);
 }
-QPushButton#pushButtonSndInput:checked:hover{
+QPushButton#pushButtonSndMicInput:checked:hover{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_checked_enter.png);
 }
-QPushButton#pushButtonSndInput:checked:disabled{
+QPushButton#pushButtonSndMicInput:checked:disabled{
 border-width: 0px  0px 0px 0px;
 border-image: url(:/butRecMicrophone_checked_disable.png);
 }
@@ -132,7 +137,7 @@ color: rgb(160, 160, 160);
       <bool>true</bool>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -183,7 +188,7 @@ color: rgb(160, 160, 160);
       <bool>true</bool>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
    </item>

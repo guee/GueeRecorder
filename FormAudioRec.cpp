@@ -10,6 +10,9 @@ FormAudioRec::FormAudioRec(QWidget *parent) :
     ui->setupUi(this);
     ui->labelVolCallback->installEventFilter(this);
     ui->labelVolMicInput->installEventFilter(this);
+
+    m_rec.startRec(SoundRecorder::SR_22050, SoundRecorder::SB_16i, SoundRecorder::SC_Stereo);
+    startTimer(100);
 }
 
 FormAudioRec::~FormAudioRec()
@@ -62,4 +65,9 @@ bool FormAudioRec::eventFilter(QObject *watched, QEvent *event)
             dev.selectDev(clkAction->data().toString());
         }
     }
+}
+
+void FormAudioRec::timerEvent(QTimerEvent *event)
+{
+    qDebug() << m_rec.callbackDev().amplitude() << "," << m_rec.micInputDev().amplitude();
 }

@@ -17,6 +17,7 @@ public:
     explicit FormAudioRec(QWidget *parent = nullptr);
     ~FormAudioRec();
     virtual bool eventFilter(QObject* watched, QEvent* event) override;
+    void timerEvent(QTimerEvent* event);
 private slots:
     void on_pushButtonSndCallback_clicked(bool checked);
 

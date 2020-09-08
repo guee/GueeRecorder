@@ -47,7 +47,6 @@ SOURCES += \
     MediaCodec/MediaWriterMp4.cpp \
     MediaCodec/MediaWriterTs.cpp \
     DialogSetting.cpp \
-    InputSource/AudioCaptureSource.cpp \
     InputSource/SoundRecorder.cpp
 
 
@@ -85,7 +84,6 @@ HEADERS += \
     MediaCodec/VideoEncoder.h \
     MediaCodec/mp4struct.h \
     DialogSetting.h \
-    InputSource/AudioCaptureSource.h \
     InputSource/SoundRecorder.h
 
 FORMS += \
