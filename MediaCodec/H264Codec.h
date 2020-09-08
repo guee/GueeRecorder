@@ -96,7 +96,7 @@ enum EVideoRateMode
 							//Cuda	RC_CQP / RC_VBR_MINQP
 };
 
-enum EAudioSampleBits
+enum ESampleBits
 {
 	eSampleBit8i = (1 << 16) | 8,
 	eSampleBit16i = (2 << 16) | 16,		//支持 AAC 编码输出
@@ -202,23 +202,23 @@ struct	SVideoParams
 	int32_t		BFramePyramid;	//0：不使用 B 帧为参考帧，1或2：使用B帧为参考帧。
 };
 
-struct	SAudioFormat
+struct	SPcmFormat
 {
-	EAudioSampleBits	sampleFormat;
-	uint32_t			samplesPerSec;	//音频的采样率
-	uint32_t			channels;		//音频的声道数，0表示没有音频，1=单声道，2=双声道
-	uint32_t			channelMask;	//如果声道数大于2，可以设置声道MASK, 参考微软WAVEFORMATEXTENSIBLE结构中dwChannelMask的说明。
+    ESampleBits sampleBits;
+    int32_t		samplesRate;	//音频的采样率
+    int32_t		channels;		//音频的声道数，0表示没有音频，1=单声道，2=双声道
+    uint32_t	channelMask;	//如果声道数大于2，可以设置声道MASK, 参考微软WAVEFORMATEXTENSIBLE结构中dwChannelMask的说明。
 };
 
-struct	SAudioParams : public SAudioFormat
+struct	SAudioParams : public SPcmFormat
 {
 	bool		enabled;		//编解码时是否需要音频
 	EAudioCodec	eCodec;			//音频编解码器
 	bool		isOnlineMode;	//是否是在线模式，即输入的声音数据是否是实时采集的。
 								//当为在线模式时，如果输入的声音采样数与实际时间有差异时，会自动修正声音数据，减少时间差异。
 	bool		useADTS;
-	uint32_t	encLevel;			//1,2,3,4 对应 aac 的 MAIN,LOW,SSR,LTP。其它值都使用LOW。
-	int32_t		bitratePerChannel;	//音频编码的码率（kbps），如果为 小于等于 0 就使用编码器支持的最大码率 / ( abs(bitratePerChannel) + 1 )。
+    uint32_t	encLevel;		//1,2,3,4 对应 aac 的 MAIN,LOW,SSR,LTP。其它值都使用LOW。
+    int32_t		bitrate;        //音频编码的码率（kbps），如果为 小于等于 0 就使用编码器支持的最大码率。
 };
 
 enum NalUnitType

@@ -457,7 +457,7 @@ bool GueeMediaStream::putAudioFrame(AUDFrame * frame)
 	}
 	if (frame->timestamp == 0)
 	{
-		frame->timestamp = m_audioFrameNum * m_aduioFrameSamples * 1000 / m_audioParams.samplesPerSec;
+        frame->timestamp = m_audioFrameNum * m_aduioFrameSamples * 1000 / m_audioParams.samplesRate;
 	}
 	else
 	{
@@ -1095,9 +1095,9 @@ void GueeMediaStream::parseADTS(const uint8_t* data)
 	//m_audioParams.eCodec = adts.ID ? AC_MP2AAC : AC_AAC;
 	m_audioParams.eCodec = AC_AAC;
 	m_audioParams.encLevel = adts.profile + 1;
-	m_audioParams.samplesPerSec = AAC_Sampling_Frequency_Table[adts.sampling_frequency_index];
+    m_audioParams.samplesRate = AAC_Sampling_Frequency_Table[adts.sampling_frequency_index];
 	m_audioParams.channels = adts.channel_configuration;
-	m_audioParams.sampleFormat = eSampleBit16i;
+    m_audioParams.sampleBits = eSampleBit16i;
 	m_aduioFrameSamples = 1024;
 	makeAAC_SequenceHeader();
 }
@@ -1108,7 +1108,7 @@ void GueeMediaStream::parseAAC_SequenceHeader(const uint8_t * data)
 	uint16_t samp = (spec >> 7) & 0x0f;
 	m_audioParams.channels = (spec >> 3) & 0x0f;
 	m_audioParams.encLevel = spec >> 11;
-	m_audioParams.samplesPerSec = AAC_Sampling_Frequency_Table[samp];
+    m_audioParams.samplesRate = AAC_Sampling_Frequency_Table[samp];
 	m_aduioFrameSamples = 1024;
 	makeAAC_SequenceHeader();
 }
@@ -1119,9 +1119,9 @@ void GueeMediaStream::makeAAC_SequenceHeader()
 	int32_t	minSub = INT_MAX;
 	for (int32_t i = 0; i < 16; ++i)
 	{
-		if (abs(AAC_Sampling_Frequency_Table[i] - int32_t(m_audioParams.samplesPerSec)) < minSub)
+        if (abs(AAC_Sampling_Frequency_Table[i] - int32_t(m_audioParams.samplesRate)) < minSub)
 		{
-			minSub = abs(AAC_Sampling_Frequency_Table[i] - int32_t(m_audioParams.samplesPerSec));
+            minSub = abs(AAC_Sampling_Frequency_Table[i] - int32_t(m_audioParams.samplesRate));
 			sampIndex = i;
 		}
 	}

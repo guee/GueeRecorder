@@ -14,33 +14,64 @@ SoundRecorder::~SoundRecorder()
     stopRec();
 }
 
-bool SoundRecorder::startRec(SampleRate rate, SampleBits bits, SampleChannel channel)
+bool SoundRecorder::startRec(int32_t rate, ESampleBits bits, int32_t channel)
 {
     QAudioFormat fmt;
     fmt.setSampleRate(rate);
     fmt.setChannelCount(channel);
-    fmt.setSampleSize(SB_16i);
-    fmt.setSampleType(bits == SB_16i ? QAudioFormat::SignedInt : QAudioFormat::Float);
+    switch (bits)
+    {
+    case eSampleBit8i:
+        fmt.setSampleSize(8);
+        fmt.setSampleType(QAudioFormat::UnSignedInt);
+        break;
+    case eSampleBit16i:
+        fmt.setSampleSize(16);
+        fmt.setSampleType(QAudioFormat::SignedInt);
+        break;
+    case eSampleBit24i:
+        fmt.setSampleSize(24);
+        fmt.setSampleType(QAudioFormat::SignedInt);
+        break;
+    case eSampleBit32i:
+        fmt.setSampleSize(32);
+        fmt.setSampleType(QAudioFormat::SignedInt);
+        break;
+    case eSampleBit24In32i:
+        fmt.setSampleSize(32);
+        fmt.setSampleType(QAudioFormat::SignedInt);
+        break;
+    case eSampleBit32f:
+        fmt.setSampleSize(32);
+        fmt.setSampleType(QAudioFormat::Float);
+        break;
+    }
     fmt.setByteOrder(QAudioFormat::LittleEndian);
     fmt.setCodec("audio/pcm");
 
-    if (m_isOpened && fmt == m_audioFormat)
+    if (m_isRecOpened && fmt == m_audioFormat)
         return  true;
     stopRec();
-    if (m_sndCallback.start(fmt) || m_sndMicInput.start(fmt))
+    m_isRecOpened = m_sndCallback.start(fmt) || m_isRecOpened;
+    m_isRecOpened = m_sndMicInput.start(fmt) || m_isRecOpened;
+    if (m_isRecOpened)
     {
         m_audioFormat = fmt;
-        m_isOpened = true;
+    }
+    else
+    {
+        m_sndCallback.stop();
+        m_sndMicInput.stop();
     }
 
-    return m_isOpened;
+    return m_isRecOpened;
 }
 
 bool SoundRecorder::stopRec()
 {
-    if (m_isOpened)
+    if (m_isRecOpened)
     {
-        m_isOpened = false;
+        m_isRecOpened = false;
         m_sndCallback.stop();
         m_sndMicInput.stop();
         return true;
@@ -146,7 +177,7 @@ bool SoundDevInfo::selectDev(const QString &dev)
         if (d.deviceName() == dev)
         {
             m_curDev = d;
-            if (m_isOpened)
+            if (m_isDevOpened)
             {
                 return start(m_format);
             }
@@ -166,7 +197,7 @@ void SoundDevInfo::setEnable(bool enable)
     if (m_isEnabled != enable)
     {
         m_isEnabled = enable;
-        if (m_isOpened)
+        if (m_isDevOpened)
         {
             if (m_audioInput)
             {
@@ -177,6 +208,7 @@ void SoundDevInfo::setEnable(bool enable)
                 else
                 {
                     m_audioInput->suspend();
+                    m_curAmplitude = 0.0;
                 }
             }
             else if (enable)
@@ -218,7 +250,13 @@ bool SoundDevInfo::start(const QAudioFormat &format)
     {
         fmt = format;
     }
-    getMaxAmplitude();
+    qDebug() << "fmt.sampleRate:" << fmt.sampleRate();
+    qDebug() << "fmt.channelCount:" << fmt.channelCount();
+    qDebug() << "fmt.sampleSize:" << fmt.sampleSize();
+    qDebug() << "fmt.sampleType:" << fmt.sampleType();
+    qDebug() << "fmt.byteOrder:" << fmt.byteOrder();
+    qDebug() << "fmt.codec:" << fmt.codec();
+    m_maxAmplitude = getMaxAmplitude(fmt);
     m_audioInput = new QAudioInput(m_curDev, fmt);
     if (m_audioInput->error() == QAudio::OpenError)
     {
@@ -242,7 +280,7 @@ bool SoundDevInfo::start(const QAudioFormat &format)
     {
         m_audioInput->suspend();
     }
-    m_isOpened = true;
+    m_isDevOpened = true;
     return true;
 }
 
@@ -255,7 +293,7 @@ void SoundDevInfo::stop()
         delete m_audioInput;
         m_audioInput = nullptr;
     }
-    m_isOpened = false;
+    m_isDevOpened = false;
 }
 
 qint64 SoundDevInfo::readData(char *data, qint64 maxlen)
@@ -322,28 +360,29 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
     return len;
 }
 
-void SoundDevInfo::getMaxAmplitude()
+quint32 SoundDevInfo::getMaxAmplitude(const QAudioFormat& format)
 {
-    switch (m_format.sampleSize()) {
+    quint32 maxAmplitude = 0;
+    switch (format.sampleSize()) {
     case 8:
-        switch (m_format.sampleType()) {
+        switch (format.sampleType()) {
         case QAudioFormat::UnSignedInt:
-            m_maxAmplitude = 255;
+            maxAmplitude = 255;
             break;
         case QAudioFormat::SignedInt:
-            m_maxAmplitude = 127;
+            maxAmplitude = 127;
             break;
         default:
             break;
         }
         break;
     case 16:
-        switch (m_format.sampleType()) {
+        switch (format.sampleType()) {
         case QAudioFormat::UnSignedInt:
-            m_maxAmplitude = 65535;
+            maxAmplitude = 65535;
             break;
         case QAudioFormat::SignedInt:
-            m_maxAmplitude = 32767;
+            maxAmplitude = 32767;
             break;
         default:
             break;
@@ -351,15 +390,15 @@ void SoundDevInfo::getMaxAmplitude()
         break;
 
     case 32:
-        switch (m_format.sampleType()) {
+        switch (format.sampleType()) {
         case QAudioFormat::UnSignedInt:
-            m_maxAmplitude = 0xffffffff;
+            maxAmplitude = 0xffffffff;
             break;
         case QAudioFormat::SignedInt:
-            m_maxAmplitude = 0x7fffffff;
+            maxAmplitude = 0x7fffffff;
             break;
         case QAudioFormat::Float:
-            m_maxAmplitude = 0x7fffffff; // Kind of
+            maxAmplitude = 0x7fffffff; // Kind of
         default:
             break;
         }
@@ -368,4 +407,5 @@ void SoundDevInfo::getMaxAmplitude()
     default:
         break;
     }
+    return maxAmplitude;
 }

@@ -67,13 +67,13 @@ bool GueeMediaWriterMp4::onWriteHeader()
 	{
 		m_defaultAudioTrackId	= add_trak(eMedTypeAudio);
 		TrackInfo&	trak = m_tracks[m_defaultAudioTrackId];
-		trak.mdhd.timeScalc = audioParams.samplesPerSec;
+        trak.mdhd.timeScalc = audioParams.samplesRate;
 		Mp4Box*	mp4aBox = new Mp4Box('mp4a', trak.stsdBox, sizeof(SampleEntryAudio));
 		SampleEntryAudio*	a = (SampleEntryAudio*)&mp4aBox->data.front();
 		a->dataReferenceIndex = endianFix16(1);
 		a->channelCount = endianFix16(audioParams.channels);
-		a->sampleSize = endianFix16(audioParams.sampleFormat & 0xFFFF);
-		a->sampleRate = endianFix32(audioParams.samplesPerSec);
+        a->sampleSize = endianFix16(audioParams.sampleBits & 0xFFFF);
+        a->sampleRate = endianFix32(audioParams.samplesRate);
 
 		putByte(0);	//Box_FillHead
 		putBE24(0);
@@ -119,8 +119,8 @@ bool GueeMediaWriterMp4::onWriteHeader()
 		putByte(0x15);	//(streamType << 3) + (upStream << 1) + reserved(0)
 		uint32_t	bitrateOffset = cacheSize();
 		putBE24(680);	//bufferSizeDB 不知道怎么计算的，先写个固定值
-		putBE32(audioParams.bitratePerChannel);	//maxBitrate;
-		putBE32(audioParams.bitratePerChannel);	//avgBitrate;
+        putBE32(audioParams.bitrate / audioParams.channels);	//maxBitrate;
+        putBE32(audioParams.bitrate / audioParams.channels);	//avgBitrate;
 
 		putByte(5);	//tag type: DecSpecificInfotag
 		int32_t	decSpecSize = 0;

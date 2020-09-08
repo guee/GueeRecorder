@@ -267,6 +267,21 @@ bool VideoSynthesizer::resetDefaultOption()
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);
     setFrameRate(5.0f);
+
+    m_audParams.enabled = true;
+    m_audParams.eCodec = AC_AAC;
+    m_audParams.isOnlineMode = true;
+    m_audParams.useADTS = false;
+    m_audParams.encLevel = 1;
+    m_audParams.bitrate = 256;
+
+    m_audParams.sampleBits = eSampleBit16i;
+    m_audParams.samplesRate = 22050;
+    m_audParams.channels = 2;
+    m_audParams.channelMask = 0;
+
+
+
     return true;
 }
 
@@ -375,14 +390,101 @@ bool VideoSynthesizer::setGopMax(int32_t gopMax)
     return true;
 }
 
+bool VideoSynthesizer::enableAudio(bool enable)
+{
+    bool ret = false;
+    m_audParams.enabled = enable;
+    if (enable)
+        ret = m_audRecorder.startRec(m_audParams.samplesRate, m_audParams.sampleBits, m_audParams.channels);
+    else
+        ret = m_audRecorder.stopRec();
+    return ret;
+}
+
+bool VideoSynthesizer::setSampleBits(ESampleBits bits)
+{
+    bool ret = true;
+    if (bits != eSampleBit16i && bits != eSampleBit32i && bits != eSampleBit32f)
+    {
+        return false;
+    }
+    if (bits != m_audParams.sampleBits)
+    {
+        m_audParams.sampleBits = bits;
+        if (m_audParams.enabled)
+        {
+            ret = enableAudio(true);
+        }
+    }
+    return ret;
+}
+
+bool VideoSynthesizer::setSampleRate(int32_t rate)
+{
+    bool ret = true;
+    if (rate != 11025 && rate != 22050 && rate != 44100)
+    {
+        return false;
+    }
+    if (rate != m_audParams.samplesRate)
+    {
+        m_audParams.samplesRate = rate;
+        if (m_audParams.enabled)
+        {
+            ret = enableAudio(true);
+        }
+    }
+    return ret;
+}
+
+bool VideoSynthesizer::setChannels(int32_t channels)
+{
+    bool ret = true;
+    if (channels != 1 && channels != 2)
+    {
+        return false;
+    }
+    if (channels != m_audParams.channels)
+    {
+        m_audParams.channels = channels;
+        if (m_audParams.enabled)
+        {
+            ret = enableAudio(true);
+        }
+    }
+    return ret;
+}
+
+bool VideoSynthesizer::setAudioBitrate(int32_t bitrate)
+{
+    bool ret = true;
+    if (bitrate < 0 || bitrate > 256)
+    {
+        return false;
+    }
+    if (bitrate != m_audParams.bitrate)
+    {
+        m_audParams.bitrate = bitrate;
+        if (m_audParams.enabled)
+        {
+            ret = enableAudio(true);
+        }
+    }
+    return ret;
+}
+
 bool VideoSynthesizer::setRefFrames(int refFrames)
 {
+    if (refFrames < 0 || refFrames > 8)
+        return false;
     m_vidParams.refFrames = refFrames;
     return true;
 }
 
 bool VideoSynthesizer::setBFrames(int bFrames)
 {
+    if (bFrames < 0 || bFrames > 8)
+        return false;
     m_vidParams.BFrames = bFrames;
     return true;
 }

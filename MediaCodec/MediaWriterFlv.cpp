@@ -102,9 +102,9 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		m_isAdtsAAC = audioParams.useADTS;
 		//音频编码的4个属性
 		putAmfString( "audiodatarate" );
-		putAmfDouble(audioParams.bitratePerChannel );
+        putAmfDouble(audioParams.bitrate / audioParams.channels );
 		putAmfString( "audiosamplerate" );
-		putAmfDouble(audioParams.samplesPerSec );
+        putAmfDouble(audioParams.samplesRate );
 		//putAmfString("audiosamplesize");
 		//putAmfDouble(audioParams.encInputBits / 8 * audioParams.channels);
 		putAmfString( "stereo" );
@@ -192,17 +192,17 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		putBE24( 0 ); // StreamID - Always 0
 
 		m_aacTagHeader	= 0;
-		if (audioParams.samplesPerSec < 11025 )
+        if (audioParams.samplesRate < 11025 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_SPECIAL;
-		else if (audioParams.samplesPerSec < 22050 )
+        else if (audioParams.samplesRate < 22050 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_11025HZ;
-		else if (audioParams.samplesPerSec < 44100 )
+        else if (audioParams.samplesRate < 44100 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_22050HZ;
 		else
 			m_aacTagHeader	|= FLV_SAMPLERATE_44100HZ;
 
 		m_aacTagHeader	|= (audioParams.channels == 1 ? FLV_MONO : FLV_STEREO );
-		m_aacTagHeader	|= ( (audioParams.sampleFormat & 0xFF ) == 8 ? FLV_SAMPLESSIZE_8BIT : FLV_SAMPLESSIZE_16BIT );
+        m_aacTagHeader	|= ( (audioParams.sampleBits & 0xFF ) == 8 ? FLV_SAMPLESSIZE_8BIT : FLV_SAMPLESSIZE_16BIT );
 		m_aacTagHeader	|= (flvCodecAudio);
 		putByte( m_aacTagHeader );
 		putByte( 0 );

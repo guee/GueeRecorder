@@ -6,6 +6,7 @@
 #include "MediaCodec/MediaWriterFlv.h"
 #include "MediaCodec/MediaWriterMp4.h"
 #include "MediaCodec/MediaWriterTs.h"
+#include "MediaCodec/SoundRecorder.h"
 
 #include "ShaderProgramPool.h"
 #include <QOffscreenSurface>
@@ -67,6 +68,20 @@ public:
     int32_t refFrames() const {return m_vidParams.refFrames;}
     bool setBFrames(int32_t bFrames);
     int32_t bFrames() const {return m_vidParams.BFrames;}
+
+    bool enableAudio(bool enable);
+    bool audioIsEnabled() const { return m_audParams.enabled;}
+    bool setSampleBits(ESampleBits bits);
+    ESampleBits sampleBits() const { return m_audParams.sampleBits;}
+    bool setSampleRate(int32_t rate);
+    int32_t sampleRate() const { return m_audParams.samplesRate; }
+    bool setChannels(int32_t channels);
+    int32_t channels() const { return m_audParams.channels; }
+    bool setAudioBitrate(int32_t bitrate );
+    int32_t audioBitrate() const { return m_audParams.bitrate; }
+
+    SoundDevInfo& audCallbackDev() { return m_audRecorder.callbackDev(); }
+    SoundDevInfo& audMicInputDev() { return m_audRecorder.micInputDev(); }
 private:
     VideoSynthesizer();
     SVideoParams m_vidParams;
@@ -96,7 +111,7 @@ private:
     GueeVideoEncoder m_vidEncoder;
     GueeMediaStream m_medStream;
     QVector<GueeMediaWriter*> m_writers;
-uint8_t * m_tempBuff = nullptr;
+    SoundRecorder m_audRecorder;
 
     bool initYuvFbo();
     void uninitYubFbo();

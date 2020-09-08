@@ -73,13 +73,28 @@ bool DialogSetting::loadProfile()
 
     VideoSynthesizer& vid = VideoSynthesizer::instance();
     ini.beginGroup("Video");
-    vid.setSize(ini.value("width").toInt(), ini.value("height").toInt());
-    vid.setFrameRate(ini.value("fps").toFloat());
-    vid.setBitrate(ini.value("bps").toInt());
-    vid.setBitrateMode(EVideoRateMode(ini.value("bps-mode").toInt()));
-    vid.setPreset(EVideoPreset_x264(ini.value("preset").toInt()));
-    vid.setGopMax(ini.value("gop-max").toInt());
-    ScreenSource::setRecordCursor(ini.value("recCursor").toBool());
+    vid.setSize(ini.value("width", vid.width()).toInt(),
+                ini.value("height", vid.height()).toInt());
+    vid.setFrameRate(ini.value("fps", vid.frameRate()).toFloat());
+    vid.setBitrate(ini.value("bps", vid.bitrate()).toInt());
+    vid.setBitrateMode(EVideoRateMode(ini.value("bps-mode", vid.bitrateMode()).toInt()));
+    vid.setPreset(EVideoPreset_x264(ini.value("preset", vid.preset()).toInt()));
+    vid.setGopMax(ini.value("gop-max", vid.gopMax()).toInt());
+    ScreenSource::setRecordCursor(ini.value("recCursor", true).toBool());
+    ini.endGroup();
+
+    ini.beginGroup("Audio");
+    vid.setSampleBits(ESampleBits(ini.value("bits", vid.sampleBits()).toInt()));
+    vid.setSampleRate(ini.value("fps", vid.sampleRate()).toInt());
+    vid.setChannels(ini.value("channels", vid.channels()).toInt());
+    vid.setAudioBitrate(ini.value("bps", vid.bitrate()).toInt());
+    vid.audCallbackDev().selectDev(ini.value("cbDev", "").toString());
+    vid.audCallbackDev().setEnable(ini.value("cbEnabled", true).toBool());
+    vid.audCallbackDev().setVolume(ini.value("cbVolume", 1.0).toReal());
+    vid.audMicInputDev().selectDev(ini.value("micDev", "").toString());
+    vid.audMicInputDev().setEnable(ini.value("micEnabled", true).toBool());
+    vid.audMicInputDev().setVolume(ini.value("micVolume", 1.0).toReal());
+    vid.enableAudio(ini.value("enabled", true).toBool());
     ini.endGroup();
     return true;
 }
@@ -107,14 +122,26 @@ bool DialogSetting::saveProfile()
     ini.beginGroup("Video");
     ini.setValue("width", vid.width());
     ini.setValue("height", vid.height());
-
     ini.setValue("fps", vid.frameRate());
     ini.setValue("bps", vid.bitrate());
     ini.setValue("bps-mode", vid.bitrateMode());
     ini.setValue("preset", vid.preset());
     ini.setValue("gop-max", vid.gopMax());
     ini.setValue("recCursor", ScreenSource::isRecordCursor());
+    ini.endGroup();
 
+    ini.beginGroup("Audio");
+    ini.setValue("enabled", vid.audioIsEnabled());
+    ini.setValue("bits", vid.sampleBits());
+    ini.setValue("fps", vid.sampleRate());
+    ini.setValue("channels", vid.channels());
+    ini.setValue("bps", vid.bitrate());
+    ini.setValue("cbDev", vid.audCallbackDev().currentDev());
+    ini.setValue("cbEnabled", vid.audCallbackDev().isEnabled());
+    ini.setValue("cbVolume", vid.audCallbackDev().volume());
+    ini.setValue("micDev", vid.audMicInputDev().currentDev());
+    ini.setValue("micEnabled", vid.audMicInputDev().isEnabled());
+    ini.setValue("micVolume", vid.audMicInputDev().volume());
     ini.endGroup();
     return true;
 }
@@ -457,16 +484,37 @@ void DialogSetting::setParamsToUi()
     else if (userSetting().fileType.compare("mp4", Qt::CaseInsensitive) == 0)
         ui->radioButton_FileMp4->setChecked(true);
 
+    ui->checkBox_RecAudio->setChecked(m_video.audioIsEnabled());
+    ui->spinBox_AudioBitrate->setValue(m_video.sampleBits());
+
+    if ( m_video.sampleRate() == 11025)
+        ui->radioButton_Sample11025->setChecked(true);
+    else if ( m_video.sampleRate() == 22050)
+        ui->radioButton_Sample22050->setChecked(true);
+    else if ( m_video.sampleRate() == 44100)
+        ui->radioButton_Sample44100->setChecked(true);
+
+    if (m_video.sampleBits() == eSampleBit16i)
+        ui->radioButton_SampleBit16i->setChecked(true);
+    else if (m_video.sampleBits() == eSampleBit32i)
+        ui->radioButton_SampleBit32i->setChecked(true);
+    else if (m_video.sampleBits() == eSampleBit32f)
+        ui->radioButton_SampleBit32f->setChecked(true);
+
+    if (m_video.channels() == 1)
+        ui->radioButton_SampleMono->setChecked(true);
+    else
+        ui->radioButton_SampleStereo->setChecked(true);
 }
 
 void DialogSetting::on_radioButton_FileMp4_clicked(bool checked)
 {
-    userSetting().fileType = "mp4";
+    if (checked) userSetting().fileType = "mp4";
 }
 
 void DialogSetting::on_radioButton_FileFlv_clicked(bool checked)
 {
-    userSetting().fileType = "flv";
+    if (checked) userSetting().fileType = "flv";
 }
 
 void DialogSetting::on_lineEdit_Filename_editingFinished()
@@ -477,4 +525,60 @@ void DialogSetting::on_lineEdit_Filename_editingFinished()
         userSetting().fileName = QApplication::applicationName();
         ui->lineEdit_Filename->setText(userSetting().fileName);
     }
+}
+
+void DialogSetting::on_checkBox_RecAudio_clicked(bool checked)
+{
+    m_video.enableAudio(checked);
+}
+
+void DialogSetting::on_horizontalSlider_AudioBitrate_valueChanged(int value)
+{
+    ui->spinBox_AudioBitrate->setValue(value);
+}
+
+void DialogSetting::on_spinBox_AudioBitrate_valueChanged(int arg1)
+{
+    ui->horizontalSlider_AudioBitrate->setValue(arg1);
+    m_video.setAudioBitrate(arg1);
+}
+
+void DialogSetting::on_radioButton_Sample11025_clicked(bool checked)
+{
+    if (checked) m_video.setSampleRate(11025);
+}
+
+void DialogSetting::on_radioButton_Sample22050_clicked(bool checked)
+{
+    if (checked) m_video.setSampleRate(22050);
+}
+
+void DialogSetting::on_radioButton_Sample44100_clicked(bool checked)
+{
+    if (checked) m_video.setSampleRate(44100);
+}
+
+void DialogSetting::on_radioButton_SampleBit16i_clicked(bool checked)
+{
+    if (checked) m_video.setSampleBits(eSampleBit16i);
+}
+
+void DialogSetting::on_radioButton_SampleBit32i_clicked(bool checked)
+{
+    if (checked) m_video.setSampleBits(eSampleBit32i);
+}
+
+void DialogSetting::on_radioButton_SampleBit32f_clicked(bool checked)
+{
+    if (checked) m_video.setSampleBits(eSampleBit32f);
+}
+
+void DialogSetting::on_radioButton_SampleMono_clicked(bool checked)
+{
+    if (checked) m_video.setChannels(1);
+}
+
+void DialogSetting::on_radioButton_SampleStereo_clicked(bool checked)
+{
+    if (checked) m_video.setChannels(2);
 }

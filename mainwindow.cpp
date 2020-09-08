@@ -59,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     DialogSetting::loadProfile();
+    ui->widget_AudioRec->resetAudioRecordUI();
 
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
 
@@ -365,6 +366,7 @@ void MainWindow::on_pushButtonRecStart_clicked()
     path.append(DialogSetting::userSetting().fileType);
     if (m_video.open(path))
     {
+        ui->pushButtonMenu->setDisabled(true);
         m_video.play();
     }
 }
@@ -373,6 +375,7 @@ void MainWindow::on_pushButtonRecStop_clicked()
 {
     ui->stackedWidgetRecControl->setCurrentIndex(0);
     m_video.close();
+    ui->pushButtonMenu->setDisabled(false);
 }
 
 void MainWindow::on_pushButtonRecPause_clicked(bool checked)
@@ -480,4 +483,5 @@ void MainWindow::on_pushButtonMenu_clicked()
     dlg.exec();
     dlg.saveProfile();
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
+    ui->widget_AudioRec->resetAudioRecordUI();
 }

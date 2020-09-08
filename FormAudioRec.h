@@ -3,7 +3,9 @@
 
 #include <QWidget>
 #include <QAudioInput>
-#include "./InputSource/SoundRecorder.h"
+#include "./MediaCodec/SoundRecorder.h"
+
+#include "VdeoSynthesizer.h"
 
 namespace Ui {
 class FormAudioRec;
@@ -18,14 +20,21 @@ public:
     ~FormAudioRec();
     virtual bool eventFilter(QObject* watched, QEvent* event) override;
     void timerEvent(QTimerEvent* event);
+    void resetAudioRecordUI();
 private slots:
     void on_pushButtonSndCallback_clicked(bool checked);
 
     void on_pushButtonSndMicInput_clicked(bool checked);
 
+    void on_pushButtonVolMic_clicked();
+
+    void on_pushButtonVolCB_clicked();
+
 private:
     Ui::FormAudioRec *ui;
-    SoundRecorder   m_rec;
+    VideoSynthesizer& m_video;
+
+    void popupRecDevs(const QPoint& pos, SoundDevInfo& dev);
 };
 
 #endif // FORMAUDIOREC_H

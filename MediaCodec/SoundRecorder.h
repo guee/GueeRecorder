@@ -4,6 +4,7 @@
 #include <QAudioDeviceInfo>
 #include <QAudioInput>
 #include <QList>
+#include "H264Codec.h"
 
 class SoundRecorder;
 class SoundDevInfo : private QIODevice
@@ -40,13 +41,13 @@ private:
 
     QAudioFormat m_format;
     QAudioInput* m_audioInput = nullptr;
-    bool m_isOpened = false;
-    qreal   m_volume = -1.0;
+    bool m_isDevOpened = false;
+    qreal m_volume = -1.0;
 
     quint32 m_maxAmplitude = 0;
     qreal m_curAmplitude = 0.0; // 0.0 <= m_level <= 1.0
 
-    void getMaxAmplitude();
+    quint32 getMaxAmplitude(const QAudioFormat& format);
 };
 
 class SoundRecorder
@@ -58,28 +59,12 @@ public:
     SoundDevInfo& callbackDev() { return m_sndCallback; }
     SoundDevInfo& micInputDev() { return m_sndMicInput; }
 
-    enum SampleRate
-    {
-        SR_11025 = 11025,
-        SR_22050 = 22050,
-        SR_44100 = 44100
-    };
-    enum SampleBits
-    {
-        SB_16i = 16,
-        SB_32f = 32
-    };
-    enum SampleChannel
-    {
-        SC_Mono = 1,
-        SC_Stereo = 2
-    };
-
-    bool startRec(SampleRate rate, SampleBits bits, SampleChannel channel);
+    bool startRec(int32_t rate, ESampleBits bits, int32_t channel);
     bool stopRec();
+    bool isOpened() const {return m_isRecOpened;}
 private:
     friend SoundDevInfo;
-    bool m_isOpened = false;
+    bool m_isRecOpened = false;
     QAudioFormat m_audioFormat;
     SoundDevInfo m_sndCallback;
     SoundDevInfo m_sndMicInput;

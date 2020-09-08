@@ -1,7 +1,6 @@
 #pragma once
 
 #include "x264.h"
-#include "VideoCodec.h"
 #include <QtCore>
 #include "MediaStream.h"
 #include "./Common/FrameRateCalc.h"

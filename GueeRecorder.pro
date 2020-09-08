@@ -47,7 +47,8 @@ SOURCES += \
     MediaCodec/MediaWriterMp4.cpp \
     MediaCodec/MediaWriterTs.cpp \
     DialogSetting.cpp \
-    InputSource/SoundRecorder.cpp
+    ButtonWithVolume.cpp \
+    MediaCodec/SoundRecorder.cpp
 
 
 HEADERS += \
@@ -73,18 +74,17 @@ HEADERS += \
     mainwindow.h \
     precompile.h \
     MediaCodec/VideoEncoder.h \
-    MediaCodec/VideoCodec.h \
     MediaCodec/H264Codec.h \
     MediaCodec/MediaStream.h \
     MediaCodec/MediaWriter.h \
     MediaCodec/MediaWriterFlv.h \
     MediaCodec/MediaWriterMp4.h \
     MediaCodec/MediaWriterTs.h \
-    MediaCodec/VideoCodec.h \
     MediaCodec/VideoEncoder.h \
     MediaCodec/mp4struct.h \
     DialogSetting.h \
-    InputSource/SoundRecorder.h
+    ButtonWithVolume.h \
+    MediaCodec/SoundRecorder.h
 
 FORMS += \
     DialogSelectScreen.ui \
