@@ -22,6 +22,11 @@ void ButtonWithVolume::paintEvent(QPaintEvent *event)
     QPainter pnt(this);
    // pnt.eraseRect(rect());
     pnt.drawImage(rect(), m_imgWave, m_imgWave.rect());
+    QFont fnt(this->font());
+    fnt.setPixelSize(8);
+    pnt.setFont(fnt);
+    pnt.setPen(QColor(255,255,255, 160));
+    pnt.drawText(QRect(0,0,width(), 12), Qt::AlignCenter, QString("%1%").arg(int(m_volume*100)));
 }
 
 void ButtonWithVolume::updateAmplitude(qreal amp)
@@ -30,7 +35,7 @@ void ButtonWithVolume::updateAmplitude(qreal amp)
     uint8_t* pix = m_imgWave.bits();
     uint8_t* las = pix + (m_imgWave.width() - 1) * 4;
     int siz = m_imgWave.bytesPerLine();
-    int hei = qMax(1, int(amp * m_imgWave.height()));
+    int hei = qMax(1, int(amp * m_imgWave.height() / m_volume));
     int lmt = m_imgWave.height() - hei;
     //qDebug() << hei << m_imgWave.height();
     for (int y = 0; y < m_imgWave.height(); ++y)
@@ -49,4 +54,9 @@ void ButtonWithVolume::updateAmplitude(qreal amp)
         las += siz;
     }
     update();
+}
+
+void ButtonWithVolume::updateVolume(qreal volume)
+{
+    m_volume = volume;
 }

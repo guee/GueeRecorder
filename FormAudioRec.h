@@ -18,7 +18,6 @@ class FormAudioRec : public QWidget
 public:
     explicit FormAudioRec(QWidget *parent = nullptr);
     ~FormAudioRec();
-    virtual bool eventFilter(QObject* watched, QEvent* event) override;
     void timerEvent(QTimerEvent* event);
     void resetAudioRecordUI();
 private slots:
@@ -34,7 +33,7 @@ private:
     Ui::FormAudioRec *ui;
     VideoSynthesizer& m_video;
 
-    void popupRecDevs(const QPoint& pos, SoundDevInfo& dev);
+    void popupRecDevs(const QPoint& pos, bool isCallbackDev);
 };
 
 #endif // FORMAUDIOREC_H

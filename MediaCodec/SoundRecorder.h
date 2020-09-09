@@ -4,14 +4,18 @@
 #include <QAudioDeviceInfo>
 #include <QAudioInput>
 #include <QList>
+#include <QThread>
+#include <QMutex>
+
 #include "H264Codec.h"
 #include "faac.h"
+#include "MediaStream.h"
 
 class SoundRecorder;
 class SoundDevInfo : private QIODevice
 {
 public:
-    ~SoundDevInfo();
+    ~SoundDevInfo() override;
     bool isCallbackType() const;
     QStringList availableDev(bool refresh);
     QString defaultDev();
@@ -45,13 +49,25 @@ private:
     bool m_isDevOpened = false;
     qreal m_volume = -1.0;
 
-    quint32 m_maxAmplitude = 0;
-    qreal m_curAmplitude = 0.0; // 0.0 <= m_level <= 1.0
+    qreal m_curAmplitude = 0.0;
 
-    quint32 getMaxAmplitude(const QAudioFormat& format);
+    uint8_t* m_currentBuffer = nullptr;
+    ulong m_bufferUsedSize = 0;
+    QMutex m_mutexPending;
+    QMutex m_mutexIdling;
+    QList<uint8_t*> m_pending;
+    QList<uint8_t*> m_idling;
+    bool m_needResample = false;
+
+    void initResample();
+    void uninitResample();
+    uint8_t* popPendBuffer();
+    uint8_t* popIdleBuffer();
+    void pushPendBuffer(uint8_t* buf);
+    void pushIdleBuffer(uint8_t* buf);
 };
 
-class SoundRecorder
+class SoundRecorder : private QThread
 {
 public:
     SoundRecorder();
@@ -62,13 +78,32 @@ public:
 
     bool startRec(int32_t rate, ESampleBits bits, int32_t channel);
     bool stopRec();
-    bool isOpened() const {return m_isRecOpened;}
+    bool isOpened() const {return m_status >= Opened;}
+
+    bool startEncode( const SAudioParams* audioParams );
+    void endEncode();
+    bool isEncodeing() const {return m_status >= recording;}
 private:
+    void run();
     friend SoundDevInfo;
-    bool m_isRecOpened = false;
+    enum RecStatus
+    {
+        NoOpen,         //没有打开
+        Opened,         //已经打开成功
+        recording,      //正在录制
+        Paused,         //暂停中
+    };
+    RecStatus m_status = NoOpen;
     QAudioFormat m_audioFormat;
     SoundDevInfo m_sndCallback;
     SoundDevInfo m_sndMicInput;
+    GueeMediaStream* m_mediaStream = nullptr;
+    faacEncHandle  m_faacHandle = nullptr;
+    SAudioParams   m_audioParams;
+    ulong       m_bytesPerSample;
+    ulong       m_bytesPerFrame;
+    ulong       m_samplesPerFrame;
+    ulong       m_maxOutByteNum;
 };
 
 #endif // SOUNDRECORD_H

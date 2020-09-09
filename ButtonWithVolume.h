@@ -9,8 +9,10 @@ public:
     ButtonWithVolume(QWidget* parent);
     void paintEvent(QPaintEvent* event);
     void updateAmplitude(qreal amp);
+    void updateVolume(qreal volume);
 private:
     qreal m_amplitude = 0.0;
+    qreal m_volume = 0.0;
     QImage m_imgWave;
 };
 

@@ -6,7 +6,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
 CONFIG += c++11 precompile_header
 PRECOMPILED_HEADER = precompile.h
-LIBS += -lX11 -lXfixes -lXinerama -lXext -lx264
+LIBS += -lX11 -lXfixes -lXinerama -lXext -lx264 -lfaac
 #LIBS += -lavformat -lavcodec -lavutil -lswscale -lX11 -lXext -lXfixes -lasound -ljack -ljacknet -lasound -lpulse -lXi -lXinerama
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -48,7 +48,8 @@ SOURCES += \
     MediaCodec/MediaWriterTs.cpp \
     DialogSetting.cpp \
     ButtonWithVolume.cpp \
-    MediaCodec/SoundRecorder.cpp
+    MediaCodec/SoundRecorder.cpp \
+    FormVolumeAction.cpp
 
 
 HEADERS += \
@@ -84,7 +85,8 @@ HEADERS += \
     MediaCodec/mp4struct.h \
     DialogSetting.h \
     ButtonWithVolume.h \
-    MediaCodec/SoundRecorder.h
+    MediaCodec/SoundRecorder.h \
+    FormVolumeAction.h
 
 FORMS += \
     DialogSelectScreen.ui \
@@ -93,7 +95,8 @@ FORMS += \
     FormLayerTools.ui \
     StackedWidgetAddLayer.ui \
     mainwindow.ui \
-    DialogSetting.ui
+    DialogSetting.ui \
+    FormVolumeAction.ui
 #QMAKE_CXXFLAGS += -march='mips64r5'
 #QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS_RELEASE += -O3
