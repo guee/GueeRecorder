@@ -5,6 +5,7 @@
 #include <QAudioInput>
 #include <QList>
 #include "H264Codec.h"
+#include "faac.h"
 
 class SoundRecorder;
 class SoundDevInfo : private QIODevice
@@ -25,12 +26,12 @@ public:
     bool setVolume(qreal val);
     const QAudioFormat& format() const { return m_format; }
 
-    qint64 readData(char *data, qint64 maxlen) override;
-    qint64 writeData(const char *data, qint64 len) override;
 private:
     SoundDevInfo(SoundRecorder& recorder);
     bool start(const QAudioFormat& format);
     void stop();
+    qint64 readData(char *data, qint64 maxlen) override;
+    qint64 writeData(const char *data, qint64 len) override;
 
     friend SoundRecorder;
     bool m_isCallbackType = false;

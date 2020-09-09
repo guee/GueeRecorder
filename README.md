@@ -47,6 +47,8 @@
 　　　　sudo apt-get install libqt5x11extras5-dev</br>
 　　　　sudo apt-get install libxinerama-dev</br>
 　　　　sudo apt-get install libx264-dev</br>
+　　　　sudo apt-get install libfaac-dev
+
 　　　　sudo apt-get install qt5-default</br>
 　　　　sudo apt-get install qt5creator</br>
 </br>

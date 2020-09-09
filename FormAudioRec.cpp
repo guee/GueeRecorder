@@ -2,6 +2,7 @@
 #include "ui_FormAudioRec.h"
 #include <QMenu>
 #include <QDebug>
+#include <QWidgetAction>
 
 FormAudioRec::FormAudioRec(QWidget *parent) :
     QWidget(parent),
@@ -111,6 +112,10 @@ void FormAudioRec::popupRecDevs(const QPoint& pos, SoundDevInfo &dev)
         QString devDef = dev.defaultDev();
         QString devSel = dev.currentDev();
         menu.clear();
+        QWidgetAction* actVolume = new QWidgetAction(&menu);
+        QSlider* sliVolume = new QSlider(&menu);
+        actVolume->setDefaultWidget(new QSlider)
+        menu.addAction()
         for (auto &n:dev.availableDev(clkAction && (refAction == clkAction)))
         {
             QAction* act = menu.addAction(devDef == n ? QString("[默认] %1").arg(n) : n);

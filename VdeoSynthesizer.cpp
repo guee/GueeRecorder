@@ -276,7 +276,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_audParams.bitrate = 256;
 
     m_audParams.sampleBits = eSampleBit16i;
-    m_audParams.samplesRate = 22050;
+    m_audParams.sampleRate = 22050;
     m_audParams.channels = 2;
     m_audParams.channelMask = 0;
 
@@ -395,7 +395,7 @@ bool VideoSynthesizer::enableAudio(bool enable)
     bool ret = false;
     m_audParams.enabled = enable;
     if (enable)
-        ret = m_audRecorder.startRec(m_audParams.samplesRate, m_audParams.sampleBits, m_audParams.channels);
+        ret = m_audRecorder.startRec(m_audParams.sampleRate, m_audParams.sampleBits, m_audParams.channels);
     else
         ret = m_audRecorder.stopRec();
     return ret;
@@ -426,9 +426,9 @@ bool VideoSynthesizer::setSampleRate(int32_t rate)
     {
         return false;
     }
-    if (rate != m_audParams.samplesRate)
+    if (rate != m_audParams.sampleRate)
     {
-        m_audParams.samplesRate = rate;
+        m_audParams.sampleRate = rate;
         if (m_audParams.enabled)
         {
             ret = enableAudio(true);
@@ -458,19 +458,23 @@ bool VideoSynthesizer::setChannels(int32_t channels)
 bool VideoSynthesizer::setAudioBitrate(int32_t bitrate)
 {
     bool ret = true;
-    if (bitrate < 0 || bitrate > 256)
-    {
-        return false;
-    }
+    bitrate = qMin(maxAudioBitrate(), bitrate);
+    bitrate = qMax(minAudioBitrate(), bitrate);
     if (bitrate != m_audParams.bitrate)
     {
         m_audParams.bitrate = bitrate;
-        if (m_audParams.enabled)
-        {
-            ret = enableAudio(true);
-        }
     }
     return ret;
+}
+
+int32_t VideoSynthesizer::maxAudioBitrate() const
+{
+    return (unsigned int)(6144.0 * double(m_audParams.sampleRate) / 1024.5) * m_audParams.channels / 1024;
+}
+
+int32_t VideoSynthesizer::minAudioBitrate() const
+{
+    return 8 * m_audParams.channels;
 }
 
 bool VideoSynthesizer::setRefFrames(int refFrames)

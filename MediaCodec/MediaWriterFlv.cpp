@@ -104,7 +104,7 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		putAmfString( "audiodatarate" );
         putAmfDouble(audioParams.bitrate / audioParams.channels );
 		putAmfString( "audiosamplerate" );
-        putAmfDouble(audioParams.samplesRate );
+        putAmfDouble(audioParams.sampleRate );
 		//putAmfString("audiosamplesize");
 		//putAmfDouble(audioParams.encInputBits / 8 * audioParams.channels);
 		putAmfString( "stereo" );
@@ -192,11 +192,11 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		putBE24( 0 ); // StreamID - Always 0
 
 		m_aacTagHeader	= 0;
-        if (audioParams.samplesRate < 11025 )
+        if (audioParams.sampleRate < 11025 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_SPECIAL;
-        else if (audioParams.samplesRate < 22050 )
+        else if (audioParams.sampleRate < 22050 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_11025HZ;
-        else if (audioParams.samplesRate < 44100 )
+        else if (audioParams.sampleRate < 44100 )
 			m_aacTagHeader	|= FLV_SAMPLERATE_22050HZ;
 		else
 			m_aacTagHeader	|= FLV_SAMPLERATE_44100HZ;

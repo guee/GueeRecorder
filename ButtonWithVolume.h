@@ -11,6 +11,7 @@ public:
     void updateAmplitude(qreal amp);
 private:
     qreal m_amplitude = 0.0;
+    QImage m_imgWave;
 };
 
 #endif // BUTTONWITHVOLUME_H

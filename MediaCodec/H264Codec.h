@@ -205,7 +205,7 @@ struct	SVideoParams
 struct	SPcmFormat
 {
     ESampleBits sampleBits;
-    int32_t		samplesRate;	//音频的采样率
+    int32_t		sampleRate;	//音频的采样率
     int32_t		channels;		//音频的声道数，0表示没有音频，1=单声道，2=双声道
     uint32_t	channelMask;	//如果声道数大于2，可以设置声道MASK, 参考微软WAVEFORMATEXTENSIBLE结构中dwChannelMask的说明。
 };

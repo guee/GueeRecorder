@@ -67,13 +67,13 @@ bool GueeMediaWriterMp4::onWriteHeader()
 	{
 		m_defaultAudioTrackId	= add_trak(eMedTypeAudio);
 		TrackInfo&	trak = m_tracks[m_defaultAudioTrackId];
-        trak.mdhd.timeScalc = audioParams.samplesRate;
+        trak.mdhd.timeScalc = audioParams.sampleRate;
 		Mp4Box*	mp4aBox = new Mp4Box('mp4a', trak.stsdBox, sizeof(SampleEntryAudio));
 		SampleEntryAudio*	a = (SampleEntryAudio*)&mp4aBox->data.front();
 		a->dataReferenceIndex = endianFix16(1);
 		a->channelCount = endianFix16(audioParams.channels);
         a->sampleSize = endianFix16(audioParams.sampleBits & 0xFFFF);
-        a->sampleRate = endianFix32(audioParams.samplesRate);
+        a->sampleRate = endianFix32(audioParams.sampleRate);
 
 		putByte(0);	//Box_FillHead
 		putBE24(0);

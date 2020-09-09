@@ -74,11 +74,13 @@ public:
     bool setSampleBits(ESampleBits bits);
     ESampleBits sampleBits() const { return m_audParams.sampleBits;}
     bool setSampleRate(int32_t rate);
-    int32_t sampleRate() const { return m_audParams.samplesRate; }
+    int32_t sampleRate() const { return m_audParams.sampleRate; }
     bool setChannels(int32_t channels);
     int32_t channels() const { return m_audParams.channels; }
     bool setAudioBitrate(int32_t bitrate );
     int32_t audioBitrate() const { return m_audParams.bitrate; }
+    int32_t maxAudioBitrate() const;
+    int32_t minAudioBitrate() const;
 
     SoundDevInfo& audCallbackDev() { return m_audRecorder.callbackDev(); }
     SoundDevInfo& audMicInputDev() { return m_audRecorder.micInputDev(); }

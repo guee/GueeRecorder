@@ -485,7 +485,9 @@ void DialogSetting::setParamsToUi()
         ui->radioButton_FileMp4->setChecked(true);
 
     ui->checkBox_RecAudio->setChecked(m_video.audioIsEnabled());
-    ui->spinBox_AudioBitrate->setValue(m_video.sampleBits());
+    ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+    ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+    ui->spinBox_AudioBitrate->setValue(m_video.audioBitrate());
 
     if ( m_video.sampleRate() == 11025)
         ui->radioButton_Sample11025->setChecked(true);
@@ -541,21 +543,46 @@ void DialogSetting::on_spinBox_AudioBitrate_valueChanged(int arg1)
 {
     ui->horizontalSlider_AudioBitrate->setValue(arg1);
     m_video.setAudioBitrate(arg1);
+    ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
 }
 
 void DialogSetting::on_radioButton_Sample11025_clicked(bool checked)
 {
-    if (checked) m_video.setSampleRate(11025);
+    if (checked)
+    {
+        int oldSample = m_video.sampleRate();
+        int oldBitrate = m_video.audioBitrate();
+        m_video.setSampleRate(11025);
+        ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setValue( oldBitrate * 11025 / oldSample );
+    }
 }
 
 void DialogSetting::on_radioButton_Sample22050_clicked(bool checked)
 {
-    if (checked) m_video.setSampleRate(22050);
+    if (checked)
+    {
+        int oldSample = m_video.sampleRate();
+        int oldBitrate = m_video.audioBitrate();
+        m_video.setSampleRate(22050);
+        ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setValue( oldBitrate * 22050 / oldSample );
+    }
 }
 
 void DialogSetting::on_radioButton_Sample44100_clicked(bool checked)
 {
-    if (checked) m_video.setSampleRate(44100);
+    if (checked)
+    {
+        int oldSample = m_video.sampleRate();
+        int oldBitrate = m_video.audioBitrate();
+        m_video.setSampleRate(44100);
+        ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setValue( oldBitrate * 44100 / oldSample );
+     }
 }
 
 void DialogSetting::on_radioButton_SampleBit16i_clicked(bool checked)
@@ -575,10 +602,26 @@ void DialogSetting::on_radioButton_SampleBit32f_clicked(bool checked)
 
 void DialogSetting::on_radioButton_SampleMono_clicked(bool checked)
 {
-    if (checked) m_video.setChannels(1);
+    if (checked)
+    {
+        int oldChannels = m_video.channels();
+        int oldBitrate = m_video.audioBitrate();
+        m_video.setChannels(1);
+        ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setValue( oldBitrate * 1 / oldChannels );
+    }
 }
 
 void DialogSetting::on_radioButton_SampleStereo_clicked(bool checked)
 {
-    if (checked) m_video.setChannels(2);
+    if (checked)
+    {
+        int oldChannels = m_video.channels();
+        int oldBitrate = m_video.audioBitrate();
+        m_video.setChannels(2);
+        ui->horizontalSlider_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
+        ui->spinBox_AudioBitrate->setValue(oldBitrate * 2 / oldChannels);
+    }
 }

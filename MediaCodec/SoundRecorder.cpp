@@ -208,7 +208,9 @@ void SoundDevInfo::setEnable(bool enable)
                 else
                 {
                     m_audioInput->suspend();
-                    m_curAmplitude = 0.0;
+                    m_maxAmplitude = 0;
+                    m_curAmplitude = 0;
+
                 }
             }
             else if (enable)
@@ -256,6 +258,8 @@ bool SoundDevInfo::start(const QAudioFormat &format)
     qDebug() << "fmt.sampleType:" << fmt.sampleType();
     qDebug() << "fmt.byteOrder:" << fmt.byteOrder();
     qDebug() << "fmt.codec:" << fmt.codec();
+    m_maxAmplitude = 0;
+    m_curAmplitude = 0;
     m_maxAmplitude = getMaxAmplitude(fmt);
     m_audioInput = new QAudioInput(m_curDev, fmt);
     if (m_audioInput->error() == QAudio::OpenError)
@@ -294,6 +298,8 @@ void SoundDevInfo::stop()
         m_audioInput = nullptr;
     }
     m_isDevOpened = false;
+    m_maxAmplitude = 0;
+    m_curAmplitude = 0;
 }
 
 qint64 SoundDevInfo::readData(char *data, qint64 maxlen)

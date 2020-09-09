@@ -98,8 +98,8 @@ public:
 	int64_t audioFrameCount() const { return m_audioFrameNum; }
 	int64_t audioTotalSize() const { return m_audioTotalSize; }
 	int64_t audioDuration() const {
-        return m_audioParams.samplesRate ?
-            m_audioDuration + 1000 * m_aduioFrameSamples / m_audioParams.samplesRate :
+        return m_audioParams.sampleRate ?
+            m_audioDuration + 1000 * m_aduioFrameSamples / m_audioParams.sampleRate :
 			m_audioDuration;
 	}
 protected:
