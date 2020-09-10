@@ -6,6 +6,7 @@
 #include <QList>
 #include <QThread>
 #include <QMutex>
+#include <QSemaphore>
 
 #include "H264Codec.h"
 #include "faac.h"
@@ -22,7 +23,7 @@ public:
     QString currentDev() const;
 
     bool selectDev(const QString& dev);
-    bool isEnabled() const;
+    bool isEnabled() const { return m_isEnabled; }
     void setEnable(bool enable);
 
     qreal amplitude() const { return m_curAmplitude; }
@@ -51,20 +52,21 @@ private:
 
     qreal m_curAmplitude = 0.0;
 
-    uint8_t* m_currentBuffer = nullptr;
-    ulong m_bufferUsedSize = 0;
-    QMutex m_mutexPending;
-    QMutex m_mutexIdling;
-    QList<uint8_t*> m_pending;
-    QList<uint8_t*> m_idling;
+    uint8_t* m_pcmBuffer = nullptr;
+    ulong m_bufferSize = 0;
+    ulong m_dataOffset = 0;
+    ulong m_dataSize = 0;
+    int64_t m_sampleBegin = 0;
+
+    QMutex m_mutexPcmBuf;
+//    QMutex m_mutexPending;
+//    QMutex m_mutexIdling;
+//    QList<uint8_t*> m_pending;
+//    QList<uint8_t*> m_idling;
     bool m_needResample = false;
 
     void initResample();
     void uninitResample();
-    uint8_t* popPendBuffer();
-    uint8_t* popIdleBuffer();
-    void pushPendBuffer(uint8_t* buf);
-    void pushIdleBuffer(uint8_t* buf);
 };
 
 class SoundRecorder : private QThread
@@ -100,10 +102,15 @@ private:
     GueeMediaStream* m_mediaStream = nullptr;
     faacEncHandle  m_faacHandle = nullptr;
     SAudioParams   m_audioParams;
-    ulong       m_bytesPerSample;
-    ulong       m_bytesPerFrame;
+    ulong       m_bytesPerSample;   //bytes of sample as single channle
+    ulong       m_bytesPerFrame;    //bytes of frame as all channel
     ulong       m_samplesPerFrame;
     ulong       m_maxOutByteNum;
+    ulong       m_maxDelaySample;
+    QSemaphore m_waitPcmBuffer;
+
+    bool mixPcm( int64_t frameBegin, SoundDevInfo& dev, uint8_t* mixBuf );
+
 };
 
 #endif // SOUNDRECORD_H

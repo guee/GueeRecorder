@@ -117,7 +117,7 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
 
     m_faacHandle	= faacEncOpen( ulong(m_audioParams.sampleRate),
         uint(m_audioParams.channels), &m_samplesPerFrame, &m_maxOutByteNum );
-    m_bytesPerFrame = m_samplesPerFrame * m_bytesPerSample;
+    m_bytesPerFrame = m_samplesPerFrame * m_bytesPerSample * m_audioParams.channels;
     faacEncConfigurationPtr	pFaacCfg	= faacEncGetCurrentConfiguration( m_faacHandle );
     pFaacCfg->mpegVersion	= MPEG4;
     pFaacCfg->aacObjectType	= m_audioParams.encLevel;
@@ -145,12 +145,121 @@ void SoundRecorder::run()
 {
     uint8_t* pcb = nullptr;
     uint8_t* mic = nullptr;
+    int64_t pcbSampleNum = 0;
+    int64_t micSampleNum = 0;
+    int64_t delaySample = m_audioParams.sampleRate * 200 / 1000;
+    uint8_t* mixBuf = new uint8_t[m_bytesPerFrame];
+    int64_t frameSampleBegin = 0;
+
+    memset(mixBuf, 0, m_bytesPerFrame);
+
     while(m_status >= recording)
     {
-        if (nullptr == pcb) pcb = m_sndCallback.popPendBuffer();
-        if (nullptr == mic) mic = m_sndMicInput.popPendBuffer();
-        if ()
+        if (m_waitPcmBuffer.tryAcquire(1, 200))
+        {
+            m_sndCallback.m_mutexPcmBuf.lock();
+            int64_t sampleEnd = m_sndCallback.m_sampleBegin + m_sndCallback.m_dataSize / (m_bytesPerSample * m_audioParams.channels);
+            if (m_sndCallback.m_dataSize)
+            {
+                int64_t begin = qMax(frameSampleBegin, m_sndCallback.m_sampleBegin);
+                int64_t end = qMin(frameSampleBegin + m_samplesPerFrame,
+                                   );
+                if (m_audioParams.sampleBits == eSampleBit16i)
+                {
+                    int16_t* pcmMix = reinterpret_cast<int16_t*>(mixBuf) + (begin - frameSampleBegin) * m_audioParams.channels;
+                    int16_t* pcmIn = reinterpret_cast<int16_t*>(m_sndCallback.m_pcmBuffer + m_sndCallback.m_dataOffset);
+                    begin *= m_audioParams.channels;
+                    end *= m_audioParams.channels;
+                    while(begin < end)
+                    {
+                        *pcm = m_sndCallback.m_pcmBuffer[m_sndCallback.ea]
+                    }
+                }
+                else if (m_audioParams.sampleBits == eSampleBit32i)
+                {
+                }
+                else if (m_audioParams.sampleBits == eSampleBit32f)
+                {
+                }
+            }
+
+            m_sndCallback.m_mutexPcmBuf.unlock();
+
+            if (m_sndCallback.m_isEnabled && m_sndMicInput.m_isEnabled)
+            {
+                if (nullptr == pcb) pcb = m_sndCallback.popPendBuffer();
+                if (nullptr == mic) mic = m_sndMicInput.popPendBuffer();
+                if (pcb && mic)
+                {
+                    //mix and put to aac encoder
+                    pcbSampleNum += m_samplesPerFrame;
+                    micSampleNum += m_samplesPerFrame;
+                    pcb = nullptr;
+                    mic = nullptr;
+                }
+                else if (qAbs(pcbSampleNum - micSampleNum) >= delaySample)
+                {
+                    //put to aac encoder
+                    pcbSampleNum += m_samplesPerFrame;
+                    micSampleNum += m_samplesPerFrame;
+                    pcb = nullptr;
+                    mic = nullptr;
+                }
+            }
+            else if (m_sndCallback.m_isEnabled)
+            {
+                if (nullptr == pcb) pcb = m_sndCallback.popPendBuffer();
+                if (pcb)
+                {
+
+                }
+            }
+        }
+
     }
+}
+
+bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBuf)
+{
+    bool ret = false;
+    dev.m_mutexPcmBuf.lock();
+    int64_t frameEnd = frameBegin + m_samplesPerFrame;
+    int64_t sampleEnd = dev.m_sampleBegin + dev.m_dataSize / (m_bytesPerSample * m_audioParams.channels);
+    if ( sampleEnd + m_maxDelaySample < frameBegin)
+    {
+        dev.m_sampleBegin = frameBegin;
+        dev.m_dataSize = 0;
+        ret = true;
+    }
+    else if (dev.m_sampleBegin >= frameEnd)
+    {
+        ret = true;
+    }
+    else
+    {
+        int64_t begin = qMax(frameBegin, m_sndCallback.m_sampleBegin);
+        int64_t end = qMin(frameEnd, sampleEnd);
+                                  );
+        if (m_audioParams.sampleBits == eSampleBit16i)
+        {
+            int16_t* pcmMix = reinterpret_cast<int16_t*>(mixBuf) + (begin - frameSampleBegin) * m_audioParams.channels;
+            int16_t* pcmIn = reinterpret_cast<int16_t*>(m_sndCallback.m_pcmBuffer + m_sndCallback.m_dataOffset);
+            begin *= m_audioParams.channels;
+            end *= m_audioParams.channels;
+            while(begin < end)
+            {
+                *pcm = m_sndCallback.m_pcmBuffer[m_sndCallback.ea]
+            }
+        }
+        else if (m_audioParams.sampleBits == eSampleBit32i)
+        {
+        }
+        else if (m_audioParams.sampleBits == eSampleBit32f)
+        {
+        }
+    }
+
+    dev.m_mutexPcmBuf.unlock();
 }
 
 SoundDevInfo::SoundDevInfo(SoundRecorder &recorder)
@@ -259,11 +368,6 @@ bool SoundDevInfo::selectDev(const QString &dev)
         }
     }
     return false;
-}
-
-bool SoundDevInfo::isEnabled() const
-{
-    return m_isEnabled;
 }
 
 void SoundDevInfo::setEnable(bool enable)
@@ -388,34 +492,42 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
     {
         ulong num = ulong(len);
         const char* dat = data;
-        while(num)
-        {
-            if (m_currentBuffer == nullptr)
-            {
-                m_currentBuffer = popIdleBuffer();
-                if ( m_currentBuffer == nullptr )
-                    break;
-            }
-            if (m_needResample)
-            {
 
-            }
-            else
+        if (m_needResample)
+        {
+
+        }
+        else
+        {
+            m_mutexPcmBuf.lock();
+            if (num > m_bufferSize - m_dataSize)
             {
-                ulong cpySize = qMin(m_rec.m_bytesPerFrame - m_bufferUsedSize, num);
-                memcpy(m_currentBuffer + m_bufferUsedSize, dat, cpySize);
-                m_bufferUsedSize += cpySize;
+                ulong skip = num - (m_bufferSize - m_dataSize);
+                if ( skip > m_dataSize)
+                {
+                    num -= (skip - m_dataSize);
+                    dat += (skip - m_dataSize);
+                    m_dataSize = 0;
+                    m_dataOffset = 0;
+                }
+                else
+                {
+                    m_dataSize -= skip;
+                    m_dataOffset = (m_dataOffset + skip) % m_bufferSize;
+                }
+                m_sampleBegin += skip / (m_rec.m_bytesPerSample * m_rec.m_audioParams.channels);
+            }
+            while(num)
+            {
+                ulong endOffset = (m_dataOffset + m_dataSize) % m_bufferSize;
+                ulong cpySize = qMin(m_bufferSize - endOffset, num);
+                memcpy(m_pcmBuffer + endOffset, dat, cpySize);
+                m_dataSize += cpySize;
                 num -= cpySize;
                 dat += cpySize;
-                if (m_bufferUsedSize == m_rec.m_bytesPerFrame)
-                {
-                    m_mutexPending.lock();
-                    m_pending.push_back(m_currentBuffer);
-                    m_currentBuffer = nullptr;
-                    m_bufferUsedSize = 0;
-                    m_mutexPending.lock();
-                }
             }
+            m_mutexPcmBuf.unlock();
+            m_rec.m_waitPcmBuffer.release();
         }
     }
 
@@ -520,56 +632,22 @@ void SoundDevInfo::initResample()
             break;
         }
     }
+    m_bufferSize = m_rec.m_audioParams.sampleRate * m_rec.m_bytesPerSample * m_rec.m_audioParams.channels;
+    m_pcmBuffer = new uint8_t[m_bufferSize];
+    m_dataOffset = 0;
+    m_dataSize = 0;
+    m_sampleBegin = 0;
 }
 
 void SoundDevInfo::uninitResample()
 {
-    m_mutexIdling.lock();
-    for (auto p:m_idling)
-    {
-        delete []p;
-    }
-    m_idling.clear();
-    m_mutexIdling.unlock();
+    m_bufferSize = 0;
+    if (m_pcmBuffer) delete []m_pcmBuffer;
+    m_pcmBuffer = nullptr;
+    m_dataOffset = 0;
+    m_dataSize = 0;
+    m_sampleBegin = 0;
 }
 
-uint8_t *SoundDevInfo::popPendBuffer()
-{
-    uint8_t* buf = nullptr;
-    m_mutexPending.lock();
-    if (!m_pending.empty())
-    {
-        buf = m_pending.takeFirst();
-    }
-    m_mutexPending.unlock();
-    return buf;
-}
-
-uint8_t *SoundDevInfo::popIdleBuffer()
-{
-    uint8_t* buf = nullptr;
-    m_mutexIdling.lock();
-    if (m_idling.empty())
-        buf = new uint8_t[m_rec.m_bytesPerFrame];
-    else {
-        buf = m_idling.takeLast();
-    }
-    m_mutexIdling.unlock();
-    return buf;
-}
-
-void SoundDevInfo::pushPendBuffer(uint8_t* buf)
-{
-    m_mutexPending.lock();
-    m_pending.push_back(buf);
-    m_mutexPending.unlock();
-}
-
-void SoundDevInfo::pushIdleBuffer(uint8_t* buf)
-{
-    m_mutexIdling.lock();
-    m_idling.push_back(buf);
-    m_mutexIdling.unlock();
-}
 
 
