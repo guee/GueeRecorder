@@ -1,6 +1,11 @@
 #include "FrameSynchronization.h"
+#include <algorithm>
+#include <cmath>
+#include <thread>
+
 using namespace std;
 using namespace std::chrono;
+
 FrameSynchronization::FrameSynchronization()
 {
     m_status    = sync_Stoped;

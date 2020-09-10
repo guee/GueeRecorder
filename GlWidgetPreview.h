@@ -6,7 +6,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLBuffer>
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 #include "FormLayerTools.h"
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram);

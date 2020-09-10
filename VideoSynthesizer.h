@@ -40,7 +40,7 @@ public:
     float frameRate() const override {return m_vidParams.frameRate;}
     float renderFps() const {return m_frameRate.fps();}
     float encodeFps() const {return m_vidEncoder.encodeFps();}
-    uint32_t encodeMSec() const {return m_vidEncoder.encodeMSec();}
+    int64_t timestamp() const {return m_timestamp.elapsed_milli();}
 
     bool setProfile(EVideoProfile profile);
     EVideoProfile profile() const {return m_vidParams.profile;}
@@ -90,6 +90,8 @@ private:
     SAudioParams m_audParams;
     FrameSynchronization    m_frameSync;
     FrameRateCalc           m_frameRate;
+    FrameTimestamp          m_timestamp;
+
     struct FrameInfo
     {
         EVideoCSP csp;

@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QScrollBar>
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 
 namespace Ui {
 class FormLayerTools;

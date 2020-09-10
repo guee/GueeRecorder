@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QScrollBar>
 
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 
 namespace Ui {
 class DialogSetting;

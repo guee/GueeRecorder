@@ -1,5 +1,9 @@
 #include "ScreenSource.h"
 #include "ScreenLayer.h"
+#include "../VideoSynthesizer.h"
+#include <sys/sem.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
 
 Display* ScreenSource::m_x11_Display = nullptr;
 int ScreenSource::m_x11_Screen = 0;
@@ -31,14 +35,14 @@ ScreenSource::~ScreenSource()
 
 bool ScreenSource::onOpen()
 {
-    m_frameSync.init(m_neededFps);
+    m_screenSync.init(m_neededFps);
     m_thread = std::thread(&ScreenSource::shotThread, this);
     return true;
 }
 
 bool ScreenSource::onClose()
 {
-    m_frameSync.stop();
+    m_screenSync.stop();
     if(m_thread.joinable())
     {
         m_thread.join();
@@ -48,14 +52,13 @@ bool ScreenSource::onClose()
 
 bool ScreenSource::onPlay()
 {
-    m_frameSync.start();
-    m_timestamp = m_frameSync.elapsed();
+    m_screenSync.start();
     return true;
 }
 
 bool ScreenSource::onPause()
 {
-    m_frameSync.pause();
+    m_screenSync.pause();
     return true;
 }
 
@@ -300,9 +303,10 @@ void ScreenSource::freeImage()
 
 void ScreenSource::shotThread()
 {
+    int64_t timestamp = m_screenSync.elapsed();
     while(m_status != BaseLayer::NoOpen)
     {
-        if (m_timestamp < 0)
+        if (timestamp < 0)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -311,14 +315,14 @@ void ScreenSource::shotThread()
             if (shotScreen())
             {
                 m_imageChanged = true;
-                //qDebug() << "shot screen m_timestamp:" << m_timestamp / 1000000.0;
+                //qDebug() << "shot screen timestamp:" << timestamp / 1000000.0;
             }
         }
-        m_timestamp = m_frameSync.waitNextFrame();
-        if (qAbs(m_frameSync.fps() - m_neededFps) > 0.1f)
+        timestamp = m_screenSync.waitNextFrame();
+        if (qAbs(m_screenSync.fps() - m_neededFps) > 0.1f)
         {
-            m_frameSync.init(m_neededFps);
-            m_frameSync.start();
+            m_screenSync.init(m_neededFps);
+            m_screenSync.start();
         }
     }
 }
@@ -345,6 +349,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
     }
 //    static int64_t timInit = 0;
 //    int64_t tim1 = m_frameSync.elapsed();
+    m_lastTimestamp = VideoSynthesizer::instance().timestamp();
     if(m_x11_UseShm)
     {
         if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
@@ -415,7 +420,7 @@ QRect ScreenSource::calcShotRect()
         switch(scr->m_shotOption.mode)
         {
         case ScreenLayer::specScreen:
-            scr->m_shotOnScreen = m_screenRects[static_cast<size_t>(scr->m_shotOption.screenIndex)];
+            scr->m_shotOnScreen = m_screenRects[scr->m_shotOption.screenIndex];
             bound |= scr->m_shotOnScreen;
             break;
         case ScreenLayer::fullScreen:

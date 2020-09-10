@@ -474,6 +474,7 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
 
 void GlWidgetPreview::enterEvent(QEvent *event)
 {
+    Q_UNUSED(event)
     m_enterLayer = m_editingLayer;
     if (m_editingLayer)
     {
@@ -483,6 +484,7 @@ void GlWidgetPreview::enterEvent(QEvent *event)
 
 void GlWidgetPreview::leaveEvent(QEvent *event)
 {
+    Q_UNUSED(event)
     m_enterLayer = nullptr;
     if (m_layerTools->isVisible())
     {

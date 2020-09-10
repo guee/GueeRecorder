@@ -1,5 +1,6 @@
 #include "SoundRecorder.h"
 #include <QDebug>
+#include "../VideoSynthesizer.h"
 
 SoundRecorder::SoundRecorder()
     :m_sndCallback(*this)
@@ -113,11 +114,10 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
         faacBits	= FAAC_INPUT_FLOAT;
         break;
     }
-    ulong		bitRate	= ulong(m_audioParams.bitrate * 1024 / m_audioParams.channels);
 
-    m_faacHandle	= faacEncOpen( ulong(m_audioParams.sampleRate),
-        uint(m_audioParams.channels), &m_samplesPerFrame, &m_maxOutByteNum );
-    m_bytesPerFrame = m_samplesPerFrame * m_bytesPerSample * m_audioParams.channels;
+    ulong		bitRate	= ulong(m_audioParams.bitrate * 1024 / m_audioParams.channels);
+    m_faacHandle	= faacEncOpen( ulong(m_audioParams.sampleRate), uint(m_audioParams.channels),
+                                   reinterpret_cast<ulong*>(&m_samplesPerFrame), reinterpret_cast<ulong*>(&m_maxOutByteNum) );
     faacEncConfigurationPtr	pFaacCfg	= faacEncGetCurrentConfiguration( m_faacHandle );
     pFaacCfg->mpegVersion	= MPEG4;
     pFaacCfg->aacObjectType	= m_audioParams.encLevel;
@@ -143,76 +143,47 @@ void SoundRecorder::endEncode()
 
 void SoundRecorder::run()
 {
-    uint8_t* pcb = nullptr;
-    uint8_t* mic = nullptr;
-    int64_t pcbSampleNum = 0;
-    int64_t micSampleNum = 0;
-    int64_t delaySample = m_audioParams.sampleRate * 200 / 1000;
-    uint8_t* mixBuf = new uint8_t[m_bytesPerFrame];
-    int64_t frameSampleBegin = 0;
-
-    memset(mixBuf, 0, m_bytesPerFrame);
+    int64_t delaySample; //当声音与实际时间发生延迟时（没有采样数据），允许的最大延迟采样数。
+    delaySample = m_audioParams.sampleRate * 200 / 1000;
+    int32_t bytesPerFrame;    //每个AAC帧的字节数（全部声道）
+    bytesPerFrame = m_samplesPerFrame * m_bytesPerSample;
+    uint8_t* mixBuf = new uint8_t[bytesPerFrame];
+    uint8_t* encBuf = new uint8_t[m_maxOutByteNum];
+    int64_t frameBegin = VideoSynthesizer::instance().timestamp();
+    frameBegin = frameBegin * m_audioParams.sampleRate / 1000;
+    int32_t sampPerFrame = m_samplesPerFrame / m_audioParams.channels;
+    int32_t encOutSize = 0;
+    memset(mixBuf, 0, ulong(bytesPerFrame));
 
     while(m_status >= recording)
     {
-        if (m_waitPcmBuffer.tryAcquire(1, 200))
+        if (m_waitPcmBuffer.tryAcquire(1, 100))
         {
-            m_sndCallback.m_mutexPcmBuf.lock();
-            int64_t sampleEnd = m_sndCallback.m_sampleBegin + m_sndCallback.m_dataSize / (m_bytesPerSample * m_audioParams.channels);
-            if (m_sndCallback.m_dataSize)
+            while(m_sndCallback.m_dataSize || m_sndMicInput.m_dataSize)
             {
-                int64_t begin = qMax(frameSampleBegin, m_sndCallback.m_sampleBegin);
-                int64_t end = qMin(frameSampleBegin + m_samplesPerFrame,
-                                   );
-                if (m_audioParams.sampleBits == eSampleBit16i)
+                bool pcbOk = mixPcm(frameBegin, m_sndCallback, mixBuf);
+                bool micOk = mixPcm(frameBegin, m_sndMicInput, mixBuf);
+                if (pcbOk && micOk)
                 {
-                    int16_t* pcmMix = reinterpret_cast<int16_t*>(mixBuf) + (begin - frameSampleBegin) * m_audioParams.channels;
-                    int16_t* pcmIn = reinterpret_cast<int16_t*>(m_sndCallback.m_pcmBuffer + m_sndCallback.m_dataOffset);
-                    begin *= m_audioParams.channels;
-                    end *= m_audioParams.channels;
-                    while(begin < end)
-                    {
-                        *pcm = m_sndCallback.m_pcmBuffer[m_sndCallback.ea]
-                    }
+                    encOutSize = faacEncEncode(m_faacHandle, reinterpret_cast<int32_t*>(mixBuf),
+                                               uint(m_samplesPerFrame), encBuf, uint(m_maxOutByteNum));
+                    memset(mixBuf, 0, ulong(bytesPerFrame));
+                    frameBegin += sampPerFrame;
                 }
-                else if (m_audioParams.sampleBits == eSampleBit32i)
+                else
                 {
-                }
-                else if (m_audioParams.sampleBits == eSampleBit32f)
-                {
+                    break;
                 }
             }
-
-            m_sndCallback.m_mutexPcmBuf.unlock();
-
-            if (m_sndCallback.m_isEnabled && m_sndMicInput.m_isEnabled)
+        }
+        else
+        {
+            int64_t sample = VideoSynthesizer::instance().timestamp() * m_audioParams.sampleRate / 1000;
+            while(frameBegin + sampPerFrame <= sample)
             {
-                if (nullptr == pcb) pcb = m_sndCallback.popPendBuffer();
-                if (nullptr == mic) mic = m_sndMicInput.popPendBuffer();
-                if (pcb && mic)
-                {
-                    //mix and put to aac encoder
-                    pcbSampleNum += m_samplesPerFrame;
-                    micSampleNum += m_samplesPerFrame;
-                    pcb = nullptr;
-                    mic = nullptr;
-                }
-                else if (qAbs(pcbSampleNum - micSampleNum) >= delaySample)
-                {
-                    //put to aac encoder
-                    pcbSampleNum += m_samplesPerFrame;
-                    micSampleNum += m_samplesPerFrame;
-                    pcb = nullptr;
-                    mic = nullptr;
-                }
-            }
-            else if (m_sndCallback.m_isEnabled)
-            {
-                if (nullptr == pcb) pcb = m_sndCallback.popPendBuffer();
-                if (pcb)
-                {
-
-                }
+                encOutSize = faacEncEncode(m_faacHandle, reinterpret_cast<int32_t*>(mixBuf),
+                                           uint(m_samplesPerFrame), encBuf, uint(m_maxOutByteNum));
+                frameBegin += sampPerFrame;
             }
         }
 
@@ -222,14 +193,29 @@ void SoundRecorder::run()
 bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBuf)
 {
     bool ret = false;
+    int32_t bytesSamAC = m_bytesPerSample * m_audioParams.channels;
     dev.m_mutexPcmBuf.lock();
-    int64_t frameEnd = frameBegin + m_samplesPerFrame;
-    int64_t sampleEnd = dev.m_sampleBegin + dev.m_dataSize / (m_bytesPerSample * m_audioParams.channels);
-    if ( sampleEnd + m_maxDelaySample < frameBegin)
+    int64_t frameEnd = frameBegin + int64_t(m_samplesPerFrame / m_audioParams.channels);
+    int64_t sampleEnd = dev.m_sampleBegin + dev.m_dataSize / bytesSamAC;
+    //采样数据滞后超出限制，重置采样缓冲区
+    if (sampleEnd < frameBegin)
     {
-        dev.m_sampleBegin = frameBegin;
-        dev.m_dataSize = 0;
-        ret = true;
+        if (!dev.m_isEnabled)
+        {
+            dev.m_dataSize = 0;
+            ret = true;
+        }
+        else if (sampleEnd + m_samplesPerFrame / m_audioParams.channels < frameBegin)
+        {
+            dev.m_sampleBegin = frameBegin;
+            dev.m_dataSize = 0;
+            ret = true;
+        }
+        else
+        {
+            dev.m_sampleBegin = sampleEnd;
+            dev.m_dataSize = 0;
+        }
     }
     else if (dev.m_sampleBegin >= frameEnd)
     {
@@ -237,29 +223,48 @@ bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBu
     }
     else
     {
-        int64_t begin = qMax(frameBegin, m_sndCallback.m_sampleBegin);
+        int64_t begin = qMax(frameBegin, dev.m_sampleBegin);
         int64_t end = qMin(frameEnd, sampleEnd);
-                                  );
+        uint8_t* mixPtr = mixBuf + (begin - frameBegin) * bytesSamAC;
+        uint8_t* inpPtr = dev.m_pcmBuffer
+                + (dev.m_dataOffset + ( begin - dev.m_sampleBegin ) * bytesSamAC ) % dev.m_bufferSize;
         if (m_audioParams.sampleBits == eSampleBit16i)
         {
-            int16_t* pcmMix = reinterpret_cast<int16_t*>(mixBuf) + (begin - frameSampleBegin) * m_audioParams.channels;
-            int16_t* pcmIn = reinterpret_cast<int16_t*>(m_sndCallback.m_pcmBuffer + m_sndCallback.m_dataOffset);
-            begin *= m_audioParams.channels;
-            end *= m_audioParams.channels;
-            while(begin < end)
+            int16_t* pcmMix = reinterpret_cast<int16_t*>(mixPtr);
+            int16_t* pcmInp = reinterpret_cast<int16_t*>(inpPtr);
+            int32_t num = int32_t(begin - end) * m_audioParams.channels;
+            for (int32_t i = 0; i < num; ++i)
             {
-                *pcm = m_sndCallback.m_pcmBuffer[m_sndCallback.ea]
+                pcmMix[i] = int16_t(qMax(-32767,qMin(32767,int32_t(pcmMix[i]) + int32_t(pcmInp[i]))));
             }
         }
         else if (m_audioParams.sampleBits == eSampleBit32i)
         {
+            int32_t* pcmMix = reinterpret_cast<int32_t*>(mixPtr);
+            int32_t* pcmInp = reinterpret_cast<int32_t*>(inpPtr);
+            int32_t num = int32_t(begin - end) * m_audioParams.channels;
+            for (int32_t i = 0; i < num; ++i)
+            {
+                pcmMix[i] = int32_t(qMax(int64_t(-2147483647),qMin(int64_t(2147483647),int64_t(pcmMix[i]) + int64_t(pcmInp[i]))));
+            }
         }
         else if (m_audioParams.sampleBits == eSampleBit32f)
         {
+            float* pcmMix = reinterpret_cast<float*>(mixPtr);
+            float* pcmInp = reinterpret_cast<float*>(inpPtr);
+            int32_t num = int32_t(begin - end) * m_audioParams.channels;
+            for (int32_t i = 0; i < num; ++i)
+            {
+                pcmMix[i] = (qMax(-1.0f,qMin(1.0f,pcmMix[i] + pcmInp[i])));
+            }
         }
+        dev.m_sampleBegin = end;
+        dev.m_dataOffset += (begin - end) * bytesSamAC;
+        dev.m_dataSize -= (begin - end) * bytesSamAC;
+        ret = (end == frameEnd);
     }
-
     dev.m_mutexPcmBuf.unlock();
+    return ret;
 }
 
 SoundDevInfo::SoundDevInfo(SoundRecorder &recorder)
@@ -490,7 +495,7 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
 {
     if (m_rec.m_status == SoundRecorder::recording)
     {
-        ulong num = ulong(len);
+        int32_t num = int32_t(len);
         const char* dat = data;
 
         if (m_needResample)
@@ -500,11 +505,14 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
         else
         {
             m_mutexPcmBuf.lock();
+            //如果输入的字节数大于缓冲区剩余字节数，需要抛弃前面的数据。
             if (num > m_bufferSize - m_dataSize)
             {
-                ulong skip = num - (m_bufferSize - m_dataSize);
+                //计算需要抛弃的字节数
+                int32_t skip = num - (m_bufferSize - m_dataSize);
                 if ( skip > m_dataSize)
                 {
+                    //需要抛弃的字节数大于了现有数据，就还需要抛弃一部分输入数据
                     num -= (skip - m_dataSize);
                     dat += (skip - m_dataSize);
                     m_dataSize = 0;
@@ -515,13 +523,15 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
                     m_dataSize -= skip;
                     m_dataOffset = (m_dataOffset + skip) % m_bufferSize;
                 }
+                //抛弃数据后重新计算数据开始位置对应的采样起始位置。
                 m_sampleBegin += skip / (m_rec.m_bytesPerSample * m_rec.m_audioParams.channels);
             }
             while(num)
             {
-                ulong endOffset = (m_dataOffset + m_dataSize) % m_bufferSize;
-                ulong cpySize = qMin(m_bufferSize - endOffset, num);
-                memcpy(m_pcmBuffer + endOffset, dat, cpySize);
+                //向缓冲区写入数据，剩余的输入数据长度已经小余缓冲区大小。
+                int32_t endOffset = (m_dataOffset + m_dataSize) % m_bufferSize;
+                int32_t cpySize = qMin(m_bufferSize - endOffset, num);
+                memcpy(m_pcmBuffer + endOffset, dat, ulong(cpySize));
                 m_dataSize += cpySize;
                 num -= cpySize;
                 dat += cpySize;

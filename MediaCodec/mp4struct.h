@@ -30,7 +30,7 @@ public:
 	static bool cpuIsLittleEndian()
 	{
 		static const uint16_t endian = 0x0102;
-		return ((const uint8_t*)&endian)[0] == 0x02;
+        return reinterpret_cast<const uint8_t*>(&endian)[0] == 0x02;
 	}
 
 private:
@@ -68,11 +68,12 @@ struct Mp4Struct
 	union uint32_16
 	{
 		uint32_t	value;
-		struct
+        struct
 		{
 			uint16_t	low;
 			uint16_t	high;
-		};
+        }u32_16;
+
 		const uint32_16& operator = (uint32_t v) {
 			value = v;
 			return *this;
@@ -84,11 +85,11 @@ struct Mp4Struct
 	union uint16_8
 	{
 		uint16_t	value;
-		struct
+        struct
 		{
 			uint8_t	low;
 			uint8_t	high;
-		};
+        }u16_8;
 		const uint16_8& operator = (uint16_t v) {
 			value = v;
 			return *this;
@@ -378,7 +379,7 @@ struct Mp4Struct
 			bool	ret = false;
 			do
 			{
-				p->doneSize += len;
+                p->doneSize += ulong(len);
 				if (cur && p->doneSize == p->head.largeSize)
 				{
 					*cur = p->parent;
@@ -423,7 +424,7 @@ struct Mp4Struct
 			doneSize += sizeof(Box_Base);
 			if (doneSize <= 0xFFFFFFFF)
 			{
-				head.size = (uint32_t)doneSize;
+                head.size = uint32_t(doneSize);
 			}
 			else
 			{
@@ -441,7 +442,8 @@ struct Mp4Struct
 				printf("  ");
 			}
 			const char* t = head.type.toArray();
-			printf("%c%c%c%c  %lld (%lld)\n", t[0], t[1], t[2], t[3], head.largeSize, doneSize/* - doneSize*/);
+            printf("%c%c%c%c  %lld (%lld)\n", t[0], t[1], t[2], t[3],
+                    static_cast<long long>(head.largeSize), static_cast<long long>(doneSize)/* - doneSize*/);
 
 			for (auto i = childs.begin(); i != childs.end(); ++i)
 				(*i)->printInfo();

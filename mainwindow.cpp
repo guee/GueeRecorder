@@ -410,12 +410,12 @@ void MainWindow::on_fpsTimerView_timeout()
     if (m_video.status() >= VideoSynthesizer::Opened)
     {
         str = QString("渲染fps:%1  编码fps：%2").arg(double(m_video.renderFps()), 0, 'f', 1).arg(double(m_video.encodeFps()), 0, 'f', 1);
-        uint tim = m_video.encodeMSec();
-        uint h = tim / 3600000;
+        int64_t tim = m_video.timestamp();
+        int64_t h = tim / 3600000;
         tim %= 3600000;
-        uint m = tim / 60000;
+        int64_t m = tim / 60000;
         tim %= 60000;
-        uint s = tim / 1000;
+        int64_t s = tim / 1000;
         static bool sw = false;
         if (m_video.status() == VideoSynthesizer::Paused)
         {

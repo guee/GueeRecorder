@@ -50,7 +50,7 @@ protected:
     bool m_x11_shm_server_attached;
     QRect m_shotRect;
     std::thread m_thread;
-    FrameSynchronization    m_frameSync;
+    FrameSynchronization    m_screenSync;
 
     void drawCursor();
 

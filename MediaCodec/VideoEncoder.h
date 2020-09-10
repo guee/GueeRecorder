@@ -2,6 +2,7 @@
 
 #include "x264.h"
 #include <QtCore>
+#include <QThread>
 #include "MediaStream.h"
 #include "./Common/FrameRateCalc.h"
 
@@ -10,18 +11,17 @@ using namespace std;
 class GueeMediaWriter;
 class GueeVideoEncoder : public QThread
 {
+    Q_OBJECT
 public:
     GueeVideoEncoder(QObject* parent = nullptr);
     ~GueeVideoEncoder();
     bool bindStream( GueeMediaStream* stream );
 	bool startEncode( const SVideoParams* videoParams );
 	void endEncode();
-    void pauseEncode();
     const SVideoParams* getParams() { return &m_videoParams; }
     bool putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch);
     bool putFrame( int64_t millisecond, uint8_t* const plane[3], int32_t* pitch);
-    float encodeFps() const { return m_encodeing ? m_frameRate.fps() : 0;}
-    uint32_t encodeMSec() const { return m_encodeing ? m_frameRate.elapsed() : 0;}
+    float encodeFps() const { return m_encodeFPS.fps(); }
 private:
 
     struct	s_csp_tab
@@ -31,7 +31,7 @@ private:
         int32_t	heightFix;
     };
 
-    bool						m_encodeing;
+    //bool						m_encodeing;
 	SVideoParams				m_videoParams;
     GueeMediaStream*            m_mediaStream = nullptr;
     s_csp_tab                   m_csp_tab;
@@ -51,7 +51,7 @@ private:
     int64_t m_prevFrameTime = 0;
     int64_t m_prevFramePts = 0;
 
-    FrameRateCalc               m_frameRate;
+    FrameRateCalc               m_encodeFPS;
 	struct s_rect
 	{
 		int32_t		x, y, width, height;

@@ -1,4 +1,4 @@
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 #include "InputSource/ScreenLayer.h"
 #include "InputSource/CameraLayer.h"
 #include "InputSource/PictureLayer.h"
@@ -213,12 +213,13 @@ bool VideoSynthesizer::play()
     if(m_status == Paused)
     {
         m_status = Palying;
-        m_vidEncoder.startEncode(nullptr);
+        m_timestamp.start();
         return true;
     }
     else if (m_status == Opened)
     {
         m_status = Palying;
+        m_timestamp.start();
         return true;
     }
     return false;
@@ -230,7 +231,7 @@ bool VideoSynthesizer::pause()
     if (m_status == Palying || m_status == Opened)
     {
         m_status = Paused;
-        m_vidEncoder.pauseEncode();
+        m_timestamp.pause();
         return true;
     }
     return false;
@@ -469,7 +470,7 @@ bool VideoSynthesizer::setAudioBitrate(int32_t bitrate)
 
 int32_t VideoSynthesizer::maxAudioBitrate() const
 {
-    return (unsigned int)(6144.0 * double(m_audParams.sampleRate) / 1024.5) * m_audParams.channels / 1024;
+    return static_cast<int32_t>((6144.0 * double(m_audParams.sampleRate) / 1024.5) * m_audParams.channels / 1024);
 }
 
 int32_t VideoSynthesizer::minAudioBitrate() const
@@ -515,7 +516,6 @@ void VideoSynthesizer::renderThread()
     int64_t curTimer = 0;
     while(m_threadWorking)
     {
-        m_frameData.timestamp = m_vidEncoder.encodeMSec();
         if ( m_videoSizeChanged &&
              (fboRgba->width() != m_vidParams.width || fboRgba->height() != m_vidParams.height ))
         {
@@ -530,17 +530,28 @@ void VideoSynthesizer::renderThread()
             qDebug() << "resize to:" << fboRgba->size();
         }
 
-        if ( updateSourceTextures() ) isUpdated = true;
-        curTimer = m_frameSync.isNextFrame();
-
-
-
+        if ( updateSourceTextures(curTimer) )
+        {
+            isUpdated = true;
+        }
+        if (0 == curTimer)
+        {
+            curTimer = m_frameSync.isNextFrame();
+        }
+        else
+        {
+            curTimer *= 1000;
+        }
         if ( curTimer - preTimer > 1000000 ) isUpdated = true;
+
+        m_frameData.timestamp = m_timestamp.elapsed();
         if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
         {
+            m_frameData.timestamp = curTimer;
         qDebug() <<"帧时间：" << curTimer << " 距离上帧：" << curTimer - preTimer;
             preTimer = curTimer;
             bool fromImm = m_immediateUpdate;
+            m_immediateUpdate = false;
             fboRgba->bind();
             glViewport(0, 0, m_vidParams.width, m_vidParams.height);
             glClearColor(m_backgroundColor.x(), m_backgroundColor.y(), m_backgroundColor.z(), m_backgroundColor.w());
@@ -551,30 +562,29 @@ void VideoSynthesizer::renderThread()
             {
                 (*it)->draw();
             }
-
-            if ( m_status  == Palying )
+            if (!fromImm)
             {
-                if ( m_frameData.fbo == nullptr )
+                if ( m_status  == Palying )
                 {
-                    if (!initYuvFbo())
-                        break;
-                }
+                    if ( m_frameData.fbo == nullptr )
+                    {
+                        if (!initYuvFbo())
+                            break;
+                    }
 
-                putFrameToEncoder(fboRgba->texture());
-            }
-            else if ( m_status < Opened && m_frameData.fbo )
-            {
-                uninitYubFbo();
+                    putFrameToEncoder(fboRgba->texture());
+                }
+                else if ( m_status < Opened && m_frameData.fbo )
+                {
+                    uninitYubFbo();
+                }
             }
 
             glFlush();
             fboRgba->release();
             //fboRgba->toImage().save(QString("/home/guee/Pictures/Temp/%1.jpg").arg(m_frameData.timestamp), nullptr, 100 );
             emit frameReady(fboRgba->texture());
-            if ( fromImm )
-            {
-                m_immediateUpdate = false;
-            }
+
             if (isUpdated)
             {
                 m_frameRate.add();

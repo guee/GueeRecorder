@@ -207,6 +207,7 @@ void FormLayerTools::on_spinBoxH_valueChanged(int arg1)
 
 void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &current, const QModelIndex &previous)
 {
+    Q_UNUSED(previous)
     if (m_posChangeByProg) return;
     if ( current.isValid() )
     {

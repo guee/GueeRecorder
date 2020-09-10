@@ -100,7 +100,7 @@ protected:
     VertexArritb    m_vertex[4];
 
 
-    static bool updateSourceTextures();
+    static bool updateSourceTextures(int64_t& lastTimestamp);
     static BaseSource* findSource(const QString& typeName, const QString& sourceName);
     static void setSourcesFramerate(float fps);
     virtual BaseSource* onCreateSource(const QString &sourceName) = 0;

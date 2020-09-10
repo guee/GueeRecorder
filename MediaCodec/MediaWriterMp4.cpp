@@ -1,4 +1,6 @@
 #include "MediaWriterMp4.h"
+#include <string.h>
+
 GueeMediaWriterMp4::GueeMediaWriterMp4(GueeMediaStream& stream)
         : GueeMediaWriter(stream)
 {
@@ -18,23 +20,23 @@ bool GueeMediaWriterMp4::onWriteHeader()
 	m_isAdtsAAC = audioParams.useADTS;
 
 	set_ftyp("mp42isom");
-	writeBox(m_boxRoot.find('ftyp'), true);
-	writeBox(new Mp4Box('free', &m_boxRoot), true);
-	m_mdatSizeOffset = (uint32_t)m_totalBytes;
-	writeBox(new Mp4Box('mdat', &m_boxRoot), true);
+    writeBox(m_boxRoot.find(FourCC('f','t','y','p')), true);
+    writeBox(new Mp4Box(FourCC('f','r','e','e'), &m_boxRoot), true);
+    m_mdatSizeOffset = uint32_t(m_totalBytes);
+    writeBox(new Mp4Box(FourCC('m','d','a','t'), &m_boxRoot), true);
 	set_moov_mvhd();
 	if (hasVideo)
 	{
 		m_defaultVideoTrackId	= add_trak(eMedTypeVideo);
 		TrackInfo&	trak = m_tracks[m_defaultVideoTrackId];
-		trak.tkhd.width.high = videoParams.width;
-		trak.tkhd.height.high = videoParams.height;
+        trak.tkhd.width.u32_16.high = uint16_t(videoParams.width);
+        trak.tkhd.height.u32_16.high = uint16_t(videoParams.height);
 		trak.mdhd.timeScalc = 10000;
-		Mp4Box*	avc1Box = new Mp4Box('avc1', trak.stsdBox, sizeof(SampleEntryVisual));
-		SampleEntryVisual*	v	= (SampleEntryVisual*)&avc1Box->data.front();
+        Mp4Box*	avc1Box = new Mp4Box(FourCC('a','v','c','1'), trak.stsdBox, sizeof(SampleEntryVisual));
+        SampleEntryVisual*	v	= reinterpret_cast<SampleEntryVisual*>(&avc1Box->data.front());
 		v->dataReferenceIndex = endianFix16(1);;
-		v->width = endianFix16(videoParams.width);
-		v->height = endianFix16(videoParams.height);
+        v->width = endianFix16(uint16_t(videoParams.width));
+        v->height = endianFix16(uint16_t(videoParams.height));
 		v->horizresolution = (72 << 8);
 		v->vertresolution = (72 << 8);
 		v->frame_count = endianFix16(1);
@@ -43,22 +45,22 @@ bool GueeMediaWriterMp4::onWriteHeader()
 
 		const string& sps = m_stream.sps();
 		const string& pps = m_stream.pps();
-		Mp4Box*	avcCBox = new Mp4Box('avcC', avc1Box, uint32_t(6 + 2 + sps.size() + 1 + 2 + pps.size()));
-		uint8_t*	data = (uint8_t*)&avcCBox->data.front();
+        Mp4Box*	avcCBox = new Mp4Box(FourCC('a','v','c','C'), avc1Box, uint32_t(6 + 2 + sps.size() + 1 + 2 + pps.size()));
+        uint8_t*	data = reinterpret_cast<uint8_t*>(&avcCBox->data.front());
 		data[0] = 1;
-		data[1] = (uint8_t)sps[1];
-		data[2] = (uint8_t)sps[2];
-		data[3] = (uint8_t)sps[3];
+        data[1] = uint8_t(sps[1]);
+        data[2] = uint8_t(sps[2]);
+        data[3] = uint8_t(sps[3]);
 		data[4] = 0xFF;
 		data[5] = 0xE1;
 		data += 6;
-		*((uint16_t*)data) = endianFix16((uint16_t)sps.size());
+        *reinterpret_cast<uint16_t*>(data) = endianFix16(uint16_t(sps.size()));
 		data += 2;
 		memcpy(data, sps.c_str(), sps.size());
 		data += sps.size();
 		data[0] = 1;
 		data++;
-		*((uint16_t*)data) = endianFix16((uint16_t)pps.size());
+        *reinterpret_cast<uint16_t*>(data) = endianFix16(uint16_t(pps.size()));
 		data += 2;
 		memcpy(data, pps.c_str(), pps.size());
 
@@ -67,13 +69,13 @@ bool GueeMediaWriterMp4::onWriteHeader()
 	{
 		m_defaultAudioTrackId	= add_trak(eMedTypeAudio);
 		TrackInfo&	trak = m_tracks[m_defaultAudioTrackId];
-        trak.mdhd.timeScalc = audioParams.sampleRate;
-		Mp4Box*	mp4aBox = new Mp4Box('mp4a', trak.stsdBox, sizeof(SampleEntryAudio));
-		SampleEntryAudio*	a = (SampleEntryAudio*)&mp4aBox->data.front();
+        trak.mdhd.timeScalc = uint(audioParams.sampleRate);
+        Mp4Box*	mp4aBox = new Mp4Box(FourCC('m','p','4','a'), trak.stsdBox, sizeof(SampleEntryAudio));
+        SampleEntryAudio*	a = reinterpret_cast<SampleEntryAudio*>(&mp4aBox->data.front());
 		a->dataReferenceIndex = endianFix16(1);
-		a->channelCount = endianFix16(audioParams.channels);
-        a->sampleSize = endianFix16(audioParams.sampleBits & 0xFFFF);
-        a->sampleRate = endianFix32(audioParams.sampleRate);
+        a->channelCount = endianFix16(uint16_t(audioParams.channels));
+        a->sampleSize = endianFix16(uint16_t(audioParams.sampleBits & 0xFFFF));
+        a->sampleRate = endianFix32(uint16_t(audioParams.sampleRate));
 
 		putByte(0);	//Box_FillHead
 		putBE24(0);
@@ -153,7 +155,7 @@ bool GueeMediaWriterMp4::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 	if (trak.stssBox && frame->isKeyFrame)
 	{
 		trak.stssBox->data.append(4, 0);
-		Box_stss *stss = (Box_stss*)&trak.stssBox->data.front();
+        Box_stss *stss = reinterpret_cast<Box_stss*>(&trak.stssBox->data.front());
 		stss->samples[stss->syncSample]	= trak.sampleCount;
 		stss->syncSample++;
 	}
@@ -236,7 +238,7 @@ void GueeMediaWriterMp4::onCloseWrite()
 			}
 			if (trak.cttsBox)
 			{
-				Box_ctts *ctts = (Box_ctts*)&trak.cttsBox->data.front();
+                Box_ctts *ctts = reinterpret_cast<Box_ctts*>(&trak.cttsBox->data.front());
 				for (uint32_t i = 0; i < ctts->timeToSample; ++i)
 				{
 					ctts->samples[i].sampleCount = endianFix32(ctts->samples[i].sampleCount);
@@ -246,7 +248,7 @@ void GueeMediaWriterMp4::onCloseWrite()
 			}
 			if (trak.stssBox)
 			{
-				Box_stss *stss = (Box_stss*)&trak.stssBox->data.front();
+                Box_stss *stss = reinterpret_cast<Box_stss*>(&trak.stssBox->data.front());
 				for (uint32_t i = 0; i < stss->syncSample; ++i)
 				{
 					stss->samples[i] = endianFix32(stss->samples[i]);
@@ -255,7 +257,7 @@ void GueeMediaWriterMp4::onCloseWrite()
 			}
 			if (trak.stscBox)
 			{
-				Box_stsc *stsc = (Box_stsc*)&trak.stscBox->data.front();
+                Box_stsc *stsc = reinterpret_cast<Box_stsc*>(&trak.stscBox->data.front());
 				for (uint32_t i = 0; i < stsc->sampleToChunk; ++i)
 				{
 					stsc->chunks[i].firstChunk = endianFix32(stsc->chunks[i].firstChunk);
@@ -266,7 +268,7 @@ void GueeMediaWriterMp4::onCloseWrite()
 			}
 			if (trak.stszBox)
 			{
-				Box_stsz *stsz = (Box_stsz*)&trak.stszBox->data.front();
+                Box_stsz *stsz = reinterpret_cast<Box_stsz*>(&trak.stszBox->data.front());
 				if (stsz->sampleSize)
 					stsz->sampleSize = endianFix32(stsz->sampleSize);
 				else
@@ -347,10 +349,10 @@ bool GueeMediaWriterMp4::set_moov_mvhd()
 		m_mvhd.modificationTime = 0;
 		m_mvhd.timeScalc = 10000;
 		m_mvhd.duration = 0;
-		m_mvhd.rate.high = 1;
-		m_mvhd.rate.low = 0;
-		m_mvhd.volume.high = 1;
-		m_mvhd.volume.low = 0;
+        m_mvhd.rate.u32_16.high = 1;
+        m_mvhd.rate.u32_16.low = 0;
+        m_mvhd.volume.u16_8.high = 1;
+        m_mvhd.volume.u16_8.low = 0;
 		m_mvhd.matrix[0] = 256;
 		m_mvhd.matrix[4] = 256;
 		m_mvhd.matrix[8] = 64;
@@ -610,7 +612,7 @@ bool GueeMediaWriterMp4::set_minf_smhd(TrackInfo & trak, int8_t leftOrRight)
 	Box_smhd*	smhd = (Box_smhd*)&smhdBox->data.front();
 	smhd->version = 0;
 	smhd->flags[0] = smhd->flags[1] = smhd->flags[2] = 0;
-	smhd->balance.low = leftOrRight;
+    smhd->balance.u16_8.low = uint8_t(leftOrRight);
 	return true;
 }
 
@@ -618,13 +620,13 @@ void GueeMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre
 {
 	if (trak.sttsBox)
 	{
-		Box_stts *stts = (Box_stts*)&trak.sttsBox->data.front();
+        Box_stts *stts = reinterpret_cast<Box_stts*>(&trak.sttsBox->data.front());
 		if (isPre)
 		{
 			if (stts->timeToSample == 0)
 			{
 				trak.sttsBox->data.append(8, 0);
-				stts = (Box_stts*)&trak.sttsBox->data.front();
+                stts = reinterpret_cast<Box_stts*>(&trak.sttsBox->data.front());
 				stts->samples[stts->timeToSample].sampleCount = 1;
 				stts->samples[stts->timeToSample].sampleDuration = dur;
 				++stts->timeToSample;
@@ -640,7 +642,7 @@ void GueeMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre
 				{
 					--stts->samples[stts->timeToSample - 1].sampleCount;
 					trak.sttsBox->data.append(8, 0);
-					stts = (Box_stts*)&trak.sttsBox->data.front();
+                    stts = reinterpret_cast<Box_stts*>(&trak.sttsBox->data.front());
 					stts->samples[stts->timeToSample].sampleCount = 2;
 					stts->samples[stts->timeToSample].sampleDuration = dur;
 					++stts->timeToSample;
@@ -657,7 +659,7 @@ void GueeMediaWriterMp4::add_trak_stts(TrackInfo& trak, uint32_t dur, bool isPre
 				dur != stts->samples[stts->timeToSample - 1].sampleDuration)
 			{
 				trak.sttsBox->data.append(8, 0);
-				stts = (Box_stts*)&trak.sttsBox->data.front();
+                stts = reinterpret_cast<Box_stts*>(&trak.sttsBox->data.front());
 				stts->samples[stts->timeToSample].sampleCount = 1;
 				stts->samples[stts->timeToSample].sampleDuration = dur;
 				++stts->timeToSample;
@@ -677,12 +679,12 @@ void GueeMediaWriterMp4::add_trak_ctts(TrackInfo& trak, uint32_t dely)
 {
 	if (trak.cttsBox)
 	{
-		Box_ctts *ctts = (Box_ctts*)&trak.cttsBox->data.front();
+        Box_ctts *ctts = reinterpret_cast<Box_ctts*>(&trak.cttsBox->data.front());
 		if (ctts->timeToSample == 0 ||
 			dely != ctts->samples[ctts->timeToSample - 1].sampleDuration)
 		{
 			trak.cttsBox->data.append(8, 0);
-			ctts = (Box_ctts*)&trak.cttsBox->data.front();
+            ctts = reinterpret_cast<Box_ctts*>(&trak.cttsBox->data.front());
 			ctts->samples[ctts->timeToSample].sampleCount = 1;
 			ctts->samples[ctts->timeToSample].sampleDuration = dely;
 			++ctts->timeToSample;
@@ -699,14 +701,14 @@ void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offs
 {
 	//Box_stts *stts = (Box_stts*)&trak.sttsBox->data.front();
 	//Box_stts *stts = (Box_stts*)&trak.sttsBox->data.front();
-	//Box_ctts *ctts = (Box_ctts*)&trak.cttsBox->data.front();
-	//Box_stss *stss = (Box_stss*)&trak.stssBox->data.front();
-	//Box_stsc *stsc = (Box_stsc*)&trak.stscBox->data.front();
-	//Box_stsz *stsz = (Box_stsz*)&trak.stszBox->data.front();
+    //Box_ctts *ctts = reinterpret_cast<Box_ctts*>(&trak.cttsBox->data.front());
+    //Box_stss *stss = reinterpret_cast<Box_stss*>(&trak.stssBox->data.front());
+    //Box_stsc *stsc = reinterpret_cast<Box_stsc*>(&trak.stscBox->data.front());
+    //Box_stsz *stsz = reinterpret_cast<Box_stsz*>(&trak.stszBox->data.front());
 	//Box_stco *stco = (Box_stco*)&trak.stcoBox->data.front();
 
 
-	Box_stsc *stsc = (Box_stsc*)&trak.stscBox->data.front();
+    Box_stsc *stsc = reinterpret_cast<Box_stsc*>(&trak.stscBox->data.front());
 	if (m_lastWriteTrackId == trak.tkhd.trackId)
 	{
 		++stsc->chunks[stsc->sampleToChunk - 1].sampleCount;
@@ -729,7 +731,7 @@ void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offs
 		else
 		{
 			trak.stscBox->data.append(12, 0);
-			stsc = (Box_stsc*)&trak.stscBox->data.front();
+            stsc = reinterpret_cast<Box_stsc*>(&trak.stscBox->data.front());
 			stsc->chunks[stsc->sampleToChunk].firstChunk = stco->chunkCount;
 			stsc->chunks[stsc->sampleToChunk].sampleCount = 1;
 			stsc->chunks[stsc->sampleToChunk].descriptionId = 1;
@@ -738,7 +740,7 @@ void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offs
 	}
 	if (trak.stszBox)
 	{
-		Box_stsz *stsz = (Box_stsz*)&trak.stszBox->data.front();
+        Box_stsz *stsz = reinterpret_cast<Box_stsz*>(&trak.stszBox->data.front());
 		uint32_t saved = uint32_t(trak.stszBox->data.size() - (sizeof(Box_stsz) - 4)) / 4;
 		if (0 == trak.sampleCount)
 		{
@@ -749,12 +751,12 @@ void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offs
 			while (saved < stsz->sampleCount)
 			{
 				trak.stszBox->data.append(4, 0);
-				stsz = (Box_stsz*)&trak.stszBox->data.front();
+                stsz = reinterpret_cast<Box_stsz*>(&trak.stszBox->data.front());
 				stsz->sizes[saved] = stsz->sampleSize;
 				++saved;
 			}
 			trak.stszBox->data.append(4, 0);
-			stsz = (Box_stsz*)&trak.stszBox->data.front();
+            stsz = reinterpret_cast<Box_stsz*>(&trak.stszBox->data.front());
 			stsz->sizes[stsz->sampleCount] = size;
 		}
 		++stsz->sampleCount;
@@ -763,8 +765,7 @@ void GueeMediaWriterMp4::add_trak_stsc_stco_stsz(TrackInfo & trak, uint64_t offs
 
 bool GueeMediaWriterMp4::fix_mdat_size()
 {
-	return reputAviDwordToFile(m_mdatSizeOffset, endianFix32(uint32_t(m_totalBytes - m_mdatSizeOffset)));
-	return false;
+    return reputAviDwordToFile(int32_t(m_mdatSizeOffset), endianFix32(uint32_t(m_totalBytes - m_mdatSizeOffset)));
 }
 
 bool GueeMediaWriterMp4::writeBox(Mp4Box * box, bool flush)
@@ -782,7 +783,7 @@ bool GueeMediaWriterMp4::writeBox(Mp4Box * box, bool flush)
 		putBE32(box->head.type);
 	}
 	if (!box->data.empty())
-		appendData((const uint8_t*)box->data.c_str(), (uint32_t)box->data.length());
+        appendData(reinterpret_cast<const uint8_t*>(box->data.c_str()), uint32_t(box->data.length()));
 	if (flush && !flushData())
 		return false;
 	for (auto i = box->childs.begin(); i != box->childs.end(); ++i)

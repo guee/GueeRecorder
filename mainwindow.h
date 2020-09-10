@@ -5,7 +5,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QActionGroup>
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 #include "./InputSource/ScreenLayer.h"
 #undef Bool
 QT_BEGIN_NAMESPACE

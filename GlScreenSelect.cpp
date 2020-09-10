@@ -1,6 +1,6 @@
 #include "GlScreenSelect.h"
 #include "DialogSelectScreen.h"
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 
 GlScreenSelect::GlScreenSelect(QWidget *parent) :
     QOpenGLWidget(parent)

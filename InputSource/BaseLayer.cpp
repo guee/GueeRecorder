@@ -389,12 +389,15 @@ void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)
 
 }
 
-bool BaseLayer::updateSourceTextures()
+bool BaseLayer::updateSourceTextures(int64_t& lastTimestamp)
 {
     bool ret = false;
+    lastTimestamp = 0;
     for (auto it:m_resPool)
     {
         if (it->updateToTexture()) ret = true;
+        lastTimestamp = qMax(lastTimestamp, it->m_lastTimestamp);
+        it->m_lastTimestamp = 0;
     }
     return ret;
 }

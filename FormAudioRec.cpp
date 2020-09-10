@@ -42,6 +42,7 @@ void FormAudioRec::on_pushButtonSndMicInput_clicked(bool checked)
 
 void FormAudioRec::timerEvent(QTimerEvent *event)
 {
+    Q_UNUSED(event)
     ui->pushButtonVolMic->updateAmplitude(m_video.audMicInputDev().amplitude());
     ui->pushButtonVolCB->updateAmplitude(m_video.audCallbackDev().amplitude());
     // qDebug() << m_video.audCallbackDev().amplitude() << "," << m_video.audMicInputDev().amplitude();

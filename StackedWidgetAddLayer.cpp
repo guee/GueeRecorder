@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QOpenGLContext>
 #include "DialogSelectScreen.h"
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 #include "./InputSource/ScreenLayer.h"
 #include "./InputSource/CameraLayer.h"
 #include "./InputSource/PictureLayer.h"

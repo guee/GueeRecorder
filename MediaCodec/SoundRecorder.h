@@ -53,9 +53,9 @@ private:
     qreal m_curAmplitude = 0.0;
 
     uint8_t* m_pcmBuffer = nullptr;
-    ulong m_bufferSize = 0;
-    ulong m_dataOffset = 0;
-    ulong m_dataSize = 0;
+    int32_t m_bufferSize = 0;
+    int32_t m_dataOffset = 0;
+    int32_t m_dataSize = 0;
     int64_t m_sampleBegin = 0;
 
     QMutex m_mutexPcmBuf;
@@ -102,11 +102,9 @@ private:
     GueeMediaStream* m_mediaStream = nullptr;
     faacEncHandle  m_faacHandle = nullptr;
     SAudioParams   m_audioParams;
-    ulong       m_bytesPerSample;   //bytes of sample as single channle
-    ulong       m_bytesPerFrame;    //bytes of frame as all channel
-    ulong       m_samplesPerFrame;
-    ulong       m_maxOutByteNum;
-    ulong       m_maxDelaySample;
+    int32_t     m_bytesPerSample;   //每个采样的字节数（一个声道）
+    int32_t     m_samplesPerFrame;  //每个AAC帧的采样数（声道数*采样数）
+    int32_t     m_maxOutByteNum;    //AAC每帧编码输出的最大字节数
     QSemaphore m_waitPcmBuffer;
 
     bool mixPcm( int64_t frameBegin, SoundDevInfo& dev, uint8_t* mixBuf );

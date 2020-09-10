@@ -5,7 +5,7 @@
 #include <QAudioInput>
 #include "./MediaCodec/SoundRecorder.h"
 
-#include "VdeoSynthesizer.h"
+#include "VideoSynthesizer.h"
 
 namespace Ui {
 class FormAudioRec;

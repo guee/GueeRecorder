@@ -37,7 +37,6 @@ SOURCES += \
     InputSource/ScreenSource.cpp \
     ShaderProgramPool.cpp \
     StackedWidgetAddLayer.cpp \
-    VdeoSynthesizer.cpp \
     main.cpp \
     mainwindow.cpp \
     MediaCodec/VideoEncoder.cpp \
@@ -49,7 +48,10 @@ SOURCES += \
     DialogSetting.cpp \
     ButtonWithVolume.cpp \
     MediaCodec/SoundRecorder.cpp \
-    FormVolumeAction.cpp
+    FormVolumeAction.cpp \
+    Common/FrameTimestamp.cpp \
+    Common/FrameRateCalc.cpp \
+    VideoSynthesizer.cpp
 
 
 HEADERS += \
@@ -71,7 +73,6 @@ HEADERS += \
     InputSource/ScreenSource.h \
     ShaderProgramPool.h \
     StackedWidgetAddLayer.h \
-    VdeoSynthesizer.h \
     mainwindow.h \
     precompile.h \
     MediaCodec/VideoEncoder.h \
@@ -86,7 +87,9 @@ HEADERS += \
     DialogSetting.h \
     ButtonWithVolume.h \
     MediaCodec/SoundRecorder.h \
-    FormVolumeAction.h
+    FormVolumeAction.h \
+    Common/FrameTimestamp.h \
+    VideoSynthesizer.h
 
 FORMS += \
     DialogSelectScreen.ui \

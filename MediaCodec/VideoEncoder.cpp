@@ -5,7 +5,6 @@
 GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     : QThread(parent)
 {
-	m_encodeing		= false;
 	memset( &m_videoParams, 0, sizeof( m_videoParams ) );
     m_x264Handle	= nullptr;
 	memset( &m_x264Param, 0, sizeof( m_x264Param ) );
@@ -34,7 +33,7 @@ GueeVideoEncoder::~GueeVideoEncoder()
 
 bool GueeVideoEncoder::bindStream( GueeMediaStream* stream )
 {
-	if ( m_encodeing ) return false;
+    if ( m_encodeFPS.status() != FrameTimestamp::sync_Stoped ) return false;
     if ( nullptr == stream )
 	{
         return false;
@@ -48,13 +47,8 @@ bool GueeVideoEncoder::bindStream( GueeMediaStream* stream )
 
 bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 {
-    if ( m_encodeing )
+    if ( m_encodeFPS.status() != FrameTimestamp::sync_Stoped )
     {
-        if (m_frameRate.isPaused())
-        {
-            m_frameRate.start();
-            return true;
-        }
         return false;
     }
 	if ( videoParams )
@@ -84,9 +78,8 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 
         m_waitPendQueue.acquire(m_waitPendQueue.available());
         m_waitIdlePool.acquire(m_waitIdlePool.available());
-        m_frameRate.start();
-        m_encodeing		= true;
-        start();
+        m_encodeFPS.start();
+        qobject_cast<QThread*>(this)->start();
 		break;
 	case VE_CUDA:
 		break;
@@ -95,17 +88,17 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 	case VE_INTEL:
 		break;
 	}
-    return m_encodeing;
+    return m_encodeFPS.status() != FrameTimestamp::sync_Stoped;
 }
 
 
 void GueeVideoEncoder::endEncode()
 {
-	if ( !m_encodeing ) return;
+    if ( m_encodeFPS.status() == FrameTimestamp::sync_Stoped ) return;
     switch( m_videoParams.encoder )
 	{
 	case VE_X264:
-		m_encodeing	= false;
+        m_encodeFPS.stop();
         m_waitPendQueue.release();
         m_waitIdlePool.release();
         if ( isRunning() )
@@ -144,14 +137,9 @@ void GueeVideoEncoder::endEncode()
     }
 }
 
-void GueeVideoEncoder::pauseEncode()
-{
-    m_frameRate.pause();
-}
-
 bool GueeVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch )
 {
-    if ( !m_encodeing || m_frameRate.isPaused()) return false;
+    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     switch( m_videoParams.encoder )
 	{
 	case VE_X264:
@@ -168,7 +156,7 @@ bool GueeVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_
 
 bool GueeVideoEncoder::putFrame( int64_t millisecond, uint8_t* const plane[3], int32_t* pitch)
 {
-    if ( !m_encodeing || m_frameRate.isPaused() ) return false;
+    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     switch( m_videoParams.encoder )
     {
     case VE_X264:
@@ -186,7 +174,7 @@ bool GueeVideoEncoder::putFrame( int64_t millisecond, uint8_t* const plane[3], i
 bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, int32_t pitch )
 {
 
-	if ( !m_encodeing ) return false;
+    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     x264_picture_t* picin = popCachePool();
     if (picin == nullptr) return false;
     picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
@@ -221,7 +209,7 @@ bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, in
     }
 
     m_mtxPendQueue.lock();
-    if (m_encodeing)
+    if (m_encodeFPS.status() == FrameTimestamp::sync_Syncing)
     {
         m_picPendQueue.push_back(picin);
         m_mtxPendQueue.unlock();
@@ -237,7 +225,7 @@ bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, in
 
 bool GueeVideoEncoder::putFrameX264(int64_t millisecond, uint8_t* const plane[3], int32_t* pitch)
 {
-    if ( !m_encodeing ) return false;
+    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     x264_picture_t* picin = popCachePool();
     if (picin == nullptr) return false;
     picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
@@ -271,7 +259,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t millisecond, uint8_t* const plane[3]
     }
 
     m_mtxPendQueue.lock();
-    if (m_encodeing)
+    if (m_encodeFPS.status() == FrameTimestamp::sync_Syncing)
     {
         m_picPendQueue.push_back(picin);
         m_mtxPendQueue.unlock();
@@ -320,10 +308,10 @@ void GueeVideoEncoder::run()
 		}
 	}
     x264_picture_t* picin = nullptr;
-    while(m_encodeing)
+    while(m_encodeFPS.status() != FrameTimestamp::sync_Stoped)
     {
         m_waitPendQueue.acquire();
-        if ( m_encodeing == false ) break;
+        if ( m_encodeFPS.status() == FrameTimestamp::sync_Stoped ) break;
         m_mtxPendQueue.lock();
         picin = m_picPendQueue.front();
         m_picPendQueue.pop_front();
@@ -337,7 +325,7 @@ void GueeVideoEncoder::run()
         m_picIdlePool.push_back(picin);
         m_mtxIdlePool.unlock();
         m_waitIdlePool.release();
-        m_frameRate.add();
+        m_encodeFPS.add();
 		if ( ret < 0 )
 		{
 			//编码出错
@@ -393,7 +381,7 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
     if (picin == nullptr)
     {
         m_waitIdlePool.acquire();
-        if ( m_encodeing == false ) return nullptr;
+        if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return nullptr;
         m_mtxIdlePool.lock();
         picin = m_picIdlePool.last();
         m_picIdlePool.pop_back();
