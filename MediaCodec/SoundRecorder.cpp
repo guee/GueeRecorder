@@ -16,6 +16,21 @@ SoundRecorder::~SoundRecorder()
     stopRec();
 }
 
+bool SoundRecorder::bindStream(GueeMediaStream *stream)
+{
+    if (m_status == Encodeing) return false;
+
+    if ( nullptr == stream )
+    {
+        return false;
+    }
+    else
+    {
+        m_mediaStream = stream;
+    }
+    return true;
+}
+
 bool SoundRecorder::startRec(int32_t rate, ESampleBits bits, int32_t channel)
 {
     if (m_status > Opened)
@@ -118,6 +133,10 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
     ulong		bitRate	= ulong(m_audioParams.bitrate * 1024 / m_audioParams.channels);
     m_faacHandle	= faacEncOpen( ulong(m_audioParams.sampleRate), uint(m_audioParams.channels),
                                    reinterpret_cast<ulong*>(&m_samplesPerFrame), reinterpret_cast<ulong*>(&m_maxOutByteNum) );
+    if (m_faacHandle == 0)
+    {
+        return false;
+    }
     faacEncConfigurationPtr	pFaacCfg	= faacEncGetCurrentConfiguration( m_faacHandle );
     pFaacCfg->mpegVersion	= MPEG4;
     pFaacCfg->aacObjectType	= m_audioParams.encLevel;
@@ -132,13 +151,31 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
         m_faacHandle	= nullptr;
         return false;
     }
-    m_status = recording;
+    m_sndCallback.initResample();
+    m_sndMicInput.initResample();
+    m_status = Encodeing;
+    start();
     return true;
 }
 
 void SoundRecorder::endEncode()
 {
-
+    if (m_status == Encodeing)
+    {
+        m_status = Opened;
+        m_waitPcmBuffer.release();
+        if ( isRunning() )
+        {
+            wait();
+        }
+        if ( m_faacHandle )
+        {
+            faacEncClose(m_faacHandle);
+            m_faacHandle	= nullptr;
+        }
+        m_sndCallback.uninitResample();
+        m_sndMicInput.uninitResample();
+    }
 }
 
 void SoundRecorder::run()
@@ -155,10 +192,11 @@ void SoundRecorder::run()
     int32_t encOutSize = 0;
     memset(mixBuf, 0, ulong(bytesPerFrame));
 
-    while(m_status >= recording)
+    while(m_status >= Encodeing)
     {
         if (m_waitPcmBuffer.tryAcquire(1, 100))
         {
+            if (m_status < Encodeing) break;
             while(m_sndCallback.m_dataSize || m_sndMicInput.m_dataSize)
             {
                 bool pcbOk = mixPcm(frameBegin, m_sndCallback, mixBuf);
@@ -167,6 +205,10 @@ void SoundRecorder::run()
                 {
                     encOutSize = faacEncEncode(m_faacHandle, reinterpret_cast<int32_t*>(mixBuf),
                                                uint(m_samplesPerFrame), encBuf, uint(m_maxOutByteNum));
+                    if (encOutSize)
+                    {
+                        m_mediaStream->putAudioFrame(encBuf, encOutSize, frameBegin * 1000 / m_audioParams.sampleRate);
+                    }
                     memset(mixBuf, 0, ulong(bytesPerFrame));
                     frameBegin += sampPerFrame;
                 }
@@ -178,16 +220,31 @@ void SoundRecorder::run()
         }
         else
         {
+            if (m_status < Encodeing) break;
             int64_t sample = VideoSynthesizer::instance().timestamp() * m_audioParams.sampleRate / 1000;
-            while(frameBegin + sampPerFrame <= sample)
+            while(frameBegin + delaySample <= sample)
             {
                 encOutSize = faacEncEncode(m_faacHandle, reinterpret_cast<int32_t*>(mixBuf),
                                            uint(m_samplesPerFrame), encBuf, uint(m_maxOutByteNum));
+                if (encOutSize)
+                {
+                    m_mediaStream->putAudioFrame(encBuf, encOutSize, frameBegin * 1000 / m_audioParams.sampleRate);
+                }
                 frameBegin += sampPerFrame;
             }
         }
 
     }
+
+    encOutSize = faacEncEncode(m_faacHandle, nullptr,
+                               0, encBuf, uint(m_maxOutByteNum));
+    if (encOutSize)
+    {
+        m_mediaStream->putAudioFrame(encBuf, encOutSize, frameBegin * 1000 / m_audioParams.sampleRate);
+    }
+    frameBegin += sampPerFrame;
+    delete []mixBuf;
+    delete []encBuf;
 }
 
 bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBuf)
@@ -493,7 +550,7 @@ qint64 SoundDevInfo::readData(char *data, qint64 maxlen)
 
 qint64 SoundDevInfo::writeData(const char *data, qint64 len)
 {
-    if (m_rec.m_status == SoundRecorder::recording)
+    if (m_rec.m_status == SoundRecorder::Encodeing)
     {
         int32_t num = int32_t(len);
         const char* dat = data;

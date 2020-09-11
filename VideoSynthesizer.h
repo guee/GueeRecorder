@@ -95,7 +95,7 @@ private:
     struct FrameInfo
     {
         EVideoCSP csp;
-        int64_t timestamp;
+        int64_t timestamp;  //单位为毫秒
         int alignWidth;
         int alignHeight;
         int textureWidth;

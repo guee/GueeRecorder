@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication::setOrganizationDomain("looongson.xyz");
     QApplication::setApplicationVersion("1.0.0");
     QApplication::setApplicationName("GueeRecorder");
-    QApplication::setApplicationDisplayName("GueeScreenRecorder");
+   // QApplication::setApplicationDisplayName("GueeScreenRecorder");
 
 
 

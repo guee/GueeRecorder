@@ -88,9 +88,9 @@ public:
 	bool putVideoFrame(const uint8_t* frame, int32_t length, int64_t pts, int64_t dts);
 	bool putAudioFrame(const uint8_t* frame, int32_t length, int64_t timestamp);
 
-	const string& sps() const { return m_sps; }
-	const string& pps() const { return m_pps; }
-	const string& sei() const { return m_sei; }
+    const QByteArray& sps() const { return m_sps; }
+    const QByteArray& pps() const { return m_pps; }
+    const QByteArray& sei() const { return m_sei; }
 	int64_t	videoFrameCount() const { return m_videoFrameNum; }
 	int64_t videoTotalSize() const { return m_videoTotalSize; }
     int64_t videoDuration() const { return m_videoDuration + int64_t(1000.0f / m_videoParams.frameRate); }
@@ -114,9 +114,9 @@ protected:
 									//对于 h.264 的流，得到了 SPS/PPS 才算是得到了头数据。
 	bool			m_dtsCompress;	//
 
-	string			m_sps;			//这里记录的 SPS/PPS/SEI 都不包含前导字节。
-	string			m_pps;
-	string			m_sei;
+    QByteArray		m_sps;			//这里记录的 SPS/PPS/SEI 都不包含前导字节。
+    QByteArray		m_pps;
+    QByteArray		m_sei;
 
 	//视频相关的信息
 	int32_t			m_videoDelayFrame;	//如果有 B 帧，则该值不为0。根据B帧的设置，值为 1 或 2.
@@ -148,8 +148,10 @@ protected:
 	void makeAAC_SequenceHeader();
 	void checkSpsPpsSei(NalUnitType type, const uint8_t* data, int32_t length);
 
-	inline  uint64_t dbl2int(double value) {
-		return *((uint64_t*)&value);
+    inline  uint64_t dbl2int(double value)
+    {
+        uint64_t* ptr = reinterpret_cast<uint64_t*>(&value);
+        return *ptr;
 	}
 	inline  uint16_t endianFix16(uint16_t x)
 	{
@@ -168,9 +170,9 @@ private:
 	bool			m_audioStreamBegin;
 	bool			m_autoCheckAnnexb;
 	bool			m_nalBufLoc;	//缓存当前帧时，使用输入的 buffer，而不使用 m_nalBuffer
-	string			m_nalBuffer;	//缓存当前帧的数据
-	string			m_lastVideo;	//缓存当前流的数据
-	string			m_lastAudio;	//缓存当前流的数据
+    QByteArray  	m_nalBuffer;	//缓存当前帧的数据
+    QByteArray  	m_lastVideo;	//缓存当前流的数据
+    QByteArray		m_lastAudio;	//缓存当前流的数据
 	
 	H264Frame*		m_curFrame;
 	struct FrameCache

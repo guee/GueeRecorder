@@ -32,11 +32,11 @@ void GueeMediaWriter::setEnable(bool enable)
 bool GueeMediaWriter::onWriteHeader()
 {
 	putBE32( 1 );
-	if ( !appendData((unsigned char*)&m_stream.m_sps.front(), (int32_t)m_stream.m_sps.size() ) ) return false;
+    if ( !appendData((unsigned char*)m_stream.m_sps.data(), m_stream.m_sps.size() ) ) return false;
 	putBE32( 1 );
-	if ( !appendData((unsigned char*)&m_stream.m_pps.front(), (int32_t)m_stream.m_pps.size() ) ) return false;
+    if ( !appendData((unsigned char*)m_stream.m_pps.data(), m_stream.m_pps.size() ) ) return false;
 	putBE24( 1 );
-	if ( !appendData((unsigned char*)&m_stream.m_sei.front(), (int32_t)m_stream.m_sei.size() ) ) return false;
+    if ( !appendData((unsigned char*)m_stream.m_sei.data(), m_stream.m_sei.size() ) ) return false;
 
 	return flushData();
 }

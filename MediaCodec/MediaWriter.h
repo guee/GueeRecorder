@@ -69,8 +69,10 @@ protected:
 	inline void putLE32( uint32_t val ) { appendData( (uint8_t*)&val, 4 ); }
 	inline void putLE64( uint64_t val ) { appendData( (uint8_t*)&val, 8 ); }
 
-	inline  uint64_t dbl2int( double value ) {
-		return *( (uint64_t*)&value );
+    inline  uint64_t dbl2int( double value )
+    {
+        uint64_t* ptr = reinterpret_cast<uint64_t*>(&value);
+        return *ptr;
 	}
 	inline  uint16_t endianFix16( uint16_t x )
 	{

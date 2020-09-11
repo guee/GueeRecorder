@@ -75,6 +75,8 @@ public:
     SoundRecorder();
     ~SoundRecorder();
 
+    bool bindStream( GueeMediaStream* stream );
+
     SoundDevInfo& callbackDev() { return m_sndCallback; }
     SoundDevInfo& micInputDev() { return m_sndMicInput; }
 
@@ -84,7 +86,7 @@ public:
 
     bool startEncode( const SAudioParams* audioParams );
     void endEncode();
-    bool isEncodeing() const {return m_status >= recording;}
+    bool isEncodeing() const {return m_status >= Encodeing;}
 private:
     void run();
     friend SoundDevInfo;
@@ -92,7 +94,7 @@ private:
     {
         NoOpen,         //没有打开
         Opened,         //已经打开成功
-        recording,      //正在录制
+        Encodeing,      //正在录制/编码
         Paused,         //暂停中
     };
     RecStatus m_status = NoOpen;

@@ -19,6 +19,7 @@ ButtonWithVolume::ButtonWithVolume(QWidget* parent)
 
 void ButtonWithVolume::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
     QPainter pnt(this);
    // pnt.eraseRect(rect());
     pnt.drawImage(rect(), m_imgWave, m_imgWave.rect());

@@ -114,7 +114,7 @@ bool GueeMediaStream::startParse(IOnReadFile* cbRead)
             ++failCount;
         }
     }
-	if (failCount == m_writers.size())
+    if (failCount == int32_t(m_writers.size()))
 	{
 		m_mutexWrite.unlock();
 		endParse();
@@ -136,9 +136,9 @@ void GueeMediaStream::endParse()
 {
 	if (m_isOpened)
 	{
-		if (!m_lastVideo.empty())
+        if (!m_lastVideo.isEmpty())
 		{
-			putVideoSlice((const uint8_t*)&m_lastVideo.front(), int32_t(m_lastVideo.length()));
+            putVideoSlice( reinterpret_cast<const uint8_t*>(m_lastVideo.data()), m_lastVideo.length());
 		}
 		m_lastVideo.clear();
 		m_lastAudio.clear();
@@ -147,7 +147,7 @@ void GueeMediaStream::endParse()
 		writeToCache(nullptr, nullptr);
 
 		m_mutexWrite.lock();
-		for (int32_t i = 0; i < m_writers.size(); ++i)
+        for (int32_t i = 0; i < int32_t(m_writers.size()); ++i)
 			m_writers[i]->onCloseWrite();
 		m_isOpened = false;
 		for (auto i = m_frameCaches.begin(); i != m_frameCaches.end(); ++i)
@@ -157,7 +157,7 @@ void GueeMediaStream::endParse()
 		}
 		m_frameCaches.erase(m_frameCaches.begin(), m_frameCaches.end());
 		m_frameCaches = map<int64_t, FrameCache>();
-		m_nalBuffer = string();
+        m_nalBuffer.clear();
 		m_mutexWrite.unlock();
 	}
 }
@@ -179,7 +179,9 @@ bool GueeMediaStream::onGetNextFrame()
 
 bool GueeMediaStream::onPutFileStream(const uint8_t * data, int32_t length)
 {
-	return false;
+    Q_UNUSED(data);
+    Q_UNUSED(length);
+    return false;
 }
 
 bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
@@ -196,7 +198,7 @@ bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 			{
 				if (i < m_lastVideo.length())
 				{
-					memmove(&m_lastVideo.front(), &m_lastVideo[i], m_lastVideo.length() - i);
+                    memmove(m_lastVideo.data(), m_lastVideo.data() + i, m_lastVideo.length() - i);
 					m_lastVideo.resize(m_lastVideo.length() - i);
 				}
 				else
@@ -227,7 +229,7 @@ bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 		}
 	}
 	if (length <= 0) return true;
-	if (!m_lastVideo.empty())
+    if (!m_lastVideo.isEmpty())
 	{
 		if (m_lastVideo.size() > 6 && length >= 3)
 		{
@@ -239,7 +241,7 @@ bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 				{
 					m_curFrame->dts = 0;
 					m_curFrame->pts = 0;
-					putVideoSlice((const uint8_t*)&m_lastVideo.front(), int32_t(m_lastVideo.length()) - (3 - i));
+                    putVideoSlice( reinterpret_cast<const uint8_t*>(m_lastVideo.data()), m_lastVideo.length() - (3 - i));
 					m_lastVideo.clear();
 					m_lastVideo.append(sp + i, 3 - i);
 					break;
@@ -256,8 +258,8 @@ bool GueeMediaStream::putVideoStream(const uint8_t * data, int32_t length)
 				if (size)m_lastVideo.append((const char*)data, size);
 				m_curFrame->dts = 0;
 				m_curFrame->pts = 0;
-				putVideoSlice((const uint8_t*)&m_lastVideo.front(), int32_t(m_lastVideo.length()));
-				m_lastVideo.clear();
+                putVideoSlice( reinterpret_cast<const uint8_t*>(m_lastVideo.data()), m_lastVideo.length());
+                m_lastVideo.clear();
 				data += size;
 				length -= size;
 				break;
@@ -307,7 +309,7 @@ bool GueeMediaStream::putAudioStream(const uint8_t * data, int32_t length)
 			{
 				if (i < m_lastAudio.length())
 				{
-					memmove(&m_lastAudio.front(), &m_lastAudio[i], m_lastAudio.length() - i);
+                    memmove(m_lastAudio.data(), m_lastAudio.data() + i, m_lastAudio.length() - i);
 					m_lastAudio.resize(m_lastAudio.length() - i);
 				}
 				else
@@ -327,7 +329,7 @@ bool GueeMediaStream::putAudioStream(const uint8_t * data, int32_t length)
 			return true;
 		}
 	}
-	if (!m_lastAudio.empty())
+    if (!m_lastAudio.isEmpty())
 	{
 		if (m_lastAudio.length() < 7)
 		{
@@ -337,14 +339,14 @@ bool GueeMediaStream::putAudioStream(const uint8_t * data, int32_t length)
 			length -= get;
 		}
 		if (m_lastAudio.length() < 7) return true;
-		unsigned char* buff = (unsigned char*)&m_lastAudio.front();
+        unsigned char* buff = (unsigned char*)m_lastAudio.data();
 		int32_t aac_frame_length = (buff[3] & 3) << 11 | buff[4] << 3 | buff[5] >> 5;
 		int32_t	get = min(int32_t(aac_frame_length - m_lastAudio.length()), length);
 		m_lastAudio.append((const char*)data, get);
 		data += get;
 		length -= get;
 		if (m_lastAudio.length() < aac_frame_length) return true;
-		putAudioFrame((const uint8_t*)&m_lastAudio.front(), aac_frame_length, 0);
+        putAudioFrame((const uint8_t*)m_lastAudio.data(), aac_frame_length, 0);
 		m_lastAudio.clear();
 	}
 	while (length)
@@ -479,7 +481,7 @@ bool GueeMediaStream::writeToCache(H264Frame* vid, AUDFrame* aud)
 	if (!m_headIsGeted)
 	{
 		append = true;		//还没有写入文件头，必须先缓存数据。
-		if ( (!m_videoParams.enabled || ( !m_sps.empty() && !m_pps.empty() ))
+        if ( (!m_videoParams.enabled || ( !m_sps.isEmpty() && !m_pps.isEmpty() ))
 			&& (!m_audioParams.enabled || m_audioSpecificConfigSize) )
 		{
 			if (!onWriteHeader())
@@ -709,7 +711,7 @@ bool GueeMediaStream::putVideoSlice(const uint8_t * data, int32_t length)
 		{
 			if (!m_nalBufLoc)
 			{
-				uint8_t * nals = (uint8_t *)&m_nalBuffer.front();
+                uint8_t * nals = reinterpret_cast<uint8_t*>(m_nalBuffer.data());
 				for (int32_t i = 0; i < m_curFrame->nalCount; ++i)
 				{
 					m_curFrame->nals[i].nalData = nals;
@@ -792,26 +794,26 @@ void GueeMediaStream::checkSpsPpsSei(NalUnitType type, const uint8_t * data, int
 	switch (type)
 	{
 	case NalSei:
-		if (m_sei.size() != length || memcmp(&m_sei.front(), data, length) != 0)
+        if (m_sei.size() != length || memcmp(m_sei.data(), data, length) != 0)
 		{
 			m_sei.resize(length);
-			memcpy(&m_sei.front(), data, length);
+            memcpy(m_sei.data(), data, length);
 		}
 		break;
 	case NalSps:
-		if (m_sps.size() != length || memcmp(&m_sps.front(), data, length) != 0)
+        if (m_sps.size() != length || memcmp(m_sps.data(), data, length) != 0)
 		{
 			m_sps.resize(length);
-			memcpy(&m_sps.front(), data, length);
+            memcpy(m_sps.data(), data, length);
 			h264_decode_sps(data, length);
 
 		}
 		break;
 	case NalPps:
-		if (m_pps.size() != length || memcmp(&m_pps.front(), data, length) != 0)
+        if (m_pps.size() != length || memcmp(m_pps.data(), data, length) != 0)
 		{
 			m_pps.resize(length);
-			memcpy(&m_pps.front(), data, length);
+            memcpy(m_pps.data(), data, length);
 		}
 		break;
     default:
@@ -921,7 +923,7 @@ void GueeMediaStream::de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
 void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 {
 	uint32_t StartBit = 0;
-
+    const bool debufInfo = false;
 	uint8_t*	buf = (uint8_t*)malloc(nLen);
 	memcpy(buf, spsBuf, nLen);
 	de_emulation_prevention(buf, &nLen);
@@ -929,6 +931,11 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 	int forbidden_zero_bit = u(1, buf, StartBit);
 	int nal_ref_idc = u(2, buf, StartBit);
 	int nal_unit_type = u(5, buf, StartBit);
+    if (debufInfo)
+    {
+        qDebug() << "forbidden_zero_bit:" << forbidden_zero_bit;
+        qDebug() << "nal_ref_idc:" << nal_ref_idc;
+    }
 	if (nal_unit_type == 7)
 	{
 		int profile_idc = u(8, buf, StartBit);
@@ -940,19 +947,37 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 		int level_idc = u(8, buf, StartBit);
 
 		int seq_parameter_set_id = Ue(buf, nLen, StartBit);
-
+        if (debufInfo)
+        {
+            qDebug() << "constraint_set0_flag:" << constraint_set0_flag;
+            qDebug() << "constraint_set1_flag:" << constraint_set1_flag;
+            qDebug() << "constraint_set2_flag:" << constraint_set2_flag;
+            qDebug() << "constraint_set3_flag:" << constraint_set3_flag;
+            qDebug() << "reserved_zero_4bits:" << reserved_zero_4bits;
+            qDebug() << "level_idc:" << level_idc;
+            qDebug() << "seq_parameter_set_id:" << seq_parameter_set_id;
+        }
 		if (profile_idc == 100 || profile_idc == 110 ||
 			profile_idc == 122 || profile_idc == 144)
 		{
 			int chroma_format_idc = Ue(buf, nLen, StartBit);
+            int residual_colour_transform_flag = 0;
 			if (chroma_format_idc == 3)
-				int residual_colour_transform_flag = u(1, buf, StartBit);
+                residual_colour_transform_flag = u(1, buf, StartBit);
 			int bit_depth_luma_minus8 = Ue(buf, nLen, StartBit);
 			int bit_depth_chroma_minus8 = Ue(buf, nLen, StartBit);
 			int qpprime_y_zero_transform_bypass_flag = u(1, buf, StartBit);
 			int seq_scaling_matrix_present_flag = u(1, buf, StartBit);
-
-			int seq_scaling_list_present_flag[8];
+            int seq_scaling_list_present_flag[8];
+            if (debufInfo)
+            {
+                qDebug() << "residual_colour_transform_flag:" << residual_colour_transform_flag;
+                qDebug() << "bit_depth_luma_minus8:" << bit_depth_luma_minus8;
+                qDebug() << "bit_depth_chroma_minus8:" << bit_depth_chroma_minus8;
+                qDebug() << "qpprime_y_zero_transform_bypass_flag:" << qpprime_y_zero_transform_bypass_flag;
+                qDebug() << "seq_scaling_matrix_present_flag:" << seq_scaling_matrix_present_flag;
+                qDebug() << "seq_scaling_list_present_flag:" << seq_scaling_list_present_flag;
+            }
 			if (seq_scaling_matrix_present_flag)
 			{
 				for (int i = 0; i < 8; i++) {
@@ -962,8 +987,19 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 		}
 		int log2_max_frame_num_minus4 = Ue(buf, nLen, StartBit);
 		int pic_order_cnt_type = Ue(buf, nLen, StartBit);
+        if (debufInfo)
+        {
+            qDebug() << "log2_max_frame_num_minus4:" << log2_max_frame_num_minus4;
+            qDebug() << "pic_order_cnt_type:" << pic_order_cnt_type;
+        }
 		if (pic_order_cnt_type == 0)
-			int log2_max_pic_order_cnt_lsb_minus4 = Ue(buf, nLen, StartBit);
+        {
+            int log2_max_pic_order_cnt_lsb_minus4 = Ue(buf, nLen, StartBit);
+            if (debufInfo)
+            {
+                qDebug() << "log2_max_pic_order_cnt_lsb_minus4:" << log2_max_pic_order_cnt_lsb_minus4;
+            }
+        }
 		else if (pic_order_cnt_type == 1)
 		{
 			int delta_pic_order_always_zero_flag = u(1, buf, StartBit);
@@ -974,6 +1010,14 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 			int *offset_for_ref_frame = new int[num_ref_frames_in_pic_order_cnt_cycle];
 			for (int i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++)
 				offset_for_ref_frame[i] = Se(buf, nLen, StartBit);
+
+            if (debufInfo)
+            {
+                qDebug() << "delta_pic_order_always_zero_flag:" << delta_pic_order_always_zero_flag;
+                qDebug() << "offset_for_non_ref_pic:" << offset_for_non_ref_pic;
+                qDebug() << "offset_for_top_to_bottom_field:" << offset_for_top_to_bottom_field;
+                qDebug() << "num_ref_frames_in_pic_order_cnt_cycle:" << num_ref_frames_in_pic_order_cnt_cycle;
+            }
 			delete[] offset_for_ref_frame;
 		}
 		int num_ref_frames = Ue(buf, nLen, StartBit);
@@ -982,11 +1026,22 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 		int spsHeight = Ue(buf, nLen, StartBit);
 		spsWidth = (spsWidth + 1) * 16;
 		spsHeight = (spsHeight + 1) * 16;
-
+        if (debufInfo)
+        {
+            qDebug() << "num_ref_frames:" << num_ref_frames;
+            qDebug() << "gaps_in_frame_num_value_allowed_flag:" << gaps_in_frame_num_value_allowed_flag;
+            qDebug() << "spsWidth:" << spsWidth;
+            qDebug() << "spsHeight:" << spsHeight;
+        }
 		int frame_mbs_only_flag = u(1, buf, StartBit);
 		if (!frame_mbs_only_flag)
+        {
 			int mb_adaptive_frame_field_flag = u(1, buf, StartBit);
-
+            if (debufInfo)
+            {
+                qDebug() << "mb_adaptive_frame_field_flag:" << mb_adaptive_frame_field_flag;
+            }
+        }
 		int direct_8x8_inference_flag = u(1, buf, StartBit);
 		int frame_cropping_flag = u(1, buf, StartBit);
 		if (frame_cropping_flag)
@@ -1001,6 +1056,11 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 			spsHeight -= frame_crop_top_offset * 2;
 			spsHeight -= frame_crop_bottom_offset * 2;
 		}
+        if (debufInfo)
+        {
+            qDebug() << "direct_8x8_inference_flag:" << direct_8x8_inference_flag;
+            qDebug() << "frame_cropping_flag:" << frame_cropping_flag;
+        }
 		if (0 >= m_videoParams.width || 0 >= m_videoParams.height)
 		{
 			m_videoParams.width = spsWidth;
@@ -1017,30 +1077,58 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 				{
 					int sar_width = u(16, buf, StartBit);
 					int sar_height = u(16, buf, StartBit);
-				}
+                    if (debufInfo)
+                    {
+                        qDebug() << "sar_width:" << sar_width;
+                        qDebug() << "sar_height:" << sar_height;
+                    }
+                }
 			}
 			int overscan_info_present_flag = u(1, buf, StartBit);
 			if (overscan_info_present_flag)
+            {
 				int overscan_appropriate_flagu = u(1, buf, StartBit);
+                if (debufInfo)
+                {
+                    qDebug() << "overscan_appropriate_flagu:" << overscan_appropriate_flagu;
+                }
+            }
 			int video_signal_type_present_flag = u(1, buf, StartBit);
 			if (video_signal_type_present_flag)
 			{
 				int video_format = u(3, buf, StartBit);
 				int video_full_range_flag = u(1, buf, StartBit);
 				int colour_description_present_flag = u(1, buf, StartBit);
+                if (debufInfo)
+                {
+                    qDebug() << "video_format:" << video_format;
+                    qDebug() << "video_full_range_flag:" << video_full_range_flag;
+                    qDebug() << "colour_description_present_flag:" << colour_description_present_flag;
+                }
 				if (colour_description_present_flag)
 				{
 					int colour_primaries = u(8, buf, StartBit);
 					int transfer_characteristics = u(8, buf, StartBit);
 					int matrix_coefficients = u(8, buf, StartBit);
-				}
+                    if (debufInfo)
+                    {
+                        qDebug() << "colour_primaries:" << colour_primaries;
+                        qDebug() << "transfer_characteristics:" << transfer_characteristics;
+                        qDebug() << "matrix_coefficients:" << matrix_coefficients;
+                    }
+                }
 			}
 			int chroma_loc_info_present_flag = u(1, buf, StartBit);
 			if (chroma_loc_info_present_flag)
 			{
 				int chroma_sample_loc_type_top_field = Ue(buf, nLen, StartBit);
 				int chroma_sample_loc_type_bottom_field = Ue(buf, nLen, StartBit);
-			}
+                if (debufInfo)
+                {
+                    qDebug() << "chroma_sample_loc_type_top_field:" << chroma_sample_loc_type_top_field;
+                    qDebug() << "chroma_sample_loc_type_bottom_field:" << chroma_sample_loc_type_bottom_field;
+                }
+            }
 			int timing_info_present_flag = u(1, buf, StartBit);
 
 			if (timing_info_present_flag)
@@ -1053,6 +1141,13 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 				{
                     m_videoParams.frameRate = float( time_scale) / float(num_units_in_tick * 2);
 				}
+                if (debufInfo)
+                {
+                    qDebug() << "num_units_in_tick:" << num_units_in_tick;
+                    qDebug() << "time_scale:" << time_scale;
+                    qDebug() << "fixed_frame_rate_flag:" << fixed_frame_rate_flag;
+                }
+
 			}
             else if (0 >= m_videoParams.frameRate)
 			{
@@ -1069,7 +1164,8 @@ void GueeMediaStream::h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen)
 
 void GueeMediaStream::parseADTS(const uint8_t* data)
 {
-	SADTS	adts = { 0 };
+    SADTS	adts;
+    memset(&adts, 0, sizeof(adts));
 	adts.syncword = data[0] << 4 | data[1] >> 4;
 	adts.ID = (data[1] >> 3) & 1;
 	adts.layer = (data[1] >> 1) & 3;

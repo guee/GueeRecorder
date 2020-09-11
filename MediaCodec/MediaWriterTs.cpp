@@ -93,7 +93,7 @@ bool GueeMediaWriterTs::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 	{
 		for (int32_t i = 0; i < frame->nalCount; ++i)
 		{
-            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            //const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if ( nal.nalType == NalAud || nal.nalType == NalSps || nal.nalType == NalSei || nal.nalType == NalPps) continue;
 			m_videoCache.append((const char*)frame->nals[i].nalData, frame->nals[i].nalSize);
 		}
@@ -102,7 +102,7 @@ bool GueeMediaWriterTs::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 	{
 		for (int32_t i = 0; i < frame->nalCount; ++i)
 		{
-            const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
+            //const GueeMediaStream::H264Frame::NAL& nal = frame->nals[i];
 			//if (nal.nalType == NalAud || nal.nalType == NalSps || nal.nalType == NalSei || nal.nalType == NalPps) continue;
 			m_videoCache.append("\0\0\1", 3);
 			m_videoCache.append((const char*)frame->nals[i].nalData + 4, frame->nals[i].nalSize - 4);
@@ -243,7 +243,7 @@ void GueeMediaWriterTs::setTsPacketHeader(uint16_t pid, bool isStart, uint8_t st
 	if (pcr>=0)
 	{
 		writeBits(8, 7);
-		int32_t wb = 0;
+        //int32_t wb = 0;
 
 		writeBits(8, 0x50);
 

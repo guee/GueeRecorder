@@ -43,8 +43,8 @@ bool GueeMediaWriterMp4::onWriteHeader()
 		v->depth = endianFix16(24);
 		v->preDefined3 = int16_t(0xFFFF);
 
-		const string& sps = m_stream.sps();
-		const string& pps = m_stream.pps();
+        const QByteArray& sps = m_stream.sps();
+        const QByteArray& pps = m_stream.pps();
         Mp4Box*	avcCBox = new Mp4Box(FourCC('a','v','c','C'), avc1Box, uint32_t(6 + 2 + sps.size() + 1 + 2 + pps.size()));
         uint8_t*	data = reinterpret_cast<uint8_t*>(&avcCBox->data.front());
 		data[0] = 1;
@@ -56,13 +56,13 @@ bool GueeMediaWriterMp4::onWriteHeader()
 		data += 6;
         *reinterpret_cast<uint16_t*>(data) = endianFix16(uint16_t(sps.size()));
 		data += 2;
-		memcpy(data, sps.c_str(), sps.size());
+        memcpy(data, sps.data(), sps.size());
 		data += sps.size();
 		data[0] = 1;
 		data++;
         *reinterpret_cast<uint16_t*>(data) = endianFix16(uint16_t(pps.size()));
 		data += 2;
-		memcpy(data, pps.c_str(), pps.size());
+        memcpy(data, pps.data(), pps.size());
 
 	}
 	if (hasAudio)
@@ -137,7 +137,7 @@ bool GueeMediaWriterMp4::onWriteHeader()
 
 		m_buffer[ES_DescrTagSizeOffset] = uint8_t(cacheSize() - ES_DescrTagSizeOffset - 1);
 
-		Mp4Box*	esdsBox = new Mp4Box('esds', mp4aBox, cacheSize());
+        Mp4Box*	esdsBox = new Mp4Box(FourCC('e','s','d','s'), mp4aBox, cacheSize());
 		esdsBox->data = m_buffer;
 		trak.esdsBitrateInfo = ((uint8_t*)&esdsBox->data.front()) + bitrateOffset;
 		m_buffer.clear();
@@ -306,21 +306,21 @@ void GueeMediaWriterMp4::onCloseWrite()
 	}
 	set_moov_mvhd();
 	fix_mdat_size();
-	writeBox(m_boxRoot.find('moov'), true);
+    writeBox(m_boxRoot.find(FourCC('m','o','o','v')), true);
 }
 
 bool GueeMediaWriterMp4::set_ftyp(const string& brands)
 {
 	int32_t brandCount = (int32_t)brands.size() / 4;
 	if (brandCount == 0) return false;
-	Mp4Box*	ftypBox = m_boxRoot.find('ftyp');
+    Mp4Box*	ftypBox = m_boxRoot.find(FourCC('f','t','y','p'));
 	if (ftypBox)
 	{
 		ftypBox->data.resize(sizeof(Box_ftyp) + brandCount * 4 - 4);
 	}
 	else
 	{
-		ftypBox	= new Mp4Box('ftyp', &m_boxRoot, sizeof(Box_ftyp) + brandCount * 4 - 4);
+        ftypBox	= new Mp4Box(FourCC('f','t','y','p'), &m_boxRoot, sizeof(Box_ftyp) + brandCount * 4 - 4);
 	}
 	Box_ftyp*	ftypPtr = (Box_ftyp*)&ftypBox->data.front();
 	memcpy(&ftypPtr->majorBrand, brands.c_str(), 4 );
@@ -334,15 +334,15 @@ bool GueeMediaWriterMp4::set_ftyp(const string& brands)
 
 bool GueeMediaWriterMp4::set_moov_mvhd()
 {
-	Mp4Box*	moovBox = m_boxRoot.find('moov');
+    Mp4Box*	moovBox = m_boxRoot.find(FourCC('m','o','o','v'));
 	if (nullptr == moovBox)
 	{
-		moovBox = new Mp4Box('moov', &m_boxRoot);
+        moovBox = new Mp4Box(FourCC('m','o','o','v'), &m_boxRoot);
 	}
-	Mp4Box*	mvhdBox = moovBox->find('mvhd');
+    Mp4Box*	mvhdBox = moovBox->find(FourCC('m','v','h','d'));
 	if (nullptr == mvhdBox)
 	{
-		mvhdBox	= new Mp4Box('mvhd', moovBox);
+        mvhdBox	= new Mp4Box(FourCC('m','v','h','d'), moovBox);
 		m_mvhd.version = 1;
 		m_mvhd.flags[0] = m_mvhd.flags[1] = m_mvhd.flags[2] = 0;
 		m_mvhd.creationTime = 0;
@@ -393,26 +393,26 @@ bool GueeMediaWriterMp4::set_moov_mvhd()
 
 uint32_t GueeMediaWriterMp4::add_trak(EMediaType type)
 {
-	Mp4Box*	moovBox = m_boxRoot.find('moov');
+    Mp4Box*	moovBox = m_boxRoot.find(FourCC('m','o','o','v'));
 	if (nullptr == moovBox) return 0;
 
 	TrackInfo	info;
 
-	info.trakBox = new Mp4Box('trak', moovBox);
+    info.trakBox = new Mp4Box(FourCC('t','r','a','k'), moovBox);
 	set_trak_tkhd(info);
 
-	Mp4Box*	mdiaBox = new Mp4Box('mdia', info.trakBox);
+    Mp4Box*	mdiaBox = new Mp4Box(FourCC('m','d','i','a'), info.trakBox);
 	set_mdia_mdhd(info);
-	new Mp4Box('hdlr', mdiaBox);
-	Mp4Box*	minfBox = new Mp4Box('minf', mdiaBox);
+    new Mp4Box(FourCC('h','d','l','r'), mdiaBox);
+    Mp4Box*	minfBox = new Mp4Box(FourCC('m','i','n','f'), mdiaBox);
 	switch (type)
 	{
 	case eMedTypeVideo:
-		set_mdia_hdlr(info, 'vide', "");
+        set_mdia_hdlr(info, FourCC('v','i','d','e'), "");
 		set_minf_vmhd(info);
 		break;
 	case eMedTypeAudio:
-		set_mdia_hdlr(info, 'soun', "");
+        set_mdia_hdlr(info, FourCC('s','o','u','n'), "");
 		set_minf_smhd(info);
 		break;
 	case eMedTypeText:
@@ -422,39 +422,39 @@ uint32_t GueeMediaWriterMp4::add_trak(EMediaType type)
 		set_mdia_hdlr(info, 0, "");
 	}
 
-	Mp4Box*	dinfBox = new Mp4Box('dinf', minfBox);
+    Mp4Box*	dinfBox = new Mp4Box(FourCC('d','i','n','f'), minfBox);
 
-	Mp4Box*	drefBox = new Mp4Box('dref', dinfBox, sizeof(Box_dref));
+    Mp4Box*	drefBox = new Mp4Box(FourCC('d','r','e','f'), dinfBox, sizeof(Box_dref));
 	((Box_dref*)&drefBox->data.front())->entryCount = endianFix32(1);
-	Mp4Box* urlBox = new Mp4Box('url ', drefBox, sizeof(Box_FillHead));
+    Mp4Box* urlBox = new Mp4Box(FourCC('u','r','l',' '), drefBox, sizeof(Box_FillHead));
 	((Box_FillHead*)&urlBox->data.front())->flags[2] = 1;
 
-	Mp4Box*	stblBox = new Mp4Box('stbl', minfBox);
+    Mp4Box*	stblBox = new Mp4Box(FourCC('s','t','b','l'), minfBox);
 
-	info.stsdBox = new Mp4Box('stsd', stblBox, sizeof(Box_stsd));
+    info.stsdBox = new Mp4Box(FourCC('s','t','s','d'), stblBox, sizeof(Box_stsd));
 	((Box_stsd*)&info.stsdBox->data.front())->entryCount = endianFix32(1);
-	info.sttsBox = new Mp4Box('stts', stblBox, sizeof(Box_stts) - 8);
+    info.sttsBox = new Mp4Box(FourCC('s','t','t','s'), stblBox, sizeof(Box_stts) - 8);
 	if (type == eMedTypeVideo)
 	{
-		info.cttsBox = new Mp4Box('ctts', stblBox, sizeof(Box_ctts) - 8);
+        info.cttsBox = new Mp4Box(FourCC('c','t','t','s'), stblBox, sizeof(Box_ctts) - 8);
 	}
 	if (type == eMedTypeVideo)
 	{
-		info.stssBox = new Mp4Box('stss', stblBox, sizeof(Box_stss) - 4);
+        info.stssBox = new Mp4Box(FourCC('s','t','s','s'), stblBox, sizeof(Box_stss) - 4);
 	}
-	info.stscBox = new Mp4Box('stsc', stblBox, sizeof(Box_stsc) - 12);
-	info.stszBox = new Mp4Box('stsz', stblBox, sizeof(Box_stsz) - 4);
-	info.stcoBox = new Mp4Box('stco', stblBox, sizeof(Box_stco) - 4 );
+    info.stscBox = new Mp4Box(FourCC('s','t','s','c'), stblBox, sizeof(Box_stsc) - 12);
+    info.stszBox = new Mp4Box(FourCC('s','t','s','z'), stblBox, sizeof(Box_stsz) - 4);
+    info.stcoBox = new Mp4Box(FourCC('s','t','c','o'), stblBox, sizeof(Box_stco) - 4 );
 	m_tracks[info.tkhd.trackId] = info;
 	return info.tkhd.trackId;
 }
 
 bool GueeMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 {
-	Mp4Box*	tkhdBox = trak.trakBox->find('tkhd');
+    Mp4Box*	tkhdBox = trak.trakBox->find(FourCC('t','k','h','d'));
 	if (nullptr == tkhdBox)
 	{
-		tkhdBox	= new Mp4Box('tkhd', trak.trakBox);
+        tkhdBox	= new Mp4Box(FourCC('t','k','h','d'), trak.trakBox);
 		trak.tkhd.version = 0;
 		trak.tkhd.flags[0] = trak.tkhd.flags[1];
 		trak.tkhd.flags[2] = 7;
@@ -514,12 +514,12 @@ bool GueeMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 
 bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 {
-	Mp4Box*	mdiaBox = trak.trakBox->find('mdia');
+    Mp4Box*	mdiaBox = trak.trakBox->find(FourCC('m','d','i','a'));
 	if (nullptr == mdiaBox) return false;
-	Mp4Box*	mdhdBox = mdiaBox->find('mdhd');
+    Mp4Box*	mdhdBox = mdiaBox->find(FourCC('m','d','h','d'));
 	if (nullptr == mdhdBox)
 	{
-		mdhdBox = new Mp4Box('mdhd', mdiaBox);
+        mdhdBox = new Mp4Box(FourCC('m','d','h','d'), mdiaBox);
 		trak.mdhd.version = 1;
 		trak.mdhd.flags[0] = trak.tkhd.flags[1] = trak.mdhd.flags[2] = 0;
 		trak.mdhd.creationTime = 0;
@@ -561,12 +561,12 @@ bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 
 bool GueeMediaWriterMp4::set_mdia_hdlr(TrackInfo & trak, FourCC fcc, const string& name)
 {
-	Mp4Box*	mdiaBox = trak.trakBox->find('mdia');
+    Mp4Box*	mdiaBox = trak.trakBox->find(FourCC('m','d','i','a'));
 	if (nullptr == mdiaBox) return false;
-	Mp4Box*	hdlrBox = mdiaBox->find('hdlr');
+    Mp4Box*	hdlrBox = mdiaBox->find(FourCC('h','d','l','r'));
 	if (nullptr == hdlrBox)
 	{
-		hdlrBox = new Mp4Box('hdlr', mdiaBox);
+        hdlrBox = new Mp4Box(FourCC('h','d','l','r'), mdiaBox);
 	}
 
 	hdlrBox->data.resize(sizeof(Box_hdlr)+ name.size());
@@ -580,12 +580,12 @@ bool GueeMediaWriterMp4::set_mdia_hdlr(TrackInfo & trak, FourCC fcc, const strin
 
 bool GueeMediaWriterMp4::set_minf_vmhd(TrackInfo & trak, uint16_t mode, uint16_t r, uint16_t g, uint16_t b)
 {
-	Mp4Box*	minfBox = trak.trakBox->find('minf');
+    Mp4Box*	minfBox = trak.trakBox->find(FourCC('m','i','n','f'));
 	if (nullptr == minfBox) return false;
-	Mp4Box*	vmhdBox = minfBox->find('vmhd');
+    Mp4Box*	vmhdBox = minfBox->find(FourCC('v','m','h','d'));
 	if (nullptr == vmhdBox)
 	{
-		vmhdBox = new Mp4Box('vmhd', minfBox, sizeof(Box_vmhd));
+        vmhdBox = new Mp4Box(FourCC('v','m','h','d'), minfBox, sizeof(Box_vmhd));
 	}
 
 	Box_vmhd*	vmhd = (Box_vmhd*)&vmhdBox->data.front();
@@ -601,12 +601,12 @@ bool GueeMediaWriterMp4::set_minf_vmhd(TrackInfo & trak, uint16_t mode, uint16_t
 
 bool GueeMediaWriterMp4::set_minf_smhd(TrackInfo & trak, int8_t leftOrRight)
 {
-	Mp4Box*	minfBox = trak.trakBox->find('minf');
+    Mp4Box*	minfBox = trak.trakBox->find(FourCC('m','i','n','f'));
 	if (nullptr == minfBox) return false;
-	Mp4Box*	smhdBox = minfBox->find('smhd');
+    Mp4Box*	smhdBox = minfBox->find(FourCC('s','m','h','d'));
 	if (nullptr == smhdBox)
 	{
-		smhdBox = new Mp4Box('smhd', minfBox, sizeof(Box_smhd));
+        smhdBox = new Mp4Box(FourCC('s','m','h','d'), minfBox, sizeof(Box_smhd));
 	}
 
 	Box_smhd*	smhd = (Box_smhd*)&smhdBox->data.front();

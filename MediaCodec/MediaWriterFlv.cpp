@@ -121,6 +121,8 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		case AC_MP3:
 			flvCodecAudio = FLV_CODECID_MP3;
 			break;
+        default:
+            break;
 		}
 		putAmfDouble(flvCodecAudio);
 	}
@@ -171,12 +173,12 @@ bool GueeMediaWriterFlv::onWriteHeader()
 		putByte( 0xe1 );   // 3 bits reserved (111) + 5 bits number of sps (00001)
 		//Write SPS
 		putBE16((uint16_t)m_stream.sps().size() );
-		appendData( (const uint8_t*)&m_stream.sps().front(), (uint32_t)m_stream.sps().size() );
+        appendData( (const uint8_t*)m_stream.sps().data(), (uint32_t)m_stream.sps().size() );
 
 		//Write PPS
 		putByte( 1 ); // number of pps
 		putBE16((uint16_t)m_stream.pps().size() );
-		appendData((const uint8_t*)&m_stream.pps().front(), (uint32_t)m_stream.pps().size() );
+        appendData((const uint8_t*)m_stream.pps().data(), (uint32_t)m_stream.pps().size() );
 
 		tagLength	= cacheSize() - dataLenOffset;
 		reputAmfBE24Length( tagLength - 10, dataLenOffset );
@@ -226,10 +228,10 @@ bool GueeMediaWriterFlv::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 	putByte( 1 ); // AVC NALU
 	putBE24( uint32_t(frame->ptsTimeMS - frame->dtsTimeMS) );
 
-	if ( 0 == m_stream.videoFrameCount() && !m_stream.sei().empty() )
+    if ( 0 == m_stream.videoFrameCount() && !m_stream.sei().isEmpty() )
 	{
 		putBE32((uint32_t)m_stream.sei().size() );
-		appendData((const uint8_t*)&m_stream.sei().front(), (uint32_t)m_stream.sei().size() );
+        appendData((const uint8_t*)m_stream.sei().data(), (uint32_t)m_stream.sei().size() );
 	}
 
 	if (videoParams.annexb )

@@ -179,8 +179,8 @@ bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, in
     if (picin == nullptr) return false;
     picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
 
-//    qDebug() << "毫秒:" << millisecond << " 距离上帧：" << millisecond - m_prevFrameTime
-//             << ", PTS:" << picin->i_pts << " 增量:" << picin->i_pts - m_prevFramePts;
+    qDebug() << "毫秒:" << millisecond << " 距离上帧：" << millisecond - m_prevFrameTime
+             << ", PTS:" << picin->i_pts << " PTS增量:" << picin->i_pts - m_prevFramePts;
 
     m_prevFramePts = picin->i_pts;
     m_prevFrameTime = millisecond;
@@ -231,7 +231,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t millisecond, uint8_t* const plane[3]
     picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
 
 //    qDebug() << "毫秒:" << millisecond << " 距离上帧：" << millisecond - m_prevFrameTime
-//             << ", PTS:" << picin->i_pts << " 增量:" << picin->i_pts - m_prevFramePts;
+//             << ", PTS:" << picin->i_pts << " PTS增量:" << picin->i_pts - m_prevFramePts;
 
     m_prevFramePts = picin->i_pts;
     m_prevFrameTime = millisecond;

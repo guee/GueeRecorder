@@ -3,8 +3,8 @@
 
 FormVolumeAction::FormVolumeAction(SoundDevInfo& dev, QWidget *parent) :
     QWidget(parent),
-    m_dev(dev),
-    ui(new Ui::FormVolumeAction)
+    ui(new Ui::FormVolumeAction),
+    m_dev(dev)
 {
     ui->setupUi(this);
     ui->horizontalSlider->setValue(int(ui->horizontalSlider->maximum() * m_dev.volume()));

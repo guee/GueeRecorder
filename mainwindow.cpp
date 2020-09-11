@@ -8,6 +8,7 @@
 #include "DialogSetting.h"
 
 #include <QDesktopWidget>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,10 +28,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     ui->widgetLogo->setAttribute(Qt::WA_TransparentForMouseEvents);
+    ui->widgetTitleInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
+   // ui->labelVideoInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
+
     ui->widgetTitle->setMouseTracking(true);
     ui->widgetTitle->installEventFilter(this);
     ui->widgetBottom->setMouseTracking(true);
     ui->widgetBottom->installEventFilter(this);
+
+    ui->widget_AudioRec->installEventFilter(this);
+
     ui->pushButtonScreenSelect->installEventFilter(this);
     ui->pushButtonCameraSelect->installEventFilter(this);
     ui->pushButtonMediaSelect->installEventFilter(this);
@@ -73,12 +80,12 @@ MainWindow::~MainWindow()
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
-    static bool mouseOnAddContents = false;
+    //static bool mouseOnAddContents = false;
     if ( watched == ui->pushButtonScreenSelect || watched == ui->pushButtonCameraSelect || watched == ui->pushButtonMediaSelect)
     {
         if ( event->type() == QEvent::Enter)
         {
-           // if (!mouseOnAddContents)
+            // if (!mouseOnAddContents)
             {
                 ui->pushButtonScreenSelect->setChecked(watched == ui->pushButtonScreenSelect);
                 ui->pushButtonCameraSelect->setChecked(watched == ui->pushButtonCameraSelect);
@@ -116,7 +123,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
     {
         if ( event->type() == QEvent::Enter)
         {
-            mouseOnAddContents = true;
+            //mouseOnAddContents = true;
         }
         else if ( event->type() == QEvent::Leave)
         {
@@ -127,7 +134,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                     !ui->pushButtonScreenSelect->rect().contains(ui->pushButtonMediaSelect->mapFromGlobal(po)))
             {
                 qDebug() << "QEvent::Leave B";
-                mouseOnAddContents = false;
+                //mouseOnAddContents = false;
                 ui->pushButtonScreenSelect->setChecked(false);
                 ui->pushButtonCameraSelect->setChecked(false);
                 ui->pushButtonMediaSelect->setChecked(false);
@@ -137,7 +144,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         }
         else if ( event->type() == QEvent::Hide)
         {
-            mouseOnAddContents = false;
+            //mouseOnAddContents = false;
         }
     }
     else if (watched == ui->widgetTitle )
@@ -154,6 +161,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             {
                 hit = Qt::TopSection;
             }
+
             if ( movEvt->x() <= 4 )
             {
                 hit = ( hit == Qt::TopSection ) ? Qt::TopLeftSection : Qt::LeftSection;
@@ -207,6 +215,14 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         {
         }
         else if ( event->type() == QEvent::Leave)
+        {
+            m_hitMain = Qt::NoSection;
+            setCursor(Qt::ArrowCursor);
+        }
+    }
+    else
+    {
+        if ( event->type() == QEvent::Enter)
         {
             m_hitMain = Qt::NoSection;
             setCursor(Qt::ArrowCursor);
@@ -356,7 +372,6 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
-    ui->stackedWidgetRecControl->setCurrentIndex(1);
     QString path = DialogSetting::userSetting().videoDir;
     if (!path.endsWith("/")) path.append("/");
     path.append(DialogSetting::userSetting().fileName);
@@ -368,6 +383,11 @@ void MainWindow::on_pushButtonRecStart_clicked()
     {
         ui->pushButtonMenu->setDisabled(true);
         m_video.play();
+        ui->stackedWidgetRecControl->setCurrentIndex(1);
+    }
+    else
+    {
+        QMessageBox::critical(this, "开始录制", "启动录像失败");
     }
 }
 

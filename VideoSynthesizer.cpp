@@ -11,6 +11,7 @@ VideoSynthesizer::VideoSynthesizer()
     resetDefaultOption();
 
     m_vidEncoder.bindStream(&m_medStream);
+    m_audRecorder.bindStream(&m_medStream);
 }
 
 VideoSynthesizer::~VideoSynthesizer()
@@ -181,10 +182,19 @@ bool VideoSynthesizer::open(const QString &sourceName)
     }
     m_vidParams.enabled = true;
     m_medStream.setVideoParams(m_vidParams);
+    m_audParams.useADTS = true;
+    m_audParams.encLevel = 2;
     m_medStream.setAudioParams(m_audParams);
     if (!m_medStream.startParse())
     {
         return false;
+    }
+    if (m_audParams.enabled)
+    {
+        if (!m_audRecorder.startEncode(&m_audParams))
+        {
+            return false;
+        }
     }
     if (!m_vidEncoder.startEncode(&m_vidParams))
     {
@@ -200,6 +210,7 @@ void VideoSynthesizer::close()
     m_vidEncoder.endEncode();
     m_medStream.endParse();
     m_status = NoOpen;
+    m_timestamp.stop();
     for (auto w:m_writers)
     {
         delete w;
@@ -273,7 +284,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_audParams.eCodec = AC_AAC;
     m_audParams.isOnlineMode = true;
     m_audParams.useADTS = false;
-    m_audParams.encLevel = 1;
+    m_audParams.encLevel = 2;
     m_audParams.bitrate = 256;
 
     m_audParams.sampleBits = eSampleBit16i;
@@ -412,7 +423,7 @@ bool VideoSynthesizer::setSampleBits(ESampleBits bits)
     if (bits != m_audParams.sampleBits)
     {
         m_audParams.sampleBits = bits;
-        if (m_audParams.enabled)
+        if (m_audParams.enabled && m_audRecorder.isOpened())
         {
             ret = enableAudio(true);
         }
@@ -430,7 +441,7 @@ bool VideoSynthesizer::setSampleRate(int32_t rate)
     if (rate != m_audParams.sampleRate)
     {
         m_audParams.sampleRate = rate;
-        if (m_audParams.enabled)
+        if (m_audParams.enabled && m_audRecorder.isOpened())
         {
             ret = enableAudio(true);
         }
@@ -448,7 +459,7 @@ bool VideoSynthesizer::setChannels(int32_t channels)
     if (channels != m_audParams.channels)
     {
         m_audParams.channels = channels;
-        if (m_audParams.enabled)
+        if (m_audParams.enabled && m_audRecorder.isOpened())
         {
             ret = enableAudio(true);
         }
@@ -512,8 +523,9 @@ void VideoSynthesizer::renderThread()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
     emit initDone(true);
-    int64_t preTimer = 0;
+    int64_t preTimer = -1000000;
     int64_t curTimer = 0;
+    int64_t preTimeStamp = 0;
     while(m_threadWorking)
     {
         if ( m_videoSizeChanged &&
@@ -530,26 +542,26 @@ void VideoSynthesizer::renderThread()
             qDebug() << "resize to:" << fboRgba->size();
         }
 
-        if ( updateSourceTextures(curTimer) )
+        if ( updateSourceTextures(m_frameData.timestamp) )
         {
             isUpdated = true;
         }
-        if (0 == curTimer)
-        {
-            curTimer = m_frameSync.isNextFrame();
-        }
-        else
-        {
-            curTimer *= 1000;
-        }
+        curTimer = m_frameSync.isNextFrame();
         if ( curTimer - preTimer > 1000000 ) isUpdated = true;
 
-        m_frameData.timestamp = m_timestamp.elapsed();
         if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
         {
-            m_frameData.timestamp = curTimer;
-        qDebug() <<"帧时间：" << curTimer << " 距离上帧：" << curTimer - preTimer;
-            preTimer = curTimer;
+            preTimer = m_frameSync.elapsed();
+            if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
+            {
+                if (m_frameData.timestamp < 0)
+                {
+                    m_frameData.timestamp = m_timestamp.elapsed_milli();
+                }
+                qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
+                preTimeStamp = m_frameData.timestamp;
+
+            }
             bool fromImm = m_immediateUpdate;
             m_immediateUpdate = false;
             fboRgba->bind();
