@@ -20,9 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     Qt::WindowFlags flags = (Qt::Window | Qt::FramelessWindowHint );
     this->setWindowFlags(flags);
 
+    this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
+
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
-    m_fpsTimer->setInterval(700);
+    m_fpsTimer->setInterval(200);
     m_fpsTimer->start();
 
     ui->setupUi(this);
@@ -353,21 +355,34 @@ void MainWindow::moveEvent(QMoveEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    //m_video.uninit();
-    event->accept();
+    qDebug() << "closeEvent";
+    if (m_video.status() >= BaseLayer::Opened)
+    {
+        if (QMessageBox::question(this, "Guee 录屏机", "正在录制视频，是否结束录制并退程序？",
+                                  QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)
+                == QMessageBox::Yes)
+        {
+            m_video.close();
+            m_video.uninit();
+
+            event->accept();
+
+        }
+        else
+        {
+            event->ignore();
+        }
+    }
+    else
+    {
+        m_video.close();
+        m_video.uninit();
+    }
 }
 
 void MainWindow::on_widgetPreview_initGL()
 {
     m_video.init(ui->widgetPreview->context());
-}
-
-void MainWindow::on_pushButton_clicked()
-{
-  //  ScreenLayer* scr = static_cast<ScreenLayer*>(m_video.childLayer(0));
-  //  scr->setRect(QRectF(0.3333, 0.3333, 0.5555, 0.5555));
-    m_video.close();
-    m_video.uninit();
 }
 
 void MainWindow::on_pushButtonRecStart_clicked()
@@ -430,7 +445,7 @@ void MainWindow::on_fpsTimerView_timeout()
     if (m_video.status() >= VideoSynthesizer::Opened)
     {
         str = QString("渲染fps:%1  编码fps：%2").arg(double(m_video.renderFps()), 0, 'f', 1).arg(double(m_video.encodeFps()), 0, 'f', 1);
-        int64_t tim = m_video.timestamp();
+        int64_t tim = m_video.timestamp() / 1000;
         int64_t h = tim / 3600000;
         tim %= 3600000;
         int64_t m = tim / 60000;

@@ -27,7 +27,6 @@ public:
     virtual void closeEvent(QCloseEvent *event) override;
 private slots:
     void on_widgetPreview_initGL();
-    void on_pushButton_clicked();
 
     void on_pushButtonRecStart_clicked();
     void on_pushButtonRecStop_clicked();

@@ -19,8 +19,8 @@ public:
 	bool startEncode( const SVideoParams* videoParams );
 	void endEncode();
     const SVideoParams* getParams() { return &m_videoParams; }
-    bool putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch);
-    bool putFrame( int64_t millisecond, uint8_t* const plane[3], int32_t* pitch);
+    bool putFrame( int64_t microsecond, const uint8_t* buf, int32_t pitch);
+    bool putFrame( int64_t microsecond, uint8_t* const plane[3], int32_t* pitch);
     float encodeFps() const { return m_encodeFPS.fps(); }
 private:
 
@@ -75,9 +75,7 @@ private:
 	bool set264StreamParams();
 	bool set264OtherParams();
 
-    bool putFrameX264(int64_t millisecond, const uint8_t* buf, int32_t pitch);
-
-    bool putFrameX264(int64_t millisecond, uint8_t* const plane[3], int32_t* pitch);
+    bool putFrameX264(int64_t microsecond, uint8_t* const plane[3], int32_t* pitch);
 
     x264_picture_t*	popCachePool();
     static inline int maximumCommonDivisor(int num, int den);

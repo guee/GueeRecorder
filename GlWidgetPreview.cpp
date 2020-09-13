@@ -71,6 +71,7 @@ void GlWidgetPreview::initializeGL()
 
 void GlWidgetPreview::paintGL()
 {
+    if (m_program == nullptr) return;
     //QOpenGLFramebufferObject::bindDefault();
     glViewport(0, 0, m_viewportSize.width(), m_viewportSize.height());
     glClearColor(m_clearColor.x(), m_clearColor.y(), m_clearColor.z(), m_clearColor.w());
@@ -173,7 +174,7 @@ void GlWidgetPreview::resizeGL(int width, int height)
     fixOffsetAsScreen();
     float sx = static_cast<float>((m_viewportSize.width() - m_displayOfSceeen.width())) / m_displayOfSceeen.width();
     float sy = static_cast<float>((m_viewportSize.height() - m_displayOfSceeen.height())) / m_displayOfSceeen.height();
-
+    if (m_program == nullptr) return;
     if (m_program->bind())
     {
         QMatrix4x4 m;
@@ -505,6 +506,7 @@ void GlWidgetPreview::makeObject()
     m.ortho(0.0f, +1.0f, +1.0f, 0.0f, -1.0f, 1.0f);
     m_matrixView = m;
     m_program = VideoSynthesizer::instance().programPool().createProgram("base");
+    if (m_program == nullptr) return;
     m_program->bind();
     m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     m_program->setUniformValue("qt_Texture0", 0);

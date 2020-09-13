@@ -36,7 +36,7 @@ public:
     int32_t m_stride = 0;
     int32_t m_width = 0;
     int32_t m_height = 0;
-    int64_t m_lastTimestamp = -1;  //如果视频帧的时间戳要以此源的时间戳为准，就设置为大于等于0的毫秒值
+    int64_t m_lastTimestamp = -1;  //如果视频帧的时间戳要以此源的时间戳为准，就设置为大于等于0的微秒值
     float m_neededFps = 0.0f;
     int   m_intputYuvFormat = 0;
 

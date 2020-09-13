@@ -36,7 +36,7 @@ void ButtonWithVolume::updateAmplitude(qreal amp)
     uint8_t* pix = m_imgWave.bits();
     uint8_t* las = pix + (m_imgWave.width() - 1) * 4;
     int siz = m_imgWave.bytesPerLine();
-    int hei = qMax(1, int(amp * m_imgWave.height() / m_volume));
+    int hei = qMax(1, int(amp * m_imgWave.height()));
     int lmt = m_imgWave.height() - hei;
     //qDebug() << hei << m_imgWave.height();
     for (int y = 0; y < m_imgWave.height(); ++y)

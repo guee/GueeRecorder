@@ -95,6 +95,12 @@ void VideoSynthesizer::uninit()
         m_threadWorking = false;
         wait();
     }
+    m_audRecorder.stopRec();
+    while( childLayerCount() )
+    {
+        delete childLayer(0);
+    }
+    ScreenSource::static_uninit();
     if (m_program)
     {
         delete m_program;
@@ -114,7 +120,7 @@ void VideoSynthesizer::uninit()
 
 BaseLayer *VideoSynthesizer::createLayer(const QString &type)
 {
-
+    if (!m_threadWorking) return nullptr;
     BaseLayer* layer = nullptr;
     if (type == "screen")
     {
@@ -145,6 +151,7 @@ void VideoSynthesizer::immediateUpdate()
 
 bool VideoSynthesizer::open(const QString &sourceName)
 {
+    if (!m_threadWorking) return false;
     Q_UNUSED(sourceName);
     if(m_status >= Opened)
     {
@@ -182,7 +189,7 @@ bool VideoSynthesizer::open(const QString &sourceName)
     }
     m_vidParams.enabled = true;
     m_medStream.setVideoParams(m_vidParams);
-    m_audParams.useADTS = true;
+    m_audParams.useADTS = false;
     m_audParams.encLevel = 2;
     m_medStream.setAudioParams(m_audParams);
     if (!m_medStream.startParse())
@@ -207,15 +214,23 @@ bool VideoSynthesizer::open(const QString &sourceName)
 
 void VideoSynthesizer::close()
 {
-    m_vidEncoder.endEncode();
-    m_medStream.endParse();
+    FrameTimestamp  ts;
+    ts.start();
     m_status = NoOpen;
+    m_audRecorder.endEncode();
+    qDebug() << "m_audRecorder.endEncode:" << ts.elapsed();
+    m_vidEncoder.endEncode();
+    qDebug() << "m_vidEncoder.endEncode:" << ts.elapsed();
+    m_medStream.endParse();
+    qDebug() << "m_medStream.endParse:" << ts.elapsed();
     m_timestamp.stop();
+    qDebug() << "m_timestamp.stop:" << ts.elapsed();
     for (auto w:m_writers)
     {
         delete w;
     }
     m_writers.clear();
+    qDebug() << "close done:" << ts.elapsed();
 }
 
 bool VideoSynthesizer::play()
@@ -223,12 +238,14 @@ bool VideoSynthesizer::play()
     if(m_status == Palying) return true;
     if(m_status == Paused)
     {
+        m_audRecorder.pauseEncode(false);
         m_status = Palying;
         m_timestamp.start();
         return true;
     }
     else if (m_status == Opened)
     {
+        m_audRecorder.pauseEncode(false);
         m_status = Palying;
         m_timestamp.start();
         return true;
@@ -241,6 +258,7 @@ bool VideoSynthesizer::pause()
     if(m_status == Paused) return true;
     if (m_status == Palying || m_status == Opened)
     {
+        m_audRecorder.pauseEncode(true);
         m_status = Paused;
         m_timestamp.pause();
         return true;
@@ -276,6 +294,9 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.BFrames       = 3;
     m_vidParams.BFramePyramid = 2;
 
+    m_vidParams.BFrames       = 0;
+    m_vidParams.BFramePyramid = 0;
+
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);
     setFrameRate(5.0f);
@@ -285,7 +306,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_audParams.isOnlineMode = true;
     m_audParams.useADTS = false;
     m_audParams.encLevel = 2;
-    m_audParams.bitrate = 256;
+    m_audParams.bitrate = 64;
 
     m_audParams.sampleBits = eSampleBit16i;
     m_audParams.sampleRate = 22050;
@@ -404,6 +425,7 @@ bool VideoSynthesizer::setGopMax(int32_t gopMax)
 
 bool VideoSynthesizer::enableAudio(bool enable)
 {
+   // if (!m_threadWorking) return false;
     bool ret = false;
     m_audParams.enabled = enable;
     if (enable)
@@ -481,7 +503,7 @@ bool VideoSynthesizer::setAudioBitrate(int32_t bitrate)
 
 int32_t VideoSynthesizer::maxAudioBitrate() const
 {
-    return static_cast<int32_t>((6144.0 * double(m_audParams.sampleRate) / 1024.5) * m_audParams.channels / 1024);
+    return static_cast<int32_t>((6144.0 * double(m_audParams.sampleRate) / 1024.5) / 1024);
 }
 
 int32_t VideoSynthesizer::minAudioBitrate() const
@@ -547,18 +569,24 @@ void VideoSynthesizer::renderThread()
             isUpdated = true;
         }
         curTimer = m_frameSync.isNextFrame();
+
         if ( curTimer - preTimer > 1000000 ) isUpdated = true;
 
         if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
         {
+            //qDebug() <<"帧时间：" << m_timestamp.elapsed_milli();
             preTimer = m_frameSync.elapsed();
             if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
             {
                 if (m_frameData.timestamp < 0)
                 {
-                    m_frameData.timestamp = m_timestamp.elapsed_milli();
+                    m_frameData.timestamp = m_timestamp.elapsed();
+                    if (m_frameData.timestamp - preTimeStamp > int32_t(1000000 / m_frameSync.fps()) * 2)
+                    {
+                        m_frameData.timestamp -= int32_t(1000000 / m_frameSync.fps());
+                    }
                 }
-                qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
+                //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
                 preTimeStamp = m_frameData.timestamp;
 
             }

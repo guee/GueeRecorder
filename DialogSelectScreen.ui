@@ -106,8 +106,11 @@ color: rgb(200, 200, 200);
        </item>
        <item>
         <widget class="QToolButton" name="toolButtonSave">
+         <property name="toolTip">
+          <string>把当前选择的内容保存为图像文件</string>
+         </property>
          <property name="text">
-          <string>Save</string>
+          <string>保存</string>
          </property>
         </widget>
        </item>
@@ -120,6 +123,9 @@ color: rgb(200, 200, 200);
        </item>
        <item>
         <widget class="QToolButton" name="toolButtonCancel">
+         <property name="toolTip">
+          <string>取消选择 （ESC 或 鼠标右键）</string>
+         </property>
          <property name="text">
           <string>Cancel</string>
          </property>
@@ -138,6 +144,9 @@ color: rgb(200, 200, 200);
        </item>
        <item>
         <widget class="QToolButton" name="toolButtonOK">
+         <property name="toolTip">
+          <string>确认当前的选择 （回车键）</string>
+         </property>
          <property name="text">
           <string>OK</string>
          </property>

@@ -169,6 +169,9 @@ border-image: url(:/butRecMicrophone_checked_disable.png);
        <height>24</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>开启、关闭录音</string>
+     </property>
      <property name="checkable">
       <bool>true</bool>
      </property>

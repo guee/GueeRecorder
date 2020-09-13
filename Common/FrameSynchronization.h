@@ -53,12 +53,20 @@ public:
         return (m_durationFrame ? m_nextFrame % m_durationFrame : m_nextFrame) + m_beginFrame;
     }
     //取得自开始计时以来，经过的微秒数
-    int64_t elapsed()
+    int64_t elapsed() const
     {
         if (m_status == sync_Paused)
             return std::chrono::duration_cast<std::chrono::microseconds>(m_pausePoint - m_initPoint).count() + m_beginMicroS;
         else if (m_status == sync_Syncing)
             return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_initPoint).count() + m_beginMicroS;
+        return -1;
+    }
+    int64_t elapsedMS() const
+    {
+        if (m_status == sync_Paused)
+            return std::chrono::duration_cast<std::chrono::milliseconds>(m_pausePoint - m_initPoint).count() + m_beginMicroS / 1000;
+        else if (m_status == sync_Syncing)
+            return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_initPoint).count() + m_beginMicroS / 1000;
         return -1;
     }
 private:

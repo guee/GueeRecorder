@@ -65,7 +65,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 		m_videoParams	= *videoParams;
 	}
     m_prevFrameTime = 0;
-    m_prevFramePts = 0;
+    m_prevFramePts = -1;
     switch( m_videoParams.encoder )
 	{
 	case VE_X264:
@@ -101,6 +101,7 @@ void GueeVideoEncoder::endEncode()
         m_encodeFPS.stop();
         m_waitPendQueue.release();
         m_waitIdlePool.release();
+        qDebug() << "GueeVideoEncoder::endEncode";
         if ( isRunning() )
 		{
             wait();
@@ -137,30 +138,32 @@ void GueeVideoEncoder::endEncode()
     }
 }
 
-bool GueeVideoEncoder::putFrame( int64_t millisecond, const uint8_t* buf, int32_t pitch )
+bool GueeVideoEncoder::putFrame( int64_t microsecond, const uint8_t* buf, int32_t pitch )
 {
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
-    switch( m_videoParams.encoder )
-	{
-	case VE_X264:
-        return putFrameX264( millisecond, buf, pitch );
-	case VE_CUDA:
-		break;
-	case VE_NVENC:
-		break;
-	case VE_INTEL:
-		break;
-	}
-	return false;
+    uint8_t* planes[3] = {nullptr};
+    int32_t pitchs[3] = {0};
+
+    for(int plan = 0; plan < m_csp_tab.planes; ++plan)
+    {
+        int ch = (m_videoParams.height + m_csp_tab.heightFix - 1) / m_csp_tab.heightFix * m_csp_tab.heightFix;
+        ch = ch / (plan == 0 ? 1 : m_csp_tab.heightFix);
+        int cw = pitch / (plan == 0 ? 1 : m_csp_tab.widthFix[plan]);
+
+        planes[plan] = const_cast<uint8_t*>(buf);
+        pitchs[plan] = cw;
+        buf += ch * cw;
+    }
+    return	putFrame(microsecond, planes, pitchs);
 }
 
-bool GueeVideoEncoder::putFrame( int64_t millisecond, uint8_t* const plane[3], int32_t* pitch)
+bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], int32_t* pitch)
 {
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     switch( m_videoParams.encoder )
     {
     case VE_X264:
-        return putFrameX264( millisecond, plane, pitch );
+        return putFrameX264( microsecond, plane, pitch );
     case VE_CUDA:
         break;
     case VE_NVENC:
@@ -171,70 +174,31 @@ bool GueeVideoEncoder::putFrame( int64_t millisecond, uint8_t* const plane[3], i
     return false;
 }
 
-bool GueeVideoEncoder::putFrameX264( int64_t millisecond, const uint8_t* buf, int32_t pitch )
-{
-
-    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
-    x264_picture_t* picin = popCachePool();
-    if (picin == nullptr) return false;
-    picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
-
-    qDebug() << "毫秒:" << millisecond << " 距离上帧：" << millisecond - m_prevFrameTime
-             << ", PTS:" << picin->i_pts << " PTS增量:" << picin->i_pts - m_prevFramePts;
-
-    m_prevFramePts = picin->i_pts;
-    m_prevFrameTime = millisecond;
-
-    for(int plan = 0; plan < m_csp_tab.planes; ++plan)
-    {
-        int cpsize = 0;
-        int ch = (m_videoParams.height + m_csp_tab.heightFix - 1) / m_csp_tab.heightFix * m_csp_tab.heightFix;
-        ch = ch / (plan == 0 ? 1 : m_csp_tab.heightFix);
-        int cw = pitch / (plan == 0 ? 1 : m_csp_tab.widthFix[plan]);
-        if (picin->img.i_stride[plan] == cw)
-        {
-            cpsize = cw * ch;
-            memcpy(picin->img.plane[plan], buf, static_cast<ulong>(cpsize));
-            buf += cpsize;
-        }
-        else
-        {
-            cpsize = min(picin->img.i_stride[plan], cw);
-            for (int h=0; h < ch; ++h)
-            {
-                memcpy(picin->img.plane[plan] + h * picin->img.i_stride[plan], buf, static_cast<ulong>(cpsize));
-                buf += cw;
-            }
-        }
-    }
-
-    m_mtxPendQueue.lock();
-    if (m_encodeFPS.status() == FrameTimestamp::sync_Syncing)
-    {
-        m_picPendQueue.push_back(picin);
-        m_mtxPendQueue.unlock();
-    }
-    else
-    {
-        x264_picture_clean(picin);
-        delete picin;
-    }
-    m_waitPendQueue.release();
-	return	true;
-}
-
-bool GueeVideoEncoder::putFrameX264(int64_t millisecond, uint8_t* const plane[3], int32_t* pitch)
+bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3], int32_t* pitch)
 {
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
+    int64_t pts = (microsecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den + 500000) / 1000000;
+    if (pts < m_prevFramePts)
+    {
+        return false;
+    }
+    if (pts == m_prevFramePts)
+    {
+        ++pts;
+    }
+    else if (pts > m_prevFramePts + 1)
+    {
+        --pts;
+    }
+//    qDebug() << "毫秒:" << microsecond << " 距离上帧：" << microsecond - m_prevFrameTime
+//             << ", PTS:" << pts << " PTS增量:" << pts - m_prevFramePts;
+
     x264_picture_t* picin = popCachePool();
     if (picin == nullptr) return false;
-    picin->i_pts = millisecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den / 1000;
 
-//    qDebug() << "毫秒:" << millisecond << " 距离上帧：" << millisecond - m_prevFrameTime
-//             << ", PTS:" << picin->i_pts << " PTS增量:" << picin->i_pts - m_prevFramePts;
-
-    m_prevFramePts = picin->i_pts;
-    m_prevFrameTime = millisecond;
+    picin->i_pts = pts;
+    m_prevFramePts = pts;
+    m_prevFrameTime = microsecond;
 
     for(int plan = 0; plan < m_csp_tab.planes; ++plan)
     {
@@ -316,11 +280,11 @@ void GueeVideoEncoder::run()
         picin = m_picPendQueue.front();
         m_picPendQueue.pop_front();
         m_mtxPendQueue.unlock();
-
+//qDebug() << "Input PTS:" << picin->i_pts;
         ret	= x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, picin, &picout );
         //ret = 0;
         //sleep(1);
-        picout.i_pts = picin->i_pts;
+
         m_mtxIdlePool.lock();
         m_picIdlePool.push_back(picin);
         m_mtxIdlePool.unlock();
@@ -337,12 +301,14 @@ void GueeVideoEncoder::run()
 		}
 		else
 		{
+            //qDebug() << "PTS:" << picout.i_pts << "  ,DTS:" << picout.i_dts;
             putNals();
 		}
 	}
     //int iMaxDelayedFrames	= x264_encoder_maximum_delayed_frames( m_x264Handle );
 	int	iDelayedFrames		= x264_encoder_delayed_frames( m_x264Handle );
-	while ( iDelayedFrames )
+    qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
+    while ( iDelayedFrames )
 	{
         ret	= x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, nullptr, &picout );
 		if ( ret > 0 )
@@ -350,7 +316,8 @@ void GueeVideoEncoder::run()
             putNals();
 		}
 		iDelayedFrames		= x264_encoder_delayed_frames( m_x264Handle );
-	}
+        qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
+    }
 
 }
 

@@ -217,7 +217,8 @@ bool GueeMediaWriterFlv::onWriteHeader()
 bool GueeMediaWriterFlv::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 {
 	const SVideoParams&	videoParams = m_stream.videoParams();
-	// A new frame - write packet header
+    //qDebug() <<"onWriteVideo timestamp:" << frame->ptsTimeMS;
+    // A new frame - write packet header
 	putByte( FLV_TAG_TYPE_VIDEO );
 	uint32_t	dataLenOffset	= (uint32_t)m_buffer.size();	// needed for overwriting length
 	putBE24( 0 ); // calculated later
@@ -263,7 +264,8 @@ bool GueeMediaWriterFlv::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 bool GueeMediaWriterFlv::onWriteAudio(const GueeMediaStream::AUDFrame * frame)
 {
 	putByte( FLV_TAG_TYPE_AUDIO );
-	putBE24(frame->size + 2 );	// data size
+    putBE24(frame->size + 2 + (m_isAdtsAAC ? - 7 : 0) );	// data size
+    //qDebug() <<"onWriteAudio timestamp:" << frame->timestamp;
 	putBE24( uint32_t(frame->timestamp & 0xFFFFFF) );
 	putByte( uint8_t((frame->timestamp >> 24) & 0xFF ) );
 	putBE24( 0 );

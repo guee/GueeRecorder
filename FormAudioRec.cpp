@@ -45,7 +45,48 @@ void FormAudioRec::timerEvent(QTimerEvent *event)
     Q_UNUSED(event)
     ui->pushButtonVolMic->updateAmplitude(m_video.audMicInputDev().amplitude());
     ui->pushButtonVolCB->updateAmplitude(m_video.audCallbackDev().amplitude());
+
+    //ui->pushButtonSndCallback
     // qDebug() << m_video.audCallbackDev().amplitude() << "," << m_video.audMicInputDev().amplitude();
+}
+
+void FormAudioRec::enterEvent(QEvent *event)
+{
+    QString strInfo;
+
+    strInfo = QString("录音码率：%1 kbps\r\n").arg(m_video.audioBitrate());
+
+    if (!m_video.audCallbackDev().isEnabled())
+    {
+        strInfo += QString("电脑声音：%1 @ %2位, %3 声道\r\n")
+                .arg(m_video.audCallbackDev().format().sampleRate())
+                .arg(m_video.audCallbackDev().format().sampleSize())
+                .arg(m_video.audCallbackDev().format().channelCount());
+    }
+    else {
+        strInfo += QString("电脑声音：%1 -> %2 @ %3位, %4 声道\r\n")
+                .arg(m_video.audCallbackDev().realSampleRate())
+                .arg(m_video.audCallbackDev().format().sampleRate())
+                .arg(m_video.audCallbackDev().format().sampleSize())
+                .arg(m_video.audCallbackDev().format().channelCount());
+    }
+
+    if (!m_video.audMicInputDev().isEnabled())
+    {
+        strInfo += QString("麦克风：%1 @ %2位, %3 声道\r\n")
+                .arg(m_video.audMicInputDev().format().sampleRate())
+                .arg(m_video.audMicInputDev().format().sampleSize())
+                .arg(m_video.audMicInputDev().format().channelCount());
+    }
+    else {
+        strInfo += QString("麦克风：%1 -> %2 @ %3位, %4 声道\r\n")
+                .arg(m_video.audMicInputDev().realSampleRate())
+                .arg(m_video.audMicInputDev().format().sampleRate())
+                .arg(m_video.audMicInputDev().format().sampleSize())
+                .arg(m_video.audMicInputDev().format().channelCount());
+    }
+
+    setToolTip(strInfo);
 }
 
 void FormAudioRec::resetAudioRecordUI()
@@ -80,38 +121,37 @@ void FormAudioRec::on_pushButtonVolCB_clicked()
 
 void FormAudioRec::popupRecDevs(const QPoint& pos, bool isCallbackDev)
 {
-    QAction* refAction = nullptr;
     QAction* clkAction = nullptr;
     SoundDevInfo& dev = isCallbackDev ? m_video.audCallbackDev() : m_video.audMicInputDev();
     QMenu menu(this);
-    do
-    {
-        QString devDef = dev.defaultDev();
-        QString devSel = dev.currentDev();
-        menu.clear();
-        QWidgetAction* actVolume = new QWidgetAction(&menu);
-        FormVolumeAction* sliVolume = new FormVolumeAction(dev, &menu);
 
-        actVolume->setDefaultWidget(sliVolume);
-        menu.addAction(actVolume);
-        menu.addSeparator();
-        for (auto &n:dev.availableDev(clkAction && (refAction == clkAction)))
+    QString devDef = dev.defaultDev();
+    QString devSel = dev.currentDev();
+    menu.clear();
+    QWidgetAction* actVolume = new QWidgetAction(&menu);
+    FormVolumeAction* sliVolume = new FormVolumeAction(dev, &menu);
+
+    actVolume->setDefaultWidget(sliVolume);
+    menu.addAction(actVolume);
+    menu.addSeparator();
+    for (auto &n:dev.availableDev(false))
+    {
+        QAction* act = menu.addAction(devDef == n ? QString("[默认] %1").arg(n) : n);
+        act->setData(n);
+        if (devSel == n)
         {
-            QAction* act = menu.addAction(devDef == n ? QString("[默认] %1").arg(n) : n);
-            act->setData(n);
-            if (devSel == n)
-            {
-                act->setCheckable(true);
-                act->setChecked(true);
-            }
+            act->setCheckable(true);
+            act->setChecked(true);
         }
-        menu.addSeparator();
-        refAction = menu.addAction("刷新列表");
-        clkAction = menu.exec(pos);
-    }while(clkAction == refAction);
-    if (clkAction && (refAction != clkAction))
+    }
+    clkAction = menu.exec(pos);
+    if (clkAction)
     {
         dev.selectDev(clkAction->data().toString());
+    }
+    else
+    {
+        //dev.availableDev(true);
     }
     QSettings ini(DialogSetting::userSetting().profile, QSettings::IniFormat);
     ini.beginGroup("Audio");

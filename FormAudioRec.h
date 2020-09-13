@@ -19,6 +19,7 @@ public:
     explicit FormAudioRec(QWidget *parent = nullptr);
     ~FormAudioRec();
     void timerEvent(QTimerEvent* event);
+    void enterEvent(QEvent *event);
     void resetAudioRecordUI();
 private slots:
     void on_pushButtonSndCallback_clicked(bool checked);

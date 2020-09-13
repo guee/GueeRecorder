@@ -51,7 +51,8 @@ SOURCES += \
     FormVolumeAction.cpp \
     Common/FrameTimestamp.cpp \
     Common/FrameRateCalc.cpp \
-    VideoSynthesizer.cpp
+    VideoSynthesizer.cpp \
+    MediaCodec/WaveFile.cpp
 
 
 HEADERS += \
@@ -89,7 +90,8 @@ HEADERS += \
     MediaCodec/SoundRecorder.h \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
-    VideoSynthesizer.h
+    VideoSynthesizer.h \
+    MediaCodec/WaveFile.h
 
 FORMS += \
     DialogSelectScreen.ui \
@@ -123,4 +125,6 @@ DISTFILES += \
     UiResource/Shaders/base.frag \
     UiResource/Shaders/base.vert \
     README.md \
-    LICENSE
+    LICENSE \
+    Doc/logo.psd \
+    Doc/icon.psd

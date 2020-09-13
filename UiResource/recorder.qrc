@@ -72,5 +72,11 @@
         <file>Shaders/RgbToYuv.vert</file>
         <file>typeIconPicture.png</file>
         <file>pictureIcon.png</file>
+        <file>gueeRecorder.ico</file>
+        <file>icon32.png</file>
+        <file>icon48.png</file>
+        <file>icon64.png</file>
+        <file>icon128.png</file>
+        <file>icon256.png</file>
     </qresource>
 </RCC>

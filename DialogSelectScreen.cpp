@@ -92,21 +92,27 @@ void DialogSelectScreen::on_widget_editing(bool ready, const QRect& box)
         {
         case ScreenLayer::unspecified:
             ui->labelType->setText("无");
+            ui->labelType->setToolTip("");
             break;
         case ScreenLayer::specScreen:
             ui->labelType->setPixmap(QPixmap(":/typeIconScreen.png"));
+            ui->labelType->setToolTip("指定屏幕");
             break;
         case ScreenLayer::fullScreen:
             ui->labelType->setPixmap(QPixmap(":/typeIconAllScreen.png"));
+            ui->labelType->setToolTip("所有屏幕");
             break;
         case ScreenLayer::rectOfScreen:
             ui->labelType->setPixmap(QPixmap(":/typeIconScreenArea.png"));
+            ui->labelType->setToolTip("屏幕区域");
             break;
         case ScreenLayer::specWindow:
             ui->labelType->setPixmap(QPixmap(":/typeIconWindow.png"));
+            ui->labelType->setToolTip("指定窗口");
             break;
         case ScreenLayer::clientOfWindow:
             ui->labelType->setPixmap(QPixmap(":/typeIconWndClient.png"));
+            ui->labelType->setToolTip("窗口内容");
             break;
 
         }

@@ -40,7 +40,7 @@ public:
     float frameRate() const override {return m_vidParams.frameRate;}
     float renderFps() const {return m_frameRate.fps();}
     float encodeFps() const {return m_vidEncoder.encodeFps();}
-    int64_t timestamp() const {return m_timestamp.elapsed_milli();}
+    int64_t timestamp() const {return m_timestamp.elapsed();}
 
     bool setProfile(EVideoProfile profile);
     EVideoProfile profile() const {return m_vidParams.profile;}

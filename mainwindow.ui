@@ -279,7 +279,7 @@ color: rgb(160, 160, 160);
            <number>4</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>8</number>
           </property>
           <property name="rightMargin">
            <number>0</number>
@@ -289,13 +289,13 @@ color: rgb(160, 160, 160);
             <property name="minimumSize">
              <size>
               <width>128</width>
-              <height>50</height>
+              <height>64</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>128</width>
-              <height>50</height>
+              <height>64</height>
              </size>
             </property>
             <property name="text">
@@ -567,19 +567,6 @@ color: rgb(160, 160, 160);
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="maximumSize">
-              <size>
-               <width>14</width>
-               <height>14</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QPushButton" name="pushButtonMenu">
              <property name="maximumSize">
               <size>
@@ -591,7 +578,7 @@ color: rgb(160, 160, 160);
               <enum>Qt::NoFocus</enum>
              </property>
              <property name="toolTip">
-              <string>弹出功能菜单</string>
+              <string>打开设置界面</string>
              </property>
              <property name="text">
               <string>=</string>
@@ -700,6 +687,9 @@ color: rgb(160, 160, 160);
                   <height>32</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>添加屏幕、屏幕区域、窗口</string>
+                </property>
                 <property name="text">
                  <string>屏幕</string>
                 </property>
@@ -721,6 +711,9 @@ color: rgb(160, 160, 160);
                   <width>90</width>
                   <height>32</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>添加摄像头</string>
                 </property>
                 <property name="text">
                  <string>摄像头</string>
@@ -744,8 +737,11 @@ color: rgb(160, 160, 160);
                   <height>32</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>添加图像文件</string>
+                </property>
                 <property name="text">
-                 <string>媒体</string>
+                 <string>图像</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -787,6 +783,9 @@ color: rgb(160, 160, 160);
     </item>
     <item>
      <widget class="GlWidgetPreview" name="widgetPreview" native="true">
+      <property name="toolTip">
+       <string>鼠标左键选择图层，鼠标右键放弃选择</string>
+      </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <property name="spacing">
         <number>0</number>

@@ -135,7 +135,7 @@ bool DialogSetting::saveProfile()
     ini.setValue("bits", vid.sampleBits());
     ini.setValue("fps", vid.sampleRate());
     ini.setValue("channels", vid.channels());
-    ini.setValue("bps", vid.bitrate());
+    ini.setValue("bps", vid.audioBitrate());
     ini.setValue("cbDev", vid.audCallbackDev().currentDev());
     ini.setValue("cbEnabled", vid.audCallbackDev().isEnabled());
     ini.setValue("cbVolume", vid.audCallbackDev().volume());
@@ -352,27 +352,27 @@ void DialogSetting::on_scrollArea_valueChanged(int value)
 
     if (value < ui->groupBox_Video->geometry().top() + 8)
     {
-        qDebug() << value << "pushButton_Video";
+        //qDebug() << value << "pushButton_Video";
         ui->pushButton_Video->setChecked(true);
     }
     else if ((value >= vid) && (value < enc))
     {
-        qDebug() << value << "pushButton_Encode";
+        //qDebug() << value << "pushButton_Encode";
         ui->pushButton_Encode->setChecked(true);
     }
     else if ((value >= enc) && (value < aud))
     {
-        qDebug() << value << "pushButton_Audio";
+        //qDebug() << value << "pushButton_Audio";
         ui->pushButton_Audio->setChecked(true);
     }
     else if ((value >= aud) && (value < sav))
     {
-        qDebug() << value << "pushButton_Save";
+        //qDebug() << value << "pushButton_Save";
         ui->pushButton_Save->setChecked(true);
     }
     else if ((value >= sav - 20) && (value < rea))
     {
-        qDebug() << value << "pushButton_Readme";
+        //qDebug() << value << "pushButton_Readme";
         ui->pushButton_Readme->setChecked(true);
     }
 }

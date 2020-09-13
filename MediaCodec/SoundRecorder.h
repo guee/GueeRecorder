@@ -12,6 +12,9 @@
 #include "faac.h"
 #include "MediaStream.h"
 
+#include "WaveFile.h"
+#include "../Common/FrameTimestamp.h"
+
 class SoundRecorder;
 class SoundDevInfo : private QIODevice
 {
@@ -31,9 +34,10 @@ public:
     bool setVolume(qreal val);
     const QAudioFormat& format() const { return m_format; }
 
+    int32_t realSampleRate() const { return m_realSample ? int32_t(m_realSample * 1000000 / m_time.elapsed()) : 0; }
 private:
     SoundDevInfo(SoundRecorder& recorder);
-    bool start(const QAudioFormat& format);
+    bool start(const QAudioFormat& format, bool checkDev);
     void stop();
     qint64 readData(char *data, qint64 maxlen) override;
     qint64 writeData(const char *data, qint64 len) override;
@@ -57,13 +61,15 @@ private:
     int32_t m_dataOffset = 0;
     int32_t m_dataSize = 0;
     int64_t m_sampleBegin = 0;
+    int64_t m_prevRealse = 0;
 
     QMutex m_mutexPcmBuf;
-//    QMutex m_mutexPending;
-//    QMutex m_mutexIdling;
-//    QList<uint8_t*> m_pending;
-//    QList<uint8_t*> m_idling;
+    bool m_firstGetPCM = false;
     bool m_needResample = false;
+    FrameTimestamp m_time;
+    int64_t m_realSample;
+    uint8_t* m_resBuffer;
+    uint8_t m_prevSample[16];
 
     void initResample();
     void uninitResample();
@@ -87,6 +93,8 @@ public:
     bool startEncode( const SAudioParams* audioParams );
     void endEncode();
     bool isEncodeing() const {return m_status >= Encodeing;}
+
+    bool pauseEncode(bool pause);
 private:
     void run();
     friend SoundDevInfo;
@@ -108,7 +116,11 @@ private:
     int32_t     m_samplesPerFrame;  //每个AAC帧的采样数（声道数*采样数）
     int32_t     m_maxOutByteNum;    //AAC每帧编码输出的最大字节数
     QSemaphore m_waitPcmBuffer;
-
+    int64_t     m_lastSampleNum = 0;
+#define _USE_WAVE_TEST 0
+#if _USE_WAVE_TEST
+    CWaveFile m_waveFile;
+#endif
     bool mixPcm( int64_t frameBegin, SoundDevInfo& dev, uint8_t* mixBuf );
 
 };
