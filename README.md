@@ -1,7 +1,7 @@
-[测试包下载：UOS@Loongson](http://www.loongson.xyz/GueeRecorder/GueeRecorder-UOS-Loongson.zip)
-[测试包下载：UOS@AMD64](http://www.loongson.xyz/GueeRecorder/GueeRecorder-UOS-AMD64.zip)
-[使用说明：](http://www.loongson.xyz/GueeRecorder/GueeRecorder-Help.docx)
-[开发日记](http://www.loongson.xyz/Articles/Content/19)
+[测试包下载：UOS@Loongson](http://www.loongson.xyz/GueeRecorder/GueeRecorder-UOS-Loongson.zip)</br>
+[测试包下载：UOS@AMD64](http://www.loongson.xyz/GueeRecorder/GueeRecorder-UOS-AMD64.zip)</br>
+[使用说明：](http://www.loongson.xyz/GueeRecorder/GueeRecorder-Help.docx)</br>
+[开发日记](http://www.loongson.xyz/Articles/Content/19)</br>
 
 # GueeRecorder （Guee 录屏机） 前言
 　　这是一个为了学习Linux下的应用程序开发，而编写的一个实验性的对屏幕和摄像头录像，然后保存为视频文件或直播到网络的软件。</br>
