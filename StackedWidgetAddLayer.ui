@@ -14,10 +14,13 @@
    <string>StackedWidget</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QToolButton
+{
+
+}</string>
   </property>
   <property name="currentIndex">
-   <number>0</number>
+   <number>2</number>
   </property>
   <widget class="QWidget" name="pageScreen">
    <property name="enabled">
@@ -29,6 +32,7 @@
 border: none;
 color: rgb(200, 200, 200);
 border: 0px  solid  rgb(64, 64, 64);
+padding-top:0px;
 }
 
 QToolButton:hover
@@ -144,8 +148,8 @@ background-color: rgb(0, 0, 0),;
 border: none;
 color: rgb(200, 200, 200);
 border: 0px  solid  rgb(64, 64, 64);
+padding-top:0px;
 }
-
 QToolButton:hover
 {
 color: rgb(230, 230, 230);
@@ -189,7 +193,7 @@ background-color: rgb(0, 0, 0),;
        </size>
       </property>
       <property name="text">
-       <string>Picture File...</string>
+       <string>图片文件……</string>
       </property>
       <property name="iconSize">
        <size>

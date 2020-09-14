@@ -276,7 +276,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.psyTune       = eTuneAnimation;
     m_vidParams.width         = 0;
     m_vidParams.height        = 0;
-    m_vidParams.frameRate     = 0.0f;
+    m_vidParams.frameRate     = 25.0f;
     m_vidParams.vfr           = false;
     m_vidParams.onlineMode    = false;
     m_vidParams.annexb        = true;
@@ -299,7 +299,7 @@ bool VideoSynthesizer::resetDefaultOption()
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);
-    setFrameRate(5.0f);
+    setFrameRate(25.0f);
 
     m_audParams.enabled = true;
     m_audParams.eCodec = AC_AAC;

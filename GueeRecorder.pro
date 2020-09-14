@@ -131,4 +131,6 @@ DISTFILES += \
     README.md \
     LICENSE \
     Doc/logo.psd \
-    Doc/icon.psd
+    Doc/icon.psd \
+    Doc/GueeRecorder-Help.docx \
+    Doc/MainUIDesc.png

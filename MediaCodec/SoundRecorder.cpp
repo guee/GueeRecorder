@@ -551,6 +551,11 @@ bool SoundDevInfo::setVolume(qreal val)
 
 bool SoundDevInfo::start(const QAudioFormat &format, bool checkDev)
 {
+    if (m_devLst.isEmpty())
+    {
+        availableDev(true);
+        checkDev = false;
+    }
     if (m_curDev.isNull())
         return false;
     if (m_audioInput)

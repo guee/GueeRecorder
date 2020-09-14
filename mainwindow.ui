@@ -816,6 +816,9 @@ color: rgb(160, 160, 160);
            <height>100</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>添加画面内容为图层</string>
+         </property>
          <property name="currentIndex">
           <number>0</number>
          </property>

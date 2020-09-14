@@ -176,7 +176,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             if ( hit != m_hitMain )
             {
                 m_hitMain = hit;
-                qDebug() << "Hit:" << m_hitMain;
+                //qDebug() << "Hit:" << m_hitMain;
                 setHitCursor(m_hitMain);
             }
         }
@@ -390,15 +390,16 @@ void MainWindow::on_pushButtonRecStart_clicked()
     QString path = DialogSetting::userSetting().videoDir;
     if (!path.endsWith("/")) path.append("/");
     path.append(DialogSetting::userSetting().fileName);
-    path.append("-");
-    path.append(QDateTime::currentDateTime().toString());
-    path.append(".");
+    path.append(" (");
+    path.append(QDateTime::currentDateTime().toString("yyyy-MM-dd#HHmmss#zzz"));
+    path.append(").");
     path.append(DialogSetting::userSetting().fileType);
     if (m_video.open(path))
     {
         ui->pushButtonMenu->setDisabled(true);
         m_video.play();
         ui->stackedWidgetRecControl->setCurrentIndex(1);
+        m_fpsTimer->setInterval(200);
     }
     else
     {
@@ -411,6 +412,7 @@ void MainWindow::on_pushButtonRecStop_clicked()
     ui->stackedWidgetRecControl->setCurrentIndex(0);
     m_video.close();
     ui->pushButtonMenu->setDisabled(false);
+
 }
 
 void MainWindow::on_pushButtonRecPause_clicked(bool checked)
@@ -418,10 +420,12 @@ void MainWindow::on_pushButtonRecPause_clicked(bool checked)
     if (checked)
     {
         m_video.pause();
+        m_fpsTimer->setInterval(1000);
     }
     else
     {
         m_video.play();
+        m_fpsTimer->setInterval(200);
     }
 }
 void MainWindow::on_videoSynthesizer_initDone(bool success)
@@ -451,6 +455,7 @@ void MainWindow::on_fpsTimerView_timeout()
         int64_t m = tim / 60000;
         tim %= 60000;
         int64_t s = tim / 1000;
+
         static bool sw = false;
         if (m_video.status() == VideoSynthesizer::Paused)
         {
