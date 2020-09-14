@@ -4,6 +4,9 @@
 #include <QCameraInfo>
 #include <QPainter>
 #include <QOpenGLContext>
+#include <QAction>
+#include <QActionGroup>
+#include <QVariant>
 #include "DialogSelectScreen.h"
 #include "VideoSynthesizer.h"
 #include "./InputSource/ScreenLayer.h"
@@ -122,13 +125,13 @@ void StackedWidgetAddLayer::showScreens()
                 QRect sourRect = ScreenLayer::screenRect(i);
                 pnt.drawImage(drawRect, scr, sourRect );
                 objName = QString("toolButton_Screen_%1").arg(i);
-                scrName = QString("screen %1").arg(i + 1);
+                scrName = QString("屏幕 %1").arg(i + 1);
              }
             else
             {
                 pnt.drawImage(QRect(xs, ys, pix.width() - xs * 2, pix.height() - ys * 2), scr, ScreenLayer::screenBound() );
                 objName = QString("toolButton_Screen_All");
-                scrName = "All screen";
+                scrName = "所有屏幕";
             }
             QRect draw(0, pix.height() - 18, pix.width(), 17);
             pnt.fillRect(draw, QColor(0, 0, 0, 128));
@@ -166,15 +169,14 @@ void StackedWidgetAddLayer::showCameras()
     if (nullptr == m_selectedCamera)
     {
         ui->comboBoxCameras->setDisabled(true);
-        ui->comboBoxSizeFps->setDisabled(true);
-        ui->pushButtonAddCamera->setDisabled(true);
+        makeCameraSizeMenu(nullptr);
     }
     if (cams.count())
     {
         if (camsLast != cams)
         {
             ui->comboBoxCameras->clear();
-            ui->comboBoxSizeFps->clear();
+            makeCameraSizeMenu(nullptr);
             camsLast = cams;
             for (const QCameraInfo& info : cams)
             {
@@ -195,7 +197,7 @@ void StackedWidgetAddLayer::showCameras()
     {
         camsLast.clear();
         ui->comboBoxCameras->clear();
-        ui->comboBoxSizeFps->clear();
+        makeCameraSizeMenu(nullptr);
     }
 
 
@@ -292,7 +294,7 @@ void StackedWidgetAddLayer::on_comboBoxCameras_currentIndexChanged(int index)
     if (!ui->comboBoxCameras->isEnabled()) return;
 
     qDebug() << "on_comboBoxCameras:" << index;
-    ui->comboBoxSizeFps->clear();
+    makeCameraSizeMenu(nullptr);
     if (index < 0)
     {
         closeCameraPreview();
@@ -313,8 +315,7 @@ void StackedWidgetAddLayer::on_comboBoxCameras_currentIndexChanged(int index)
         }
         if (m_selectedCamera == nullptr)
         {
-            ui->comboBoxSizeFps->setDisabled(true);
-            ui->comboBoxSizeFps->clear();
+            makeCameraSizeMenu(nullptr);
             QByteArray dev = ui->comboBoxCameras->itemData(index).toByteArray();
             m_selectedCamera = new QCamera(dev, this);
             connect(m_selectedCamera, &QCamera::statusChanged,
@@ -357,7 +358,7 @@ void StackedWidgetAddLayer::on_camera_statusChanged(QCamera::Status status)
                            "Jpeg", "CameraRaw", "AdobeDng", "ABGR32"};
     if (status == QCamera::ActiveStatus)
     {
-        ui->comboBoxSizeFps->setEnabled(true);
+        ui->pushButtonCameraSizeFps->setEnabled(true);
         ui->pushButtonAddCamera->setEnabled(true);
 
         QCameraViewfinderSettings s = m_selectedCamera->viewfinderSettings();
@@ -369,44 +370,7 @@ void StackedWidgetAddLayer::on_camera_statusChanged(QCamera::Status status)
     }
     else if (status == QCamera::LoadedStatus)
     {
-        if (ui->comboBoxSizeFps->count() == 0)
-        {
-            ui->comboBoxSizeFps->setDisabled(true);
-            ui->comboBoxSizeFps->clear();
-            QList<QCameraViewfinderSettings> setList = m_selectedCamera->supportedViewfinderSettings();
-            qreal minDiff = -1.0;
-            int selIndex = 0;
-            for (int i = 0; i < setList.count(); ++i)
-            {
-                auto s = setList[i];
-                int diffW = m_camSetting.resolution().width() - s.resolution().width();
-                int diffH = m_camSetting.resolution().height() - s.resolution().height();
-                qreal diff = m_camSetting.maximumFrameRate() - s.maximumFrameRate();
-                diff = diffW * diffW + diffH * diffH + diff * diff;
-                if (m_camSetting.pixelFormat() != s.pixelFormat()) diff *= 2.0;
-                if (minDiff < 0.0 || diff < minDiff)
-                {
-                    minDiff = diff;
-                    selIndex = i;
-                }
-
-                QString fmtName = pixNames[(s.pixelFormat() < 0 || s.pixelFormat() >= pixNames.count()) ? 0 : s.pixelFormat()];
-                fmtName = QString("[%1] %2 x %3 @ %4 fps")
-                        .arg(fmtName)
-                        .arg(s.resolution().width()).arg(s.resolution().height())
-                        .arg(s.maximumFrameRate());
-                ui->comboBoxSizeFps->addItem(fmtName);
-                qDebug() << fmtName;
-            }
-            ui->comboBoxSizeFps->setCurrentIndex(selIndex);
-            //ui->comboBoxSizeFps->setDisabled(false);
-
-            m_camSetting = setList[selIndex];
-            QSize siPreview = m_camSetting.resolution().scaled(ui->widgetCameraFrame->size(), Qt::KeepAspectRatio);
-            ui->widgetCamera->setMaximumSize(siPreview);
-            ui->widgetCamera->setMinimumSize(siPreview);
-            m_selectedCamera->setViewfinderSettings(m_camSetting);
-        }
+        makeCameraSizeMenu(m_selectedCamera);
         m_selectedCamera->start();
     }
     else if (status == QCamera::UnloadedStatus)
@@ -415,33 +379,107 @@ void StackedWidgetAddLayer::on_camera_statusChanged(QCamera::Status status)
     }
 }
 
-void StackedWidgetAddLayer::on_comboBoxSizeFps_currentIndexChanged(int index)
-{
-    if (index < 0 || nullptr == m_selectedCamera || !ui->comboBoxSizeFps->isEnabled())
-        return;
-    qDebug() << "on_comboBoxSizeFps:" << index;
-    QList<QCameraViewfinderSettings> setList = m_selectedCamera->supportedViewfinderSettings();
-    if (index >= setList.count() || m_camSetting == setList[index])
-    {
-        return;
-    }
-    ui->comboBoxSizeFps->setDisabled(true);
-    m_camSetting = setList[index];
-    m_selectedCamera->setViewfinderSettings(setList[index]);
-}
-
 void StackedWidgetAddLayer::closeCameraPreview()
 {
     if (m_selectedCamera)
     {
-        ui->comboBoxSizeFps->setDisabled(true);
-        ui->comboBoxSizeFps->clear();
+        makeCameraSizeMenu(nullptr);
 
         m_selectedCamera->stop();
         m_selectedCamera->unload();
         delete m_selectedCamera;
         m_selectedCamera = nullptr;
     }
+}
+
+void StackedWidgetAddLayer::makeCameraSizeMenu(QCamera *cam)
+{
+    QStringList pixNames = {"Invalid", "ARGB32", "ARGB32_Premultiplied", "RGB32", "RGB24", "RGB565", "RGB555", "ARGB8565_Premultiplied", "BGRA32", "BGRA32_Premultiplied",
+                           "BGR32", "BGR24", "BGR565", "BGR555", "BGRA5658_Premultiplied", "AYUV444", "AYUV444_Premultiplied", "YUV444", "YUV420P", "YV12",
+                           "UYVY", "YUYV", "NV12", "NV21", "IMC1", "IMC2", "IMC3", "IMC4", "Y8", "Y16",
+                           "Jpeg", "CameraRaw", "AdobeDng", "ABGR32"};
+    if ( cam == nullptr )
+    {
+        if (m_camSizeMenu)
+        {
+            delete m_camSizeMenu;
+            m_camSizeMenu = nullptr;
+        }
+        ui->pushButtonCameraSizeFps->setDisabled(true);
+        ui->pushButtonCameraSizeFps->setText("----");
+        ui->pushButtonAddCamera->setDisabled(true);
+        return;
+    }
+
+    if (m_camSizeMenu == nullptr)
+    {
+        QList<QCameraViewfinderSettings> setList = m_selectedCamera->supportedViewfinderSettings();
+        QList<QSize> sizes = m_selectedCamera->supportedViewfinderResolutions();
+        m_camSizeMenu = new QMenu(ui->pushButtonCameraSizeFps);
+        QActionGroup* grpSize = new QActionGroup(m_camSizeMenu);
+        QActionGroup* grpFps = new QActionGroup(m_camSizeMenu);
+        grpSize->setExclusive(true);
+        grpFps->setExclusive(true);
+        qreal minDiffSize = 65536.0 * 65536.0;
+        qreal minDiffFps = 65536.0;
+        QMenu* seledSizeMenu = nullptr;
+        QAction* selecFpsAction = nullptr;
+        for (auto s:sizes)
+        {
+            QMenu* menuSize = m_camSizeMenu->addMenu(QString("%1 x %2").arg(s.width()).arg(s.height()));
+            menuSize->menuAction()->setCheckable(true);
+            menuSize->menuAction()->setData(s);
+            grpSize->addAction(menuSize->menuAction());
+
+            int diffW = m_camSetting.resolution().width() - s.width();
+            int diffH = m_camSetting.resolution().height() - s.height();
+            if (diffW * diffW + diffH * diffH < minDiffSize)
+            {
+                minDiffSize = diffW * diffW + diffH * diffH;
+                seledSizeMenu = menuSize;
+                selecFpsAction = nullptr;
+                minDiffFps = 65536.0;
+            }
+            for (int i = 0; i < setList.count(); ++i)
+            {
+                auto& vf = setList[i];
+                if (vf.resolution() != s) continue;
+                QString fmtName = pixNames[(vf.pixelFormat() < 0 || vf.pixelFormat() >= pixNames.count()) ? 0 : vf.pixelFormat()];
+                QAction* act = menuSize->addAction(QString("%1 fps\t[%2]").arg(vf.maximumFrameRate()).arg(fmtName));
+
+                act->setData(i);
+                act->setCheckable(true);
+                grpFps->addAction(act);
+                if ( qAbs(vf.maximumFrameRate() - m_camSetting.maximumFrameRate()) < minDiffFps )
+                {
+                    minDiffFps = qAbs(vf.maximumFrameRate() - m_camSetting.maximumFrameRate());
+                    selecFpsAction = act;
+                }
+            }
+        }
+        if (seledSizeMenu)
+        {
+            seledSizeMenu->menuAction()->setChecked(true);
+        }
+        if (selecFpsAction)
+        {
+            selecFpsAction->setChecked(true);
+            m_camSetting = setList[selecFpsAction->data().toUInt()];
+        }
+
+        m_selectedCamera->setViewfinderSettings(m_camSetting);
+    }
+    QSize siPreview = m_camSetting.resolution().scaled(ui->widgetCameraFrame->size(), Qt::KeepAspectRatio);
+    ui->widgetCamera->setMaximumSize(siPreview);
+    ui->widgetCamera->setMinimumSize(siPreview);
+
+    QString fmtName = pixNames[(m_camSetting.pixelFormat() < 0 || m_camSetting.pixelFormat() >= pixNames.count()) ? 0 : m_camSetting.pixelFormat()];
+    QString sizName = QString("%1 x %2 @ %3 \t[%4]")
+        .arg(m_camSetting.resolution().width())
+        .arg(m_camSetting.resolution().height())
+        .arg(m_camSetting.maximumFrameRate())
+        .arg(fmtName);
+    ui->pushButtonCameraSizeFps->setText(sizName);
 }
 
 void StackedWidgetAddLayer::on_StackedWidgetAddLayer_currentChanged(int arg1)
@@ -462,5 +500,27 @@ void StackedWidgetAddLayer::on_StackedWidgetAddLayer_currentChanged(int arg1)
     }
     else if ( currentIndex() == 2 )
     {
+    }
+}
+
+void StackedWidgetAddLayer::on_pushButtonCameraSizeFps_clicked()
+{
+    if (m_camSizeMenu)
+    {
+        QPoint pos(0, ui->pushButtonCameraSizeFps->height());
+        pos = ui->pushButtonCameraSizeFps->mapToGlobal(pos);
+        QAction* act = m_camSizeMenu->exec(pos);
+        if (act)
+        {
+            QList<QCameraViewfinderSettings> setList = m_selectedCamera->supportedViewfinderSettings();
+            if (act->data().toInt() >= setList.count() || m_camSetting == setList[act->data().toInt()])
+            {
+                return;
+            }
+            //ui->pushButtonCameraSizeFps->setDisabled(true);
+            m_camSetting = setList[act->data().toInt()];
+            m_selectedCamera->setViewfinderSettings(m_camSetting);
+            qobject_cast<QMenu*>(act->parent())->menuAction()->setChecked(true);
+        }
     }
 }

@@ -46,6 +46,7 @@
 　　　　sudo apt-get install libgl1-mesa-dev</br>
 　　　　sudo apt-get install libqt5x11extras5-dev</br>
 　　　　sudo apt-get install libxinerama-dev</br>
+　　　　sudo apt-get install libxfixes-dev
 　　　　sudo apt-get install libx264-dev</br>
 　　　　sudo apt-get install libfaac-dev</br>
 
@@ -53,12 +54,16 @@
 　　　　sudo apt-get install qt5creator</br>
 </br>
 　　龙梦 Fedora28：</br>
-　　　　sudo dnf inatall gcc-g++</br>
-　　　　sudo dnf inatall gdb</br>
-　　　　sudo dnf install libgl1-mesa-dev</br>
-　　　　sudo dnf install libqt5x11extras5-dev</br>
-　　　　sudo dnf install libxinerama-dev</br>
+　　　　sudo yum inatall gcc-c++</br>
+　　　　sudo yum inatall gdb</br>
+　　　　sudo yum install mesa-libGL-devel</br>
+　　　　sudo yum install mesa-libGLU-devel</br>
+　　　　sudo yum install qt5-qtx11extras-devel</br>
+　　　　sudo dnf install libXinerama-devel</br>
+　　　　sudo dnf install libXfixes-devel</br>
 　　　　sudo dnf install x264-devel</br>
+　　　　//aac编码库需要自行下载和编译源码，请参考 [其他人写的文章](https://www.cnblogs.com/wayns/p/facc-install.html)</br>
+
 　　　　sudo dnf inatall qt5-devel</br>
 　　　　sudo dnf inatall qt-creator</br>
 </br>

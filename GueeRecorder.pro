@@ -1,13 +1,12 @@
 QT       += core gui multimedia multimediawidgets
-linux{
 QT += x11extras
-}
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
 CONFIG += c++11 precompile_header
 PRECOMPILED_HEADER = precompile.h
 LIBS += -lX11 -lXfixes -lXinerama -lXext -lx264 -lfaac
-#LIBS += -lavformat -lavcodec -lavutil -lswscale -lX11 -lXext -lXfixes -lasound -ljack -ljacknet -lasound -lpulse -lXi -lXinerama
+
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -116,6 +115,11 @@ RESOURCES += \
     UiResource/recorder.qrc
 
 DISTFILES += \
+    Doc/GueeRecorder-ScreenShot-1.png \
+    Doc/GueeRecorder-ScreenShot.png \
+    Doc/GueeRecorder.sh \
+    Doc/pack.sh \
+    Install/GueeRecoder-uos-amd64.zip \
     UiResource/Shaders/RgbToYuv.frag \
     UiResource/Shaders/RgbToYuv.vert \
     UiResource/Shaders/SelectScreen.frag \

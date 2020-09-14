@@ -4,6 +4,7 @@
 #include <QStackedWidget>
 #include <QToolButton>
 #include <QCamera>
+#include <QMenu>
 #include "InputSource/ScreenLayer.h"
 
 #undef Bool
@@ -33,9 +34,11 @@ private slots:
     void on_pushButtonAddCamera_clicked();
     void on_toolButtonAddPicture_clicked();
     void on_comboBoxCameras_currentIndexChanged(int index);
-    void on_comboBoxSizeFps_currentIndexChanged(int index);
+
     void on_camera_statusChanged(QCamera::Status status);
     void on_StackedWidgetAddLayer_currentChanged(int arg1);
+
+    void on_pushButtonCameraSizeFps_clicked();
 
 private:
     Ui::StackedWidgetAddLayer *ui;
@@ -48,6 +51,10 @@ private:
     QVector<QToolButton*> m_screenButs;
     QSize rescaleButIcon(QToolButton* but, const QString& path);
     void closeCameraPreview();
+
+    QMenu* m_camSizeMenu = nullptr;
+    void makeCameraSizeMenu(QCamera* cam);
+
 signals:
     void selectedScreen(ScreenLayer::Option scrOpt);
     //void selectedCamera()
