@@ -2,7 +2,7 @@
 临时提供本程序在 UOS 上编译的二进制测试包。分为Loongson版和AMD64版，放在了我的个人网站上。
 [点击打开下载页面](http://www.loongson.xyz/Articles/Content/18)</br>
 因为打包时没有检查调用的库文件哪些是系统中已有的，哪些是后来新增的，把所有用到的库文件全都放进了压缩包，文件就比较大。</br>
-[使用说明：](http://www.loongson.xyz/GueeRecorder/GueeRecorder-Help.docx)</br>
+[使用说明](http://www.loongson.xyz/GueeRecorder/GueeRecorder-Help.docx)</br>
 [开发日记](http://www.loongson.xyz/Articles/Content/19)</br>
 
 # GueeRecorder （Guee 录屏机） 前言
