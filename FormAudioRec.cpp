@@ -52,8 +52,8 @@ void FormAudioRec::timerEvent(QTimerEvent *event)
 
 void FormAudioRec::enterEvent(QEvent *event)
 {
+    Q_UNUSED(event);
     QString strInfo;
-
     strInfo = QString("录音码率：%1 kbps\r\n").arg(m_video.audioBitrate());
 
     if (!m_video.audCallbackDev().isEnabled())

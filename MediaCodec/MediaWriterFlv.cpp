@@ -222,8 +222,8 @@ bool GueeMediaWriterFlv::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 	putByte( FLV_TAG_TYPE_VIDEO );
 	uint32_t	dataLenOffset	= (uint32_t)m_buffer.size();	// needed for overwriting length
 	putBE24( 0 ); // calculated later
-	putBE24( uint32_t(frame->ptsTimeMS) );
-	putByte( uint8_t(frame->ptsTimeMS >> 24 ) );
+    putBE24( uint32_t(frame->dtsTimeMS) );
+    putByte( uint8_t(frame->dtsTimeMS >> 24 ) );
 	putBE24( 0 );
 	putByte(frame->isKeyFrame ? FLV_FRAME_KEY : FLV_FRAME_INTER);
 	putByte( 1 ); // AVC NALU

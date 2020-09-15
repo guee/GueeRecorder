@@ -148,10 +148,10 @@ bool GueeMediaWriterMp4::onWriteVideo(const GueeMediaStream::H264Frame * frame)
 {
 	TrackInfo&	trak = m_tracks[m_defaultVideoTrackId];
 
-	add_trak_stts(trak, uint32_t((frame->ptsTimeMS - trak.durationMs) * trak.mdhd.timeScalc / 1000), true);
-	add_trak_ctts(trak, uint32_t((frame->ptsTimeMS - frame->dtsTimeMS) * trak.mdhd.timeScalc / 1000));
+    add_trak_stts(trak, uint32_t((frame->dtsTimeMS - trak.durationMs) * trak.mdhd.timeScalc / 1000), true);
+    add_trak_ctts(trak, uint32_t((frame->dtsTimeMS - frame->dtsTimeMS) * trak.mdhd.timeScalc / 1000));
 	trak.sampleCount++;
-	trak.durationMs = frame->ptsTimeMS;
+    trak.durationMs = frame->dtsTimeMS;
 	if (trak.stssBox && frame->isKeyFrame)
 	{
 		trak.stssBox->data.append(4, 0);

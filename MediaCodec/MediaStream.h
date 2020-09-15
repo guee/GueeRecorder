@@ -1,11 +1,12 @@
 #pragma once
-#include <string>
-#include <vector>
+#include <QByteArray>
+#include <QVector>
 #include <utility>
 #include <map>
 #include <algorithm>
 #include <mutex>
 #include <fstream>
+
 
 #include "H264Codec.h"
 using namespace std;
@@ -69,8 +70,8 @@ public:
 	bool hasAudio() const { return m_hasAudio; }
 
     int32_t writerCount() const { return static_cast<int32_t>(m_writers.size()); }
-    GueeMediaWriter* writer(int32_t i) { return (i >= 0 && i < static_cast<int32_t>(m_writers.size()))
-                ? m_writers[static_cast<size_t>(i)] : nullptr; }
+    GueeMediaWriter* writer(int32_t i) { return (i >= 0 && i < m_writers.size())
+                ? m_writers[i] : nullptr; }
 
 	//开始分解、另存音视频流
 	//如果 cbRead 有值，则是以文件方式读入，不能调用 putFileStream 接口。
@@ -187,7 +188,7 @@ private:
 	map<int64_t, FrameCache>	m_frameCaches;
 	bool writeToCache(H264Frame* vid, AUDFrame* aud);
 	mutex			m_mutexWrite;
-    vector<GueeMediaWriter*>	m_writers;
+    QVector<GueeMediaWriter*>	m_writers;
 	//解码SPS,获取视频图像宽、高和帧率信息
 	void h264_decode_sps(const uint8_t * spsBuf, uint32_t nLen);
 	// H264的NAL起始码防竞争机制 @param buf SPS数据内容
