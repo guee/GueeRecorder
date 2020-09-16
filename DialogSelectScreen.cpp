@@ -16,6 +16,7 @@ DialogSelectScreen::DialogSelectScreen(QWidget *parent) :
     if (parent)
     {
         m_mainOldGeometry = parent->geometry();
+        parent->hide();
         //由于隐藏窗口时的渐隐动画时间可能较长，因此换一种方式使主窗口基本不可见，耗时较短。
         parent->setMask(QRegion(0,0,1,1));
         if (parent->pos() == QPoint(0,0))

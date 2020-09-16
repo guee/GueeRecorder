@@ -966,7 +966,7 @@ void SoundDevInfo::initResample()
     }
     m_bufferSize = m_rec.m_audioParams.sampleRate * m_rec.m_bytesPerSample * m_rec.m_audioParams.channels;
     m_resBuffer = new uint8_t[m_bufferSize];
-    m_bufferSize *= 30;
+    m_bufferSize *= 3;
     m_pcmBuffer = new uint8_t[m_bufferSize];
     m_dataOffset = 0;
     m_dataSize = 0;

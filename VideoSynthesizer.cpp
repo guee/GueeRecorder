@@ -294,8 +294,8 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.BFrames       = 3;
     m_vidParams.BFramePyramid = 2;
 
-    m_vidParams.BFrames       = 0;
-    m_vidParams.BFramePyramid = 0;
+//    m_vidParams.BFrames       = 0;
+//    m_vidParams.BFramePyramid = 0;
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);

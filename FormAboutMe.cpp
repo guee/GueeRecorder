@@ -8,6 +8,8 @@ FormAboutMe::FormAboutMe(QWidget *parent) :
     ui(new Ui::FormAboutMe)
 {
     ui->setupUi(this);
+
+    ui->labelVerDate->setText(QApplication::applicationVersion());
 }
 
 FormAboutMe::~FormAboutMe()

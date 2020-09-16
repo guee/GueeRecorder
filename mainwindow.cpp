@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 //            Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     Qt::WindowFlags flags = (Qt::Window | Qt::FramelessWindowHint );
     this->setWindowFlags(flags);
+    this->setAttribute(Qt::WA_TranslucentBackground);
 
     this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
 
@@ -519,6 +520,8 @@ void MainWindow::on_pushButtonMediaSelect_clicked(bool checked)
 
 void MainWindow::on_pushButtonMenu_clicked()
 {
+    //hide();
+    //return;
     DialogSetting dlg(this);
     dlg.exec();
     dlg.saveProfile();

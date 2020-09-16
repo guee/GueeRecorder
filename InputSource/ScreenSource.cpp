@@ -140,17 +140,17 @@ bool ScreenSource::readScreenConfig()
     }
     else
     {
-        fprintf(stderr, "[X11Input::Init] Warning: Xinerama is not supported by X server, multi-monitor support may not work properly. Don't translate 'Xinerama'");
+        qWarning() << "Xinerama 不能工作,不能支持多显示器";
         return true;
     }
 
-    // make sure that we have at least one monitor
-    if(m_screenRects.size() == 0) {
-        fprintf(stderr, "[X11Input::Init] Warning: No monitors detected, multi-monitor support may not work properly.");
+    if(m_screenRects.size() == 0)
+    {
+        qWarning() << "没有获取到显示器信息";
         return true;
     }
 
-    // calculate bounding box
+    // 计算所有显示器合并后的矩形区域
     m_screenBound = m_screenRects[0];
     for(int i = 1; i < m_screenRects.size(); ++i)
     {
@@ -158,7 +158,7 @@ bool ScreenSource::readScreenConfig()
     }
     if ( m_screenBound.isEmpty())
     {
-        fprintf(stderr, "[X11Input::UpdateScreenConfiguration] Error: Invalid screen bounding box!\n");
+        qWarning() << "计算出的所有屏幕矩形区域是空的";
         return false;
     }
     // calculate dead space
@@ -242,14 +242,14 @@ bool ScreenSource::allocImage(uint width, uint height)
             && m_x11_image->width == static_cast<int>(width)
             && m_x11_image->height == static_cast<int>(height))
     {
-        return true; // reuse existing image
+        return true;
     }
     freeImage();
     m_x11_image = XShmCreateImage(m_x11_Display, m_x11_Visual, static_cast<uint>(m_x11_Depth),
                                   ZPixmap, nullptr, &m_x11_shm_info, width, height);
     if(m_x11_image == nullptr)
     {
-        qDebug() << "[X11Input::Init] Error: Can't create shared image!";
+        qDebug() << "x11 不能创建共享内存!";
         return false;
     }
     m_pixFormat = checkPixelFormat(m_x11_image);
@@ -258,19 +258,19 @@ bool ScreenSource::allocImage(uint width, uint height)
                                   IPC_CREAT | 0700);
     if(m_x11_shm_info.shmid == -1)
     {
-        qDebug() << "[X11Input::Init] Error: Can't get shared memory!";
+        qDebug() << "x11 获取共享内存信息失败";
         return false;
     }
     m_x11_shm_info.shmaddr = reinterpret_cast<char*>(shmat(m_x11_shm_info.shmid, nullptr, SHM_RND));
     if(m_x11_shm_info.shmaddr == reinterpret_cast<char*>(-1))
     {
-        qDebug() << "[X11Input::Init] Error: Can't attach to shared memory!";
+        qDebug() << "x11 不能附加到共享内存";
         return false;
     }
     m_x11_image->data = m_x11_shm_info.shmaddr;
     if(!XShmAttach(m_x11_Display, &m_x11_shm_info))
     {
-        qDebug() << "[X11Input::Init] Error: Can't attach server to shared memory!";
+        qDebug() << "x11 不能附加到共享内存";
         return false;
     }
     m_x11_shm_server_attached = true;

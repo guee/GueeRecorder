@@ -199,9 +199,6 @@ void ScreenLayer::onReleaseSource(BaseSource* source)
     }
 }
 
-// Tries to find the real window that corresponds to a top-level window (the actual window without window manager decorations).
-// Returns None if it can't find the window (probably because the window is not handled by the window manager).
-// Based on the xprop source code (http://cgit.freedesktop.org/xorg/app/xprop/tree/clientwin.c).
 Window ScreenLayer::findRealWindow(Window window)
 {
     // is this the real window?

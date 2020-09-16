@@ -699,10 +699,7 @@ bool GueeMediaStream::putVideoSlice(const uint8_t * data, int32_t length)
 	{
 		groupBegin = true;
 	}
-	//static int	innn = 0;
-	//static int tsi = 0;
-	//tsi += length;
-	//printf("%d,putVideoSlice(%d), type=%d, grp=%d, count:%d\n", tsi, length, nalType, groupBegin, m_curFrame->nalCount);
+
 	if (groupBegin)
 	{
 		if (m_curFrame->nalCount)
