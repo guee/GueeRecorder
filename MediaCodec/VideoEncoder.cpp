@@ -34,7 +34,7 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
 //    }
 //    else
     {
-        qDebug() << "load " << libFileName << "fail:" << m_libX264.errorString();
+        //qDebug() << "load " << libFileName << "fail:" << m_libX264.errorString();
         m_libX264.setFileName("libx264" );
         if (m_libX264.load())
         {
@@ -49,6 +49,8 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
             m_x264_encoder_open = p_x264_encoder_open(m_libX264.resolve(openName.toUtf8()));
             if (m_x264_encoder_open) break;
         }
+        //fprintf(stderr, "m_x264_encoder_open(%p):%s\n", m_x264_encoder_open, m_libX264.fileName().toUtf8().data() );
+
         m_x264_encoder_reconfig = p_x264_encoder_reconfig(m_libX264.resolve("x264_encoder_reconfig"));
         m_x264_encoder_parameters = p_x264_encoder_parameters(m_libX264.resolve("x264_encoder_parameters"));
         m_x264_encoder_headers = p_x264_encoder_headers(m_libX264.resolve("x264_encoder_headers"));
@@ -95,7 +97,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
     {
         return false;
     }
-	if ( videoParams )
+    if ( videoParams )
 	{
         if ( videoParams->height < 16 || videoParams->width < 16 ||
             videoParams->frameRate <= 0.0f || videoParams->frameRate > 240.0f ||
@@ -478,7 +480,7 @@ bool GueeVideoEncoder::set264Params()
 bool GueeVideoEncoder::set264BaseParams()
 {
 	int		iRet	= 0;
-	//x264_param_default_preset 内部会调用 x264_param_default，因此必须在其它参数设置之前调用它。
+    //x264_param_default_preset 内部会调用 x264_param_default，因此必须在其它参数设置之前调用它。
 	memset( &m_x264Param, 0, sizeof( m_x264Param ) );
 	string	tuneString;
 
@@ -753,7 +755,7 @@ bool GueeVideoEncoder::set264BitrateParams()
 
 bool GueeVideoEncoder::set264NalHrdParams()
 {
-	/* NAL HRD
+    /* NAL HRD
 	* Uses Buffering and Picture Timing SEIs to signal HRD
 	* The HRD in H.264 was not designed with VFR in mind.
 	* It is therefore not recommendeded to use NAL HRD with VFR.
@@ -778,7 +780,7 @@ bool GueeVideoEncoder::set264NalHrdParams()
 
 bool GueeVideoEncoder::set264AnalyserParams()
 {
-	//编码分析参数		/* Encoder analyser parameters */
+    //编码分析参数		/* Encoder analyser parameters */
 //	m_x264Param.analyse.intra;		//帧内分区			/* intra partitions */
 //	m_x264Param.analyse.inter;		//帧间分区			/* inter partitions */
 //	m_x264Param.analyse.b_transform_8x8;

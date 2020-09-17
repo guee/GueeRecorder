@@ -27,7 +27,9 @@ void VideoSynthesizer::init(QOpenGLContext* shardContext)
         if ( shardContext )
         {
             auto mainSur = shardContext->surface();
-            m_surface = new QOffscreenSurface(nullptr, dynamic_cast<QObject*>(this));
+            //m_surface = new QOffscreenSurface(nullptr, dynamic_cast<QObject*>(this));
+            m_surface = new QOffscreenSurface(nullptr);
+
 
 //            QSurfaceFormat fmt = mainSur->format();
 //            fprintf(stderr, "alphaBufferSize:%d\n"
@@ -161,6 +163,7 @@ bool VideoSynthesizer::open(const QString &sourceName)
     {
         return false;
     }
+    fprintf(stderr, "VideoSynthesizer open:%s\n", sourceName.toUtf8().data() );
     QStringList files = sourceName.split('|', QString::SkipEmptyParts);
     for (auto fn : files)
     {
@@ -192,24 +195,28 @@ bool VideoSynthesizer::open(const QString &sourceName)
     m_audParams.useADTS = false;
     m_audParams.encLevel = 2;
     m_medStream.setAudioParams(m_audParams);
+    fprintf(stderr, "m_medStream.startParse()\n");
     if (!m_medStream.startParse())
     {
         return false;
     }
     if (m_audParams.enabled)
     {
+        fprintf(stderr, "m_audRecorder.startEncode\n");
         if (!m_audRecorder.startEncode(&m_audParams))
         {
             return false;
         }
     }
+            fprintf(stderr, "m_vidEncoder.startEncode\n");
     if (!m_vidEncoder.startEncode(&m_vidParams))
     {
         m_medStream.endParse();
         return false;
     }
     m_status = Opened;
-    return true;
+            fprintf(stderr, "VideoSynthesizer.exit\n");
+            return true;
 }
 
 void VideoSynthesizer::close()
@@ -294,8 +301,8 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.BFrames       = 3;
     m_vidParams.BFramePyramid = 2;
 
-//    m_vidParams.BFrames       = 0;
-//    m_vidParams.BFramePyramid = 0;
+    m_vidParams.BFrames       = 0;
+    m_vidParams.BFramePyramid = 0;
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);
@@ -548,6 +555,7 @@ void VideoSynthesizer::renderThread()
     int64_t preTimer = -1000000;
     int64_t curTimer = 0;
     int64_t preTimeStamp = 0;
+
     while(m_threadWorking)
     {
         if ( m_videoSizeChanged &&
@@ -575,6 +583,7 @@ void VideoSynthesizer::renderThread()
         if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
         {
             //qDebug() <<"帧时间：" << m_timestamp.elapsed_milli();
+
             preTimer = m_frameSync.elapsed();
             if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
             {
@@ -601,7 +610,9 @@ void VideoSynthesizer::renderThread()
             for (auto it = m_childs.rbegin(); it != m_childs.rend(); ++it)
             {
                 (*it)->draw();
+
             }
+
             if (!fromImm)
             {
                 if ( m_status  == Palying )
@@ -621,7 +632,7 @@ void VideoSynthesizer::renderThread()
             }
 
             glFlush();
-            fboRgba->release();
+\
             //fboRgba->toImage().save(QString("/home/guee/Pictures/Temp/%1.jpg").arg(m_frameData.timestamp), nullptr, 100 );
             emit frameReady(fboRgba->texture());
 
@@ -631,7 +642,7 @@ void VideoSynthesizer::renderThread()
                 isUpdated = false;
             }
         }
-        msleep(2);
+        msleep(1);
         //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
@@ -860,13 +871,15 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
     m_program->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
     glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
    // glFlush();
     //m_frameData.fbo->toImage().save(QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp));
     m_frameData.buffer->bind();
+
     glReadPixels(0, 0, m_frameData.fbo->width(), m_frameData.fbo->height(),
                  m_frameData.internalFormat, m_frameData.dateType, offset);
-
     uint8_t* dat = static_cast<uint8_t*>(m_frameData.buffer->map(QOpenGLBuffer::ReadOnly));
+
     if (dat)
     {
 //        QImage img((const uchar*)dat, m_frameData.textureWidth, m_frameData.textureHeight, m_frameData.stride[0], QImage::Format_Grayscale8);
@@ -877,6 +890,7 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
         //m_vidEncoder.putFrame(m_frameData.timestamp, reinterpret_cast<uint8_t*>(dat), m_frameData.stride[0]);
         m_frameData.buffer->unmap();
     }
+
     m_frameData.buffer->release();
     m_vbo->release();
     m_program->release();

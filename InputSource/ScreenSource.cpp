@@ -23,6 +23,7 @@ ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     m_x11_image = nullptr;
     memset( &m_x11_shm_info, 0, sizeof(m_x11_shm_info) );
     m_x11_shm_server_attached = false;
+    m_shotThread.setSou(this);
     qDebug() << "ScreenSource 构造";
 }
 
@@ -36,17 +37,19 @@ ScreenSource::~ScreenSource()
 bool ScreenSource::onOpen()
 {
     m_screenSync.init(m_neededFps);
-    m_thread = std::thread(&ScreenSource::shotThread, this);
+   // m_thread = std::thread(&ScreenSource::shotThread, this);
+    m_shotThread.start();
     return true;
 }
 
 bool ScreenSource::onClose()
 {
     m_screenSync.stop();
-    if(m_thread.joinable())
-    {
-        m_thread.join();
-    }
+//    if(m_thread.joinable())
+//    {
+//        m_thread.join();
+//    }
+    m_shotThread.wait();
     return true;
 }
 
@@ -308,7 +311,8 @@ void ScreenSource::shotThread()
     {
         if (timestamp < 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            QThread::msleep(1);
         }
         else if (m_status == BaseLayer::Palying)
         {
@@ -514,3 +518,5 @@ void ScreenSource::drawCursor()
         scrRow += m_stride;
     }
 }
+
+

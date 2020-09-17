@@ -9,6 +9,8 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xinerama.h>
 
+#include <QThread>
+
 class ScreenSource : public BaseSource
 {
 public:
@@ -49,7 +51,22 @@ protected:
     XShmSegmentInfo m_x11_shm_info;
     bool m_x11_shm_server_attached;
     QRect m_shotRect;
-    std::thread m_thread;
+    class ShotThread : public QThread
+    {
+    public:
+        void run()
+        {
+            m_source->shotThread();
+        }
+        void setSou(ScreenSource* source)
+        {
+            m_source = source;
+        }
+    private:
+        ScreenSource* m_source = nullptr;
+    };
+    ShotThread  m_shotThread;
+    //std::thread m_thread;
     FrameSynchronization    m_screenSync;
 
     void drawCursor();

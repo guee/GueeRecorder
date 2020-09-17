@@ -15,23 +15,48 @@ int main(int argc, char *argv[])
     QApplication::setApplicationVersion("1.0.0");
     QApplication::setApplicationName("GueeRecorder");
    // QApplication::setApplicationDisplayName("GueeScreenRecorder");
-    QApplication::setApplicationVersion("2020-09-16");
+    QApplication::setApplicationVersion("2020-09-18");
 
 
+    bool alreadyExists = false;
+    Window wid = 0;
     QSharedMemory singleton(a.applicationName());
-    if (!singleton.create(8))
+    if (!singleton.create(sizeof(Window)))
     {
-        if (singleton.attach())
+        if ( singleton.error() == 4 )
         {
-
+            singleton.attach();
+            memcpy(&wid, singleton.data(), sizeof(Window));
+            if (wid)
+            {
+                Display* disp = XOpenDisplay(nullptr);
+                if (disp)
+                {
+                    XWindowAttributes attributes;
+                    if ( XGetWindowAttributes(disp, wid, &attributes) )
+                    {
+                        alreadyExists = true;
+                        XSetInputFocus(disp, wid, RevertToPointerRoot, CurrentTime);
+                        XRaiseWindow(disp, wid);
+                    }
+                    XCloseDisplay(disp);
+                }
+            }
         }
-        QMessageBox::information(nullptr, "Guee 录屏机", "程序已经在运行了，请不要重复启动。");
-
-        return false;
+        else
+        {
+            alreadyExists = true;
+        }
+        if (alreadyExists)
+        {
+            singleton.detach();
+            return 0;
+        }
     }
-
 
     MainWindow w;
     w.show();
-    return a.exec();
+    wid = w.winId();
+    memcpy(singleton.data(), &wid, sizeof(Window));
+    return a.exec();;
 }

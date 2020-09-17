@@ -226,6 +226,7 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
     ScreenLayer::Option scrOpt;
 
     QToolButton* but = qobject_cast<QToolButton*>(sender());
+
     if ( but == ui->toolButtonScreenArea )
     {
         QOpenGLContext* currContext = QOpenGLContext::currentContext();
@@ -235,11 +236,13 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
         {
             scrOpt = dlg->option();
         }
+
         delete dlg;
         if ( mainSur )
         {
             currContext->makeCurrent(mainSur);
         }
+
     }
     else if ( but->objectName() == "toolButton_Screen_All")
     {
@@ -251,6 +254,7 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
         scrOpt.screenIndex = but->objectName().mid(18).toInt();
 
     }
+
     if ( scrOpt.mode != ScreenLayer::unspecified )
     {
         ScreenLayer* layer = static_cast<ScreenLayer*>(VideoSynthesizer::instance().createLayer("screen"));
@@ -490,7 +494,7 @@ void StackedWidgetAddLayer::on_StackedWidgetAddLayer_currentChanged(int arg1)
         if ( m_prevMS + 500 < ms || ms < m_prevMS )
         {
             m_prevMS = ms;
-            fprintf(stderr, "%d, showEvent\n", m_prevMS);
+
             showScreens();
         }
     }

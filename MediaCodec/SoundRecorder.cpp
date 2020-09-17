@@ -134,13 +134,19 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
         break;
     }
 
-    ulong		bitRate	= ulong(m_audioParams.bitrate * 1024);
+
+    ulong	bitRate	= ulong(m_audioParams.bitrate * 1024);
+    ulong   samPerf = 0;
+    ulong   outBufs = 0;
     m_faacHandle	= faacEncOpen( ulong(m_audioParams.sampleRate), uint(m_audioParams.channels),
-                                   reinterpret_cast<ulong*>(&m_samplesPerFrame), reinterpret_cast<ulong*>(&m_maxOutByteNum) );
+                                   &samPerf, &outBufs );
     if (m_faacHandle == nullptr)
     {
         return false;
     }
+    m_samplesPerFrame = samPerf;
+    m_maxOutByteNum = outBufs;
+
     faacEncConfigurationPtr	pFaacCfg	= faacEncGetCurrentConfiguration( m_faacHandle );
     pFaacCfg->mpegVersion	= MPEG4;
     pFaacCfg->aacObjectType	= m_audioParams.encLevel;
@@ -149,6 +155,7 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
     //pFaacCfg->quantqual		= 50;
     pFaacCfg->outputFormat	= m_audioParams.useADTS ? 1 : 0;
     pFaacCfg->inputFormat	= faacBits;
+
     if ( !faacEncSetConfiguration( m_faacHandle, pFaacCfg ) )
     {
         faacEncClose( m_faacHandle );
@@ -156,6 +163,7 @@ bool SoundRecorder::startEncode(const SAudioParams *audioParams)
         return false;
     }
     m_lastSampleNum = 0;
+
     m_sndCallback.initResample();
     m_sndMicInput.initResample();
 #if _USE_WAVE_TEST
@@ -215,6 +223,7 @@ bool SoundRecorder::pauseEncode(bool pause)
 
 void SoundRecorder::run()
 {
+
     int64_t delaySample; //当声音与实际时间发生延迟时（没有采样数据），允许的最大延迟采样数。
     delaySample = m_audioParams.sampleRate;
     int32_t bytesPerFrame;    //每个AAC帧的字节数（全部声道）
@@ -253,7 +262,8 @@ void SoundRecorder::run()
                         m_mediaStream->putAudioFrame(encBuf, encOutSize, frameBegin * 1000 / m_audioParams.sampleRate);
                     }
                     memset(mixBuf, 0, ulong(bytesPerFrame));
-                    //qDebug() << "Time:" << VideoSynthesizer::instance().timestamp() / 1000 << ", frameBegin:" << frameBegin << ", encOutSize:" << encOutSize;
+                    //fprintf(stderr, "Time %d , frameBegin:%d ,encOutSize:%d\n",
+                    //        int32_t(VideoSynthesizer::instance().timestamp() / 1000), int32_t(frameBegin), int32_t(encOutSize));
                     frameBegin += sampPerFrame;
                     m_lastSampleNum = qMax(m_lastSampleNum, frameBegin);
                 }
@@ -282,6 +292,7 @@ void SoundRecorder::run()
                 qDebug() << "[null]Time:" << VideoSynthesizer::instance().timestamp() / 1000 << ", frameBegin:" << frameBegin << ", encOutSize:" << encOutSize;
                 frameBegin += sampPerFrame;
             }
+
         }
 
     }

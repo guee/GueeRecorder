@@ -75,7 +75,7 @@ private:
 	uint32_t		m_uWaveSize		= 0;
 	uint32_t		m_uReadOffset	= 0;
 	bool			m_bIsWrite		= false;
-	static int MakeFourCC( uint8_t ch0, uint8_t ch1, uint8_t ch2, uint8_t ch3 )
+    static uint32_t MakeFourCC( uint8_t ch0, uint8_t ch1, uint8_t ch2, uint8_t ch3 )
 	{
 		return ( (uint32_t)ch0 | ( (uint32_t)ch1 << 8 ) | ( (uint32_t)ch2 << 16 ) | ( (uint32_t)ch3 << 24 ) );
 	}
