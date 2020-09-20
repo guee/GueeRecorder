@@ -9,6 +9,7 @@
 #include "FormWaitFinish.h"
 #include <QDesktopWidget>
 #include <QMessageBox>
+QDateTime buildDateTime();
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -72,6 +73,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->widget_AudioRec->resetAudioRecordUI();
 
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
+    QDate dt = QLocale(QLocale::English).toDate(__DATE__, "MMM dd yyyy");
+    QString ver = QString("%1 [%2]").arg(QApplication::applicationVersion(), dt.toString("yyyy-M-d"));
+
+    ui->labelVersion->setText(ver);
+    ui->labelVersion->setToolTip(ver);
+    ui->labelLogo->setToolTip(ver);
 
 }
 

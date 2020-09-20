@@ -274,39 +274,55 @@ color: rgb(160, 160, 160);
            <height>16777215</height>
           </size>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <property name="leftMargin">
-           <number>4</number>
+         <widget class="QLabel" name="labelLogo">
+          <property name="geometry">
+           <rect>
+            <x>4</x>
+            <y>8</y>
+            <width>128</width>
+            <height>64</height>
+           </rect>
           </property>
-          <property name="topMargin">
-           <number>8</number>
+          <property name="minimumSize">
+           <size>
+            <width>128</width>
+            <height>64</height>
+           </size>
           </property>
-          <property name="rightMargin">
-           <number>0</number>
+          <property name="maximumSize">
+           <size>
+            <width>128</width>
+            <height>64</height>
+           </size>
           </property>
-          <item>
-           <widget class="QLabel" name="labelLogo">
-            <property name="minimumSize">
-             <size>
-              <width>128</width>
-              <height>64</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>128</width>
-              <height>64</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="pixmap">
-             <pixmap resource="UiResource/recorder.qrc">:/logo.png</pixmap>
-            </property>
-           </widget>
-          </item>
-         </layout>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="UiResource/recorder.qrc">:/logo.png</pixmap>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelVersion">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>61</y>
+            <width>151</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(20, 60, 90);
+font-size:8px;
+</string>
+          </property>
+          <property name="text">
+           <string>V1.0.0 beta [2020-09-20]</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </widget>
        </item>
        <item>
