@@ -1,5 +1,10 @@
 #include "BaseSource.h"
 
+BaseSource::BaseSource()
+{
+
+}
+
 BaseSource::BaseSource(const QString& typeName, const QString &sourceName)
     : m_typeName(typeName)
     , m_sourceName(sourceName)
@@ -131,6 +136,11 @@ bool BaseSource::isSameSource(const QString &type, const QString &source)
 void BaseSource::setSourceFps(float fps)
 {
     m_neededFps = fps;
+}
+
+void BaseSource::requestTimestamp(int64_t timestamp)
+{
+    m_requestTimestamp = timestamp;
 }
 
 void BaseSource::setImage(const QImage& image)
@@ -374,5 +384,10 @@ int BaseSource::pixelBits(QImage::Format fmt)
         return 0;
     }
     return 0;
+}
+
+void BaseSource::run()
+{
+    return;
 }
 

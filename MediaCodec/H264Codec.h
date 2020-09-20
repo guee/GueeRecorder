@@ -8,7 +8,7 @@ enum EVideoEncoder
 	VE_NVENC,				//nvidia NVENC 硬件编码器
     VE_INTEL,				//intel 核显加速编码器
 };
-static const char * const video_encoder_names[] = { "x264", "nvcuda", "nvenc", "intel", 0 };
+static const char * const video_encoder_names[] = { "x264", "nvcuda", "nvenc", "intel", nullptr };
 
 //视频编码配置，profile。
 enum EVideoProfile
@@ -18,7 +18,7 @@ enum EVideoProfile
 	VF_Main,
 	VF_High
 };
-static const char * const video_profile_names[] = { "auto", "baseline", "main", "high", 0 };
+static const char * const video_profile_names[] = { "auto", "baseline", "main", "high", nullptr };
 
 //用于各种视频编码器的 Preset 配置
 enum EVideoPreset_x264
@@ -35,7 +35,7 @@ enum EVideoPreset_x264
 	VP_x264_Placebo
 };
 static const char * const video_preset_x264_names[] = { "UltraFast", "SuperFast", "VeryFast", "Faster", "Fast",
-"Medium", "Slow", "Slower", "VerySlow", "Placebo", 0 };
+"Medium", "Slow", "Slower", "VerySlow", "Placebo", nullptr };
 
 enum EVideoPreset_Cuda
 {
@@ -47,7 +47,7 @@ enum EVideoPreset_Cuda
 	VP_Cuda_ZuneHD,		//width 720  height 480
 	VP_Cuda_FlipCam
 };
-static const char * const video_preset_cuda_names[] = { "PSP", "iPod", "AVCHD", "BlurayDisk", "HDV1440", "ZuneHD", "FlipCam", 0 };
+static const char * const video_preset_cuda_names[] = { "PSP", "iPod", "AVCHD", "BlurayDisk", "HDV1440", "ZuneHD", "FlipCam", nullptr };
 
 enum EVideoPreset_Nvenc
 {
@@ -62,7 +62,7 @@ enum EVideoPreset_Nvenc
 	VP_Nvenc_LosslessHP
 };
 static const char * const video_preset_nvenc_names[] = { "Default", "HighPerformance", "HighQuality", "BlurayDisk", "LowLatencyDefault",
-"LowLatencyHP", "LowLatencyHQ", "LosslessDefault", "LosslessHP", 0 };
+"LowLatencyHP", "LowLatencyHQ", "LosslessDefault", "LosslessHP", nullptr };
 
 enum EVideoPreset_Intel
 {
@@ -70,21 +70,11 @@ enum EVideoPreset_Intel
 	VP_Intel_Balanced,
 	VP_Intel_Quality
 };
-static const char * const video_preset_intel_names[] = { "Speed", "Balanced", "Quality", 0 };
+static const char * const video_preset_intel_names[] = { "Speed", "Balanced", "Quality", nullptr };
 
 //视频编码器码率控制方式设置
 enum EVideoRateMode
 {
-	VR_AverageBitrate,		//平均码率(ABR)		
-							//x264 使用 X264_RC_ABR平均码率
-							//Nvenc	NV_ENC_PARAMS_RC_VBR
-							//Cuda	RC_VBR
-
-	VR_VariableBitrate,		//可变码率(VBR)		
-							//x264 使用 X264_RC_ABR平均码率 进行控制
-							//Nvenc	NV_ENC_PARAMS_RC_VBR
-							//Cuda	RC_VBR
-
 	VR_ConstantBitrate,		//固定码率(CBR)		
 							//x264 使用 X264_RC_CRF 进行控制
 							//Nvenc	NV_ENC_PARAMS_RC_CBR
@@ -94,6 +84,10 @@ enum EVideoRateMode
 							//x264 使用 X264_RC_CQP恒定质量
 							//Nvenc	NV_ENC_PARAMS_RC_CBR, 如果 VBV 参数有值，则使用 NV_ENC_PARAMS_RC_VBR_MINQP
 							//Cuda	RC_CQP / RC_VBR_MINQP
+    VR_VariableBitrate,		//可变码率(VBR)
+                            //x264 使用 X264_RC_ABR平均码率 进行控制
+                            //Nvenc	NV_ENC_PARAMS_RC_VBR
+                            //Cuda	RC_VBR
 };
 
 enum ESampleBits
@@ -155,7 +149,7 @@ enum	EVideoCSP
 static const char * const video_color_space_names[] = { "I420/IYUV", "YV12", "NV12", "NV21", "I422",
 "YV16", "NV16", "YUY2", "UYVY", "V210",
 "I444", "YV24", "AYUV", "RGB", "BGR",
-"ARGB", "ARGB10", 0 };
+"ARGB", "ARGB10", nullptr };
 enum	EPsyTuneType
 {
 	eTuneNone,
@@ -191,6 +185,7 @@ struct	SVideoParams
 	bool		fastDecode;	//使编码出的视频能够被快速解码。
     int32_t		threadNum;		//编码线程数。0为自动线程数，否则就是指定的线程数量。
 	EVideoRateMode	rateMode;	//码率控制方式
+    int32_t     constantQP;
 	int32_t		bitrate;		//平均码率，如果为 0 就自动计算出一个码率。
     int32_t		bitrateMax;     //最大码率
     int32_t		bitrateMin;     //最小码率，默认为0，不使用最小码率设置。否则根据文件写入速度或网络上传速度自动重设码率。
@@ -245,7 +240,7 @@ enum NalUnitType
 
 static const char * const nal_unit_names[] = { "Unknow", "Slice", "Slice_DPA", "Slice_DPB", "Slice_DPC",
 	"Slice_IDR", "SEI", "SPS", "PPS", "AUD","EoSeq", "EoStream", "Fill", "", "Prefix",
-	"SupSps", "SlcExt", "VDRD", 0 };
+    "SupSps", "SlcExt", "VDRD", nullptr };
 
 enum	EMediaType
 {

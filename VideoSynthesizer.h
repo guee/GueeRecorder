@@ -27,7 +27,7 @@ public:
     void immediateUpdate();
 
     bool open(const QString &sourceName = QString());
-    void close();
+    void close(close_step_progress fun, void* param);
 
     bool play();
     bool pause();
@@ -52,6 +52,8 @@ public:
     EPsyTuneType psyTune() const {return m_vidParams.psyTune;}
     bool setBitrateMode(EVideoRateMode rateMode);
     EVideoRateMode bitrateMode() const {return m_vidParams.rateMode;}
+    bool setConstantQP(int32_t qp);
+    int32_t constantQP() const {return m_vidParams.constantQP;}
     bool setBitrate(int32_t bitrate);
     int32_t bitrate() const {return m_vidParams.bitrate;}
     bool setBitrateMin(int32_t bitrateMin);
@@ -85,6 +87,7 @@ public:
     SoundDevInfo& audCallbackDev() { return m_audRecorder.callbackDev(); }
     SoundDevInfo& audMicInputDev() { return m_audRecorder.micInputDev(); }
 private:
+
     VideoSynthesizer();
     SVideoParams m_vidParams;
     SAudioParams m_audParams;

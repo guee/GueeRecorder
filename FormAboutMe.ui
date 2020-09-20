@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>355</width>
-    <height>311</height>
+    <height>354</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,10 +56,70 @@
    <item>
     <widget class="QWidget" name="widget_2" native="true">
      <layout class="QGridLayout" name="gridLayout">
-      <item row="6" column="0" colspan="3">
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_Diary">
+        <property name="text">
+         <string>&lt;a href=&quot;http://www.loongson.xyz/Articles/Content/19&quot;&gt;开发日记……&lt;/a&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_Help">
+        <property name="text">
+         <string>&lt;a href=&quot;http://www.loongson.xyz/Articles/Content/18&quot;&gt;使用说明……&lt;/a&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label_Name">
+        <property name="font">
+         <font>
+          <pointsize>18</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Guee 录屏机 1.0.0</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string>版本日期：</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelVerDate">
+          <property name="text">
+           <string>2020-09-15</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_22">
+        <property name="text">
+         <string>本程序基于 GPLv3 发布</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0" colspan="2">
        <widget class="QLabel" name="label_26">
         <property name="text">
-         <string>作者：Guee@guee.net</string>
+         <string>作者：&lt;a href=&quot;http://www.loongson.xyz&quot;&gt;Guee&lt;/a&gt;</string>
         </property>
        </widget>
       </item>
@@ -76,32 +136,17 @@
         </property>
        </spacer>
       </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_Diary">
+      <item row="4" column="1">
+       <widget class="QLabel" name="label_Source">
         <property name="text">
-         <string>&lt;a href=&quot;http://www.loongson.xyz/Articles/Content/19&quot;&gt;开发日记……&lt;/a&gt;</string>
+         <string>&lt;a href=&quot;https://github.com/guee/GueeRecorder&quot;&gt;查看源码……&lt;/a&gt;</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
-        <property name="openExternalLinks">
-         <bool>true</bool>
-        </property>
        </widget>
       </item>
-      <item row="0" column="0" colspan="3">
-       <widget class="QLabel" name="label_17">
-        <property name="font">
-         <font>
-          <pointsize>18</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Guee 录屏机 1.0.0</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="3">
+      <item row="3" column="0" colspan="2">
        <widget class="QGroupBox" name="groupBox_6">
         <property name="enabled">
          <bool>true</bool>
@@ -134,50 +179,12 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="2">
-       <widget class="QLabel" name="label_Source">
+      <item row="7" column="0">
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>&lt;a href=&quot;https://github.com/guee/GueeRecorder&quot;&gt;查看源码……&lt;/a&gt;</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <string>邮箱：Guee@guee.net</string>
         </property>
        </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_22">
-        <property name="text">
-         <string>本程序基于 GPLv3 发布</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="label_Help">
-        <property name="text">
-         <string>&lt;a href=&quot;http://www.loongson.xyz/Articles/Content/18&quot;&gt;使用说明……&lt;/a&gt;</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QLabel" name="label_23">
-          <property name="text">
-           <string>版本日期：</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="labelVerDate">
-          <property name="text">
-           <string>2020-09-15</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </item>
      </layout>
     </widget>

@@ -5,10 +5,11 @@
 #include <QVideoFrame>
 #include <QOpenGLTexture>
 
-class BaseSource : public QObject
+class BaseSource : public QThread
 {
-
+    Q_OBJECT
 public:
+    BaseSource();
     BaseSource(const QString& typeName, const QString &sourceName = QString());
     virtual ~BaseSource();
     //打开数据源
@@ -24,19 +25,19 @@ public:
     virtual bool isSameSource(const QString& type, const QString& source);
 
     void setSourceFps(float fps);
+    virtual void requestTimestamp(int64_t timestamp);
     bool updateToTexture();
     void setImage(const QImage& image);
     void setFrame(const QVideoFrame &frame);
     int width() const { return m_width; }
     int height() const { return m_height; }
     friend BaseLayer;
-
     QVector<BaseLayer*> m_layers;
     const uint8_t* m_imageBuffer = nullptr;
     int32_t m_stride = 0;
     int32_t m_width = 0;
     int32_t m_height = 0;
-    int64_t m_lastTimestamp = -1;  //如果视频帧的时间戳要以此源的时间戳为准，就设置为大于等于0的微秒值
+    int64_t m_requestTimestamp = 0;  //最近一次请求源获得指定时间的图像，微秒值
     float m_neededFps = 0.0f;
     int   m_intputYuvFormat = 0;
 
@@ -55,6 +56,7 @@ protected:
     virtual bool onClose() = 0;
     virtual bool onPlay() = 0;
     virtual bool onPause() = 0;
+    virtual void run();
 
     QString m_typeName;
     QString m_sourceName;

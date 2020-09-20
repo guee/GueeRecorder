@@ -28,6 +28,8 @@ private slots:
 
     void on_label_Source_linkActivated(const QString &link);
 
+    void on_label_26_linkActivated(const QString &link);
+
 private:
     Ui::FormAboutMe *ui;
 };

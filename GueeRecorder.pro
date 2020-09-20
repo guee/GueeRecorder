@@ -24,6 +24,7 @@ SOURCES += \
     FormAboutMe.cpp \
     FormAudioRec.cpp \
     FormLayerTools.cpp \
+    FormWaitFinish.cpp \
     GlScreenSelect.cpp \
     GlWidgetPreview.cpp \
     InputSource/BaseLayer.cpp \
@@ -61,6 +62,7 @@ HEADERS += \
     FormAboutMe.h \
     FormAudioRec.h \
     FormLayerTools.h \
+    FormWaitFinish.h \
     GlScreenSelect.h \
     GlWidgetPreview.h \
     InputSource/BaseLayer.h \
@@ -97,6 +99,7 @@ FORMS += \
     FormAboutMe.ui \
     FormAudioRec.ui \
     FormLayerTools.ui \
+    FormWaitFinish.ui \
     StackedWidgetAddLayer.ui \
     mainwindow.ui \
     DialogSetting.ui \

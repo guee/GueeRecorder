@@ -39,7 +39,11 @@ bool ScreenLayer::fullScreenImage(QImage& img)
     ScreenSource    sour("");
     if ( sour.shotScreen(&ScreenSource::screenBound()) )
     {
-        img = QImage(sour.m_width, sour.m_height, sour.m_pixFormat);
+        if (img.width() != sour.m_width || img.height() != sour.m_height || img.format() != sour.m_pixFormat)
+        {
+            img.detach();
+            img = QImage(sour.m_width, sour.m_height, sour.m_pixFormat);
+        }
         int line = std::min(sour.m_stride, img.bytesPerLine());
         for ( int i = 0; i < sour.m_height; ++i)
         {

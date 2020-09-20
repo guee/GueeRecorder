@@ -10,6 +10,7 @@
 #include <X11/extensions/Xinerama.h>
 
 #include <QThread>
+#include <QSemaphore>
 
 class ScreenSource : public BaseSource
 {
@@ -34,6 +35,7 @@ public:
 	void shotThread();
     bool shotScreen(const QRect* rect = nullptr);
     QRect calcShotRect();
+    virtual void requestTimestamp(int64_t timestamp);
 protected:
     static Display *m_x11_Display;
     static int m_x11_Screen;
@@ -51,24 +53,8 @@ protected:
     XShmSegmentInfo m_x11_shm_info;
     bool m_x11_shm_server_attached;
     QRect m_shotRect;
-    class ShotThread : public QThread
-    {
-    public:
-        void run()
-        {
-            m_source->shotThread();
-        }
-        void setSou(ScreenSource* source)
-        {
-            m_source = source;
-        }
-    private:
-        ScreenSource* m_source = nullptr;
-    };
-    ShotThread  m_shotThread;
-    //std::thread m_thread;
-    FrameSynchronization    m_screenSync;
-
+    QSemaphore  m_semShot;
+    void run();
     void drawCursor();
 
     virtual bool onClose();

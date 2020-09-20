@@ -6,7 +6,7 @@
 
 #include "stdio.h"
 #include "DialogSetting.h"
-
+#include "FormWaitFinish.h"
 #include <QDesktopWidget>
 #include <QMessageBox>
 
@@ -267,7 +267,14 @@ void MainWindow::initMenu()
 {
 //    QList<int>
 //    QAction ss;
-//    ss.setData()
+    //    ss.setData()
+}
+
+void MainWindow::on_close_step_progress(void* param)
+{
+    MainWindow* me = reinterpret_cast<MainWindow*>(param);
+
+    qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
@@ -363,7 +370,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
                                   QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)
                 == QMessageBox::Yes)
         {
-            m_video.close();
+            on_pushButtonRecStop_clicked();
             m_video.uninit();
 
             event->accept();
@@ -376,7 +383,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
     else
     {
-        m_video.close();
+        m_video.close(nullptr, nullptr);
         m_video.uninit();
     }
 }
@@ -388,11 +395,16 @@ void MainWindow::on_widgetPreview_initGL()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
+    if (m_video.status() >= BaseLayer::Opened)
+    {
+        return;
+    }
+    ui->pushButtonRecStart->setDisabled(true);
     QString path = DialogSetting::userSetting().videoDir;
     if (!path.endsWith("/")) path.append("/");
     path.append(DialogSetting::userSetting().fileName);
     path.append(" (");
-    path.append(QDateTime::currentDateTime().toString("yyyy-MM-dd#HHmmss#zzz"));
+    path.append(QDateTime::currentDateTime().toString("yyyy-MM-dd[HH-mm-ss]"));
     path.append(").");
     path.append(DialogSetting::userSetting().fileType);
     if (m_video.open(path))
@@ -405,15 +417,23 @@ void MainWindow::on_pushButtonRecStart_clicked()
     else
     {
         QMessageBox::critical(this, "开始录制", "启动录像失败");
+        ui->pushButtonMenu->setDisabled(false);
+        ui->pushButtonRecStart->setDisabled(false);
     }
 }
 
+
 void MainWindow::on_pushButtonRecStop_clicked()
 {
+    FormWaitFinish wait(this);
+    wait.setParent(ui->centralwidget);
+    wait.setGeometry(0,0,ui->centralwidget->width(),ui->centralwidget->height());
+    wait.raise();
+    wait.show();
     ui->stackedWidgetRecControl->setCurrentIndex(0);
-    m_video.close();
+    m_video.close(on_close_step_progress, this);
     ui->pushButtonMenu->setDisabled(false);
-
+    ui->pushButtonRecStart->setDisabled(false);
 }
 
 void MainWindow::on_pushButtonRecPause_clicked(bool checked)

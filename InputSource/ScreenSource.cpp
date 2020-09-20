@@ -1,6 +1,5 @@
 #include "ScreenSource.h"
 #include "ScreenLayer.h"
-#include "../VideoSynthesizer.h"
 #include <sys/sem.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -23,7 +22,6 @@ ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     m_x11_image = nullptr;
     memset( &m_x11_shm_info, 0, sizeof(m_x11_shm_info) );
     m_x11_shm_server_attached = false;
-    m_shotThread.setSou(this);
     qDebug() << "ScreenSource 构造";
 }
 
@@ -36,32 +34,25 @@ ScreenSource::~ScreenSource()
 
 bool ScreenSource::onOpen()
 {
-    m_screenSync.init(m_neededFps);
-   // m_thread = std::thread(&ScreenSource::shotThread, this);
-    m_shotThread.start();
+    start();
     return true;
 }
 
 bool ScreenSource::onClose()
 {
-    m_screenSync.stop();
-//    if(m_thread.joinable())
-//    {
-//        m_thread.join();
-//    }
-    m_shotThread.wait();
+    m_semShot.release();
+    wait();
+    if (m_semShot.available()) m_semShot.acquire(m_semShot.available());
     return true;
 }
 
 bool ScreenSource::onPlay()
 {
-    m_screenSync.start();
     return true;
 }
 
 bool ScreenSource::onPause()
 {
-    m_screenSync.pause();
     return true;
 }
 
@@ -110,6 +101,7 @@ void ScreenSource::static_uninit()
     if(m_x11_Display != nullptr) {
         XCloseDisplay(m_x11_Display);
         m_x11_Display = nullptr;
+
     }
 }
 
@@ -304,33 +296,6 @@ void ScreenSource::freeImage()
     }
 }
 
-void ScreenSource::shotThread()
-{
-    int64_t timestamp = m_screenSync.elapsed();
-    while(m_status != BaseLayer::NoOpen)
-    {
-        if (timestamp < 0)
-        {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            QThread::msleep(1);
-        }
-        else if (m_status == BaseLayer::Palying)
-        {
-            if (shotScreen())
-            {
-                m_imageChanged = true;
-                //qDebug() << "shot screen timestamp:" << timestamp / 1000000.0;
-            }
-        }
-        timestamp = m_screenSync.waitNextFrame();
-        if (qAbs(m_screenSync.fps() - m_neededFps) > 0.1f)
-        {
-            m_screenSync.init(m_neededFps);
-            m_screenSync.start();
-        }
-    }
-}
-
 bool ScreenSource::shotScreen(const QRect* rect)
 {
     m_imageLock.lock();
@@ -351,9 +316,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
         m_imageLock.unlock();
         return false;
     }
-//    static int64_t timInit = 0;
-//    int64_t tim1 = m_frameSync.elapsed();
-    m_lastTimestamp = VideoSynthesizer::instance().timestamp();
+
     if(m_x11_UseShm)
     {
         if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
@@ -388,9 +351,6 @@ bool ScreenSource::shotScreen(const QRect* rect)
         }
         m_pixFormat = checkPixelFormat(m_x11_image);
     }
-//    int64_t tim2 = m_frameSync.elapsed();
-//    qDebug() <<"截屏时间：" << tim1 << " 距离上帧：" << tim1 - timInit << " , 截屏耗时：" << tim2 - tim1;
-//    timInit = tim1;
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_x11_image->data);
     m_stride = m_x11_image->bytes_per_line;
@@ -457,6 +417,33 @@ QRect ScreenSource::calcShotRect()
     return bound;
 }
 
+void ScreenSource::requestTimestamp(int64_t timestamp)
+{
+    BaseSource::requestTimestamp(timestamp);
+    m_semShot.release();
+}
+
+void ScreenSource::run()
+{
+    while(m_status != BaseLayer::NoOpen)
+    {
+        m_semShot.acquire();
+        if (m_status == BaseLayer::NoOpen)
+        {
+            break;
+        }
+        else if (m_status != BaseLayer::Paused)
+        {
+            if (shotScreen())
+            {
+                m_imageChanged = true;
+                //qDebug() << "shot screen timestamp:" << timestamp / 1000000.0;
+            }
+        }
+    }
+
+}
+
 void ScreenSource::drawCursor()
 {
     XFixesCursorImage * ci = XFixesGetCursorImage(m_x11_Display);
@@ -517,6 +504,7 @@ void ScreenSource::drawCursor()
         curRow += ci->width;
         scrRow += m_stride;
     }
+    XFree(ci);
 }
 
 

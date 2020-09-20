@@ -58,5 +58,6 @@ private:
     QMenu* m_menu = nullptr;
     void setHitCursor(Qt::WindowFrameSection hit);
     void initMenu();
+    static void on_close_step_progress(void* param);
 };
 #endif // MAINWINDOW_H

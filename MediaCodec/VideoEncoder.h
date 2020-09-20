@@ -7,7 +7,7 @@
 #include "./Common/FrameRateCalc.h"
 
 using namespace std;
-
+typedef void (*close_step_progress)(void* param);
 class GueeMediaWriter;
 class GueeVideoEncoder : public QThread
 {
@@ -17,7 +17,7 @@ public:
     ~GueeVideoEncoder();
     bool bindStream( GueeMediaStream* stream );
 	bool startEncode( const SVideoParams* videoParams );
-	void endEncode();
+    void endEncode(close_step_progress fun, void* param);
     const SVideoParams* getParams() { return &m_videoParams; }
     bool putFrame( int64_t microsecond, const uint8_t* buf, int32_t pitch);
     bool putFrame( int64_t microsecond, uint8_t* const plane[3], int32_t* pitch);
@@ -92,16 +92,6 @@ private:
     int64_t m_prevFramePts = 0;
 
     FrameRateCalc               m_encodeFPS;
-	struct s_rect
-	{
-		int32_t		x, y, width, height;
-		s_rect() { x=y=width=height=0; }
-		s_rect(int32_t _x, int32_t _y, int32_t _width, int32_t _height)
-		{
-			x = _x; y = _y; width = _width; height = _height;
-		}
-	};
-
 
 	inline const s_csp_tab& getCspTable( EVideoCSP eFormat );
 	inline int32_t EVideoCSP_To_x264CSP( EVideoCSP eFormat );

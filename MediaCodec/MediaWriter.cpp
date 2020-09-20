@@ -26,7 +26,14 @@ bool GueeMediaWriter::setFilePath( const string& szPath )
 
 void GueeMediaWriter::setEnable(bool enable)
 {
-	m_isEnabled = enable;
+    m_isEnabled = enable;
+}
+
+void GueeMediaWriter::setTimeFlg(int64_t creationMS, int64_t modificationMS)
+{
+    m_creationTimeMS = creationMS;
+    m_modificationTimeMS = modificationMS;
+
 }
 
 bool GueeMediaWriter::onWriteHeader()

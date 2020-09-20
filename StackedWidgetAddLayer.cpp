@@ -70,7 +70,11 @@ void StackedWidgetAddLayer::timerEvent(QTimerEvent *event)
 
 void StackedWidgetAddLayer::showScreens()
 {
-    QSize iconSize = rescaleButIcon(ui->toolButtonScreenArea, ":/windowAndAreaIcon.png");
+    static QSize iconSize;
+    if (iconSize != rescaleButIcon(ui->toolButtonScreenArea, ""))
+    {
+        iconSize = rescaleButIcon(ui->toolButtonScreenArea, ":/windowAndAreaIcon.png");
+    }
     QImage scr;
     if (ScreenLayer::fullScreenImage(scr))
     {
@@ -86,6 +90,7 @@ void StackedWidgetAddLayer::showScreens()
              if (but)
              {
                  ui->horizontalLayoutScreen->removeWidget(but);
+                 delete but;
                  ++c;
              }
         }while(but);
@@ -101,6 +106,7 @@ void StackedWidgetAddLayer::showScreens()
             if (but)
             {
                 ui->horizontalLayoutScreen->removeWidget(but);
+                delete but;
             }
         }
 
@@ -159,7 +165,6 @@ void StackedWidgetAddLayer::showScreens()
             toolButton->setChecked(i == 0);
         }
     }
-
 }
 
 void StackedWidgetAddLayer::showCameras()
@@ -205,6 +210,12 @@ void StackedWidgetAddLayer::showCameras()
 
 QSize StackedWidgetAddLayer::rescaleButIcon(QToolButton* but, const QString &path)
 {
+    if (path.isEmpty())
+    {
+        qreal scale = static_cast<QGuiApplication*>(QGuiApplication::instance())->devicePixelRatio();
+        return QSize(qRound(but->iconSize().width() * scale), qRound(but->iconSize().height() * scale));
+    }
+
     QImage scr(path);
     qreal scale = static_cast<QGuiApplication*>(QGuiApplication::instance())->devicePixelRatio();
     QSize iconSize(qRound(but->iconSize().width() * scale), qRound(but->iconSize().height() * scale));
@@ -490,6 +501,7 @@ void StackedWidgetAddLayer::on_StackedWidgetAddLayer_currentChanged(int arg1)
 {
     if ( arg1 == 0 )
     {
+        if (ui->pageScreen->isHidden()) return;
         int32_t ms = QTime::currentTime().msecsSinceStartOfDay();
         if ( m_prevMS + 500 < ms || ms < m_prevMS )
         {

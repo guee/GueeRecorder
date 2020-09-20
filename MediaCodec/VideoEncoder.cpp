@@ -1,6 +1,7 @@
 ﻿#include "VideoEncoder.h"
 #include "MediaWriter.h"
 #include <QApplication>
+#define _NOT_USE_X264_ALLOC 1
 
 GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     : QThread(parent)
@@ -25,14 +26,15 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     m_videoParams.BFrames		= -1;
     m_videoParams.BFramePyramid	= 0;
 
-    QString libFileName = QApplication::applicationDirPath() + "/libx264.so.155";
+    QString libFileName = QApplication::applicationDirPath() + "/libx264.so.152";
 
-//    m_libX264.setFileName(libFileName);
-//    if (m_libX264.load())
-//    {
-//        qDebug() << "succ load x264:" << m_libX264.fileName();
-//    }
-//    else
+    m_libX264.setFileName(libFileName);
+    if (m_libX264.load())
+    {
+        //qDebug() << "succ load x264:" << m_libX264.fileName();
+        fprintf(stderr,"succ load x264:%s\n", m_libX264.fileName().toUtf8().data() );
+    }
+    else
     {
         //qDebug() << "load " << libFileName << "fail:" << m_libX264.errorString();
         m_libX264.setFileName("libx264" );
@@ -74,7 +76,7 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
 
 GueeVideoEncoder::~GueeVideoEncoder()
 {
-    endEncode();
+    endEncode(nullptr, nullptr);
 }
 
 bool GueeVideoEncoder::bindStream( GueeMediaStream* stream )
@@ -104,7 +106,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
             videoParams->vbvBuffer < 0 || videoParams->bitrateMax < 0 ||
             videoParams->encoder < VE_X264 || videoParams->encoder > VE_INTEL ||
             videoParams->profile < VF_Auto || videoParams->profile > VF_High ||
-            videoParams->rateMode < VR_AverageBitrate || videoParams->rateMode > VR_ConstantQP )
+            videoParams->rateMode < VR_ConstantBitrate || videoParams->rateMode > VR_VariableBitrate )
 		{
 			return false;
 		}
@@ -112,6 +114,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 	}
     m_prevFrameTime = 0;
     m_prevFramePts = -1;
+
     switch( m_videoParams.encoder )
 	{
 	case VE_X264:
@@ -122,8 +125,8 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 			return false;
         m_x264_encoder_parameters( m_x264Handle, &m_x264Param );
 
-        m_waitPendQueue.acquire(m_waitPendQueue.available());
-        m_waitIdlePool.acquire(m_waitIdlePool.available());
+        if (m_waitPendQueue.available()) m_waitPendQueue.acquire(m_waitPendQueue.available());
+        if (m_waitIdlePool.available()) m_waitIdlePool.acquire(m_waitIdlePool.available());
         m_encodeFPS.start();
         reinterpret_cast<QThread*>(this)->start();
 		break;
@@ -138,7 +141,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
 }
 
 
-void GueeVideoEncoder::endEncode()
+void GueeVideoEncoder::endEncode(close_step_progress fun, void* param)
 {
     if ( m_encodeFPS.status() == FrameTimestamp::sync_Stoped ) return;
     switch( m_videoParams.encoder )
@@ -148,29 +151,40 @@ void GueeVideoEncoder::endEncode()
         m_waitPendQueue.release();
         m_waitIdlePool.release();
         qDebug() << "GueeVideoEncoder::endEncode";
-        if ( reinterpret_cast<QThread*>(this)->isRunning() )
-		{
-            reinterpret_cast<QThread*>(this)->wait();
+        while (reinterpret_cast<QThread*>(this)->isRunning())
+        {
+            if (fun) fun(param);
+            reinterpret_cast<QThread*>(this)->wait(2);
 		}
 		if ( m_x264Handle )
 		{
             m_x264_encoder_close( m_x264Handle );
             m_x264Handle	= nullptr;
 		}
+
         m_mtxPendQueue.lock();
         for (auto q:m_picPendQueue)
         {
+#if _NOT_USE_X264_ALLOC
+            free(q);
+#else
             m_x264_picture_clean(q);
             delete q;
+#endif
         }
         m_picPendQueue.clear();
         m_mtxPendQueue.unlock();
-
+        if (fun) fun(param);
         m_mtxIdlePool.lock();
+        if (fun) fun(param);
         for (auto q:m_picIdlePool)
         {
+#if _NOT_USE_X264_ALLOC
+            free(q);
+#else
             m_x264_picture_clean(q);
             delete q;
+#endif
         }
         m_picIdlePool.clear();
         m_mtxIdlePool.unlock();
@@ -225,6 +239,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     //int64_t pts = (microsecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den + 500000) / 1000000;
     int64_t pts = qRound(double(microsecond) / 1000000.0 * double(m_videoParams.frameRate));
+
     if (pts < m_prevFramePts)
     {
         return false;
@@ -239,6 +254,11 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
     }
 //    qDebug() << "毫秒:" << microsecond / 1000 << " 距离上帧：" << (microsecond - m_prevFrameTime) / 1000
 //             << ", PTS:" << pts << " PTS增量:" << pts - m_prevFramePts;
+//    fprintf(stderr, "毫秒:%d, 距离上帧:%d, PTS:%d, PTS增量:%d\n",
+//            int32_t(microsecond / 1000),
+//            int32_t((microsecond - m_prevFrameTime) / 1000),
+//            int32_t(pts),
+//            int32_t(pts - m_prevFramePts));
 
     x264_picture_t* picin = popCachePool();
     if (picin == nullptr) return false;
@@ -276,8 +296,12 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
     }
     else
     {
+#if _NOT_USE_X264_ALLOC
+        free(picin);
+#else
         m_x264_picture_clean(picin);
         delete picin;
+#endif
     }
     m_mtxPendQueue.unlock();
     m_waitPendQueue.release();
@@ -296,6 +320,7 @@ void GueeVideoEncoder::run()
     memset(&picout, 0, sizeof(picout));
 
     auto putNals = [&]{
+
         frame->pts = picout.i_pts;
         frame->dts = picout.i_dts;
         frame->nalCount = nalNum;
@@ -322,42 +347,44 @@ void GueeVideoEncoder::run()
     while(m_encodeFPS.status() != FrameTimestamp::sync_Stoped)
     {
         m_waitPendQueue.acquire();
-        if ( m_encodeFPS.status() == FrameTimestamp::sync_Stoped ) break;
-        m_mtxPendQueue.lock();
-        picin = m_picPendQueue.front();
-        m_picPendQueue.pop_front();
-        m_mtxPendQueue.unlock();
-//qDebug() << "Input PTS:" << picin->i_pts;
-        int64_t t = m_encodeFPS.elapsed();
-        ret	= m_x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, picin, &picout );
-        t = m_encodeFPS.elapsed() - t;
-        //qDebug() << "Encode " << picin->i_pts << "  Time" << t << "  , 还有" << m_picPendQueue.size();
-        //ret = 0;
-        //sleep(1);
+        while(!m_picPendQueue.isEmpty())
+        {
+            m_mtxPendQueue.lock();
+            picin = m_picPendQueue.front();
+            m_picPendQueue.pop_front();
+            m_mtxPendQueue.unlock();
 
-        m_mtxIdlePool.lock();
-        m_picIdlePool.push_back(picin);
-        m_mtxIdlePool.unlock();
-        m_waitIdlePool.release();
-        m_encodeFPS.add();
-		if ( ret < 0 )
-		{
-			//编码出错
-            break;
-		}
-		else if ( ret == 0 )
-		{
-			//编码成功,但被缓存了
-		}
-		else
-		{
-            //qDebug() << "PTS:" << picout.i_pts << "  ,DTS:" << picout.i_dts;
-            putNals();
-		}
-	}
+            //int64_t t = m_encodeFPS.elapsed();
+            ret	= m_x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, picin, &picout );
+
+            //t = m_encodeFPS.elapsed() - t;
+            //qDebug() << "Encode " << picin->i_pts << "  Time" << t << "  , 还有" << m_picPendQueue.size();
+            m_mtxIdlePool.lock();
+            m_picIdlePool.push_back(picin);
+            m_mtxIdlePool.unlock();
+            m_waitIdlePool.release();
+            m_encodeFPS.add();
+            if ( ret < 0 )
+            {
+                //编码出错
+                break;
+            }
+            else if ( ret == 0 )
+            {
+                //编码成功,但被缓存了
+            }
+            else
+            {
+                //qDebug() << "PTS:" << picout.i_pts << "  ,DTS:" << picout.i_dts;
+                putNals();
+            }
+        }
+        if ( m_encodeFPS.status() == FrameTimestamp::sync_Stoped ) break;
+    }
+
     //int iMaxDelayedFrames	= x264_encoder_maximum_delayed_frames( m_x264Handle );
     int	iDelayedFrames		= m_x264_encoder_delayed_frames( m_x264Handle );
-    qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
+    //qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
     while ( iDelayedFrames )
 	{
         ret	= m_x264_encoder_encode( m_x264Handle, &nalBuf, &nalNum, nullptr, &picout );
@@ -366,7 +393,7 @@ void GueeVideoEncoder::run()
             putNals();
 		}
         iDelayedFrames		= m_x264_encoder_delayed_frames( m_x264Handle );
-        qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
+        //qDebug() << "GueeVideoEncoder::x264_encoder_delayed_frames:" << iDelayedFrames;
     }
 
 }
@@ -380,8 +407,41 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         m_mtxPendQueue.lock();
         if (m_picPendQueue.size() < m_maxPendQueue)
         {
+#if _NOT_USE_X264_ALLOC
+            int stride[3] = {0};
+            size_t byteNum[3] = {0};
+
+            if (m_csp_tab.planes > 0)
+            {
+                stride[0] = m_x264Param.i_width * m_csp_tab.widthFix[0];
+                stride[0] = (stride[0] + 3) / 4 * 4;
+                byteNum[0] = stride[0] * m_x264Param.i_height;
+            }
+            if (m_csp_tab.planes > 1)
+            {
+                stride[1] = stride[0] / m_csp_tab.widthFix[1];
+                byteNum[1] = m_x264Param.i_height / m_csp_tab.heightFix * stride[1];
+            }
+            if (m_csp_tab.planes > 2)
+            {
+                stride[2] = stride[0] / m_csp_tab.widthFix[1];
+                byteNum[2] = m_x264Param.i_height / m_csp_tab.heightFix * stride[2];
+            }
+            size_t bufSize = byteNum[0] + byteNum[1] + byteNum[2] + sizeof(x264_picture_t);
+            picin = reinterpret_cast<x264_picture_t*>(malloc(bufSize));
+            memset(picin, 0, bufSize);
+            picin->img.i_csp = m_x264Param.i_csp;
+            picin->img.i_plane = m_csp_tab.planes;
+            picin->img.i_stride[0] = stride[0];
+            picin->img.i_stride[1] = stride[1];
+            picin->img.i_stride[2] = stride[2];
+            picin->img.plane[0] = reinterpret_cast<uint8_t*>(picin + 1);
+            picin->img.plane[1] = picin->img.plane[0] + byteNum[0];
+            picin->img.plane[2] = picin->img.plane[1] + byteNum[1];
+#else
             picin = new x264_picture_t;
             m_x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
+#endif
         }
         else /*if(m_videoParams.onlineMode)*/
         {
@@ -501,8 +561,8 @@ bool GueeVideoEncoder::set264BaseParams()
     }
     else
     {
-        m_maxPendQueue = static_cast<int>(m_videoParams.frameRate + 1);
-        m_maxPendQueue = std::min(std::max(m_maxPendQueue, 5), 30);
+        m_maxPendQueue = static_cast<int>(m_videoParams.frameRate + 1) * 4;
+        m_maxPendQueue = std::min(std::max(m_maxPendQueue, 5), m_maxPendQueue);
     }
 
     iRet	= m_x264_param_default_preset( &m_x264Param, x264_preset_names[m_videoParams.presetX264], tuneString.c_str() );
@@ -616,9 +676,9 @@ bool GueeVideoEncoder::set264FrameParams()
 		m_x264Param.i_bframe			= 0;
 		m_x264Param.i_bframe_pyramid	= 0;
 	}
-    else if ( m_videoParams.BFrames >= 0 && m_videoParams.BFrames < m_x264Param.i_keyint_max )
+    else if ( m_videoParams.BFrames >= 0 )
 	{
-        m_x264Param.i_bframe		= m_videoParams.BFrames;
+        m_x264Param.i_bframe		= qMin(m_videoParams.BFrames, m_x264Param.i_keyint_max);
 	//m_x264Param.i_bframe_adaptive;	//自适应 B 帧判定, 可选取值：X264_B_ADAPT_FAST 等
 	//m_x264Param.i_bframe_bias;		//控制B帧替代 P 帧的概率，范围-100 ~ +100，该值越高越容易插入B帧，默认 0.
 	////允许部分B帧为参考帧			/* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
@@ -660,25 +720,34 @@ bool GueeVideoEncoder::set264BitrateParams()
     if ( m_videoParams.bitrate ) m_x264Param.rc.i_bitrate	= m_videoParams.bitrate;
     switch( m_videoParams.rateMode )
 	{
-	case VR_AverageBitrate:
-		m_x264Param.rc.i_rc_method	= X264_RC_ABR;
-		m_x264Param.rc.i_vbv_max_bitrate	= 0;
-		m_x264Param.rc.i_vbv_buffer_size	= 0;
-		break;
-	case VR_VariableBitrate:
-		m_x264Param.rc.i_rc_method	= X264_RC_ABR;
-        m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrateMax;
-        m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.vbvBuffer;
-		break;
-	case VR_ConstantBitrate:
-		m_x264Param.rc.i_rc_method	= X264_RC_CRF;
+    case VR_ConstantBitrate:
+        m_x264Param.rc.i_rc_method	= X264_RC_CRF;
+        m_x264Param.rc.f_rf_constant = m_videoParams.constantQP;
+        //m_x264Param.rc.f_rf_constant_max = 51;
         //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrate;
         //m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.bitrate;
-		break;
-	case VR_ConstantQP:
-		m_x264Param.rc.i_rc_method			= X264_RC_CQP;
-        m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrateMax;
-        m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.vbvBuffer;
+        break;
+    case VR_ConstantQP:
+        m_x264Param.rc.i_rc_method			= X264_RC_CQP;
+        //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrateMax;
+        //m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.vbvBuffer;
+        //m_x264Param.rc.qp
+        m_x264Param.rc.i_qp_constant = m_videoParams.constantQP;
+        m_x264Param.rc.i_qp_min = qMin(m_x264Param.rc.i_qp_min, m_x264Param.rc.i_qp_constant);
+        //m_x264Param.rc.i_qp_max = 51;
+        break;
+	case VR_VariableBitrate:
+		m_x264Param.rc.i_rc_method	= X264_RC_ABR;
+        if (m_x264Param.rc.i_bitrate > m_videoParams.bitrateMax)
+        {
+            m_x264Param.rc.i_vbv_max_bitrate = m_x264Param.rc.i_bitrate * 1.5;
+        }
+        else
+        {
+            m_x264Param.rc.i_vbv_max_bitrate = m_videoParams.bitrateMax;
+        }
+
+        m_x264Param.rc.i_vbv_buffer_size	= qMax(m_x264Param.rc.i_vbv_max_bitrate, m_videoParams.vbvBuffer);
 		break;
 	}
 //	m_x264Param.rc.i_rc_method;		//码率控制方式：X264_RC_CQP恒定质量,X264_RC_CRF恒定码率,  X264_RC_ABR平均码率	/* X264_RC_* */

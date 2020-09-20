@@ -2,10 +2,14 @@
 #include <QApplication>
 #include <QMessageBox>
 
+void customMessageHandle(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    fprintf(stderr, "%s\n", msg.toUtf8().data());
+}
+
+
 int main(int argc, char *argv[])
 {
-
-
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QApplication a(argc, argv);
@@ -14,9 +18,8 @@ int main(int argc, char *argv[])
     QApplication::setOrganizationDomain("looongson.xyz");
     QApplication::setApplicationVersion("1.0.0");
     QApplication::setApplicationName("GueeRecorder");
-   // QApplication::setApplicationDisplayName("GueeScreenRecorder");
-    QApplication::setApplicationVersion("2020-09-18");
-
+    QApplication::setApplicationDisplayName("Guee 录屏机");
+    QApplication::setApplicationVersion("v1.0.0 Beta");
 
     bool alreadyExists = false;
     Window wid = 0;
@@ -53,7 +56,7 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
-
+    qInstallMessageHandler(customMessageHandle);
     MainWindow w;
     w.show();
     wid = w.winId();

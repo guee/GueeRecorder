@@ -114,7 +114,7 @@ background-color: rgb(255, 255, 255);
       <item>
        <widget class="QPushButton" name="pushButton_Readme">
         <property name="text">
-         <string>程序说明</string>
+         <string>关于……</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -145,9 +145,9 @@ background-color: rgb(255, 255, 255);
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>425</width>
-        <height>772</height>
+        <y>-181</y>
+        <width>436</width>
+        <height>935</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -262,17 +262,35 @@ background-color: rgb(255, 255, 255);
            </widget>
           </item>
           <item>
-           <widget class="QSlider" name="horizontalSlider_Resolution">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>1000</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QPushButton" name="pushButton_SizeSub">
+              <property name="text">
+               <string>-</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSlider" name="horizontalSlider_Resolution">
+              <property name="minimum">
+               <number>0</number>
+              </property>
+              <property name="maximum">
+               <number>1000</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_SizeAdd">
+              <property name="text">
+               <string>+</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -335,6 +353,12 @@ background-color: rgb(255, 255, 255);
            <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
              <widget class="QLabel" name="label_14">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>帧率：</string>
               </property>
@@ -344,7 +368,7 @@ background-color: rgb(255, 255, 255);
              <widget class="QSlider" name="horizontalSlider_Fps">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>2</horstretch>
+                <horstretch>12</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
@@ -366,7 +390,7 @@ background-color: rgb(255, 255, 255);
              <widget class="QDoubleSpinBox" name="doubleSpinBox_Fps">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>1</horstretch>
+                <horstretch>6</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
@@ -399,119 +423,163 @@ background-color: rgb(255, 255, 255);
           <string>视频编码</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>压缩品质：</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="comboBox_Bps">
-            <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToMinimumContentsLength</enum>
-            </property>
-            <item>
-             <property name="text">
-              <string>平均码率</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>可变码率</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>固定码率</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>恒定质量</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Keyframe">
-            <property name="prefix">
-             <string>每 </string>
-            </property>
-            <property name="suffix">
-             <string> 秒一个</string>
-            </property>
-            <property name="decimals">
+          <item row="1" column="0" colspan="3">
+           <widget class="QStackedWidget" name="stackedWidget_QP">
+            <property name="currentIndex">
              <number>1</number>
             </property>
-            <property name="minimum">
-             <double>0.500000000000000</double>
-            </property>
-            <property name="value">
-             <double>2.000000000000000</double>
-            </property>
+            <widget class="QWidget" name="page">
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>视频码率：</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSlider" name="horizontalSlider_Bps">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>2</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimum">
+                 <number>100</number>
+                </property>
+                <property name="maximum">
+                 <number>8000</number>
+                </property>
+                <property name="pageStep">
+                 <number>200</number>
+                </property>
+                <property name="value">
+                 <number>1000</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinBox_Bps">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>1</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimum">
+                 <number>100</number>
+                </property>
+                <property name="maximum">
+                 <number>8000</number>
+                </property>
+                <property name="singleStep">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>1000</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="page_2">
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_19">
+                <property name="text">
+                 <string>质量因子：</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSlider" name="horizontalSlider_QP">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>2</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>质量因子越接近0，画面质量越好，编码速度越慢，文件也会越大。</string>
+                </property>
+                <property name="maximum">
+                 <number>51</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinBox_QP">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>1</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>质量因子越接近0，画面质量越好，编码速度越慢，文件也会越大。</string>
+                </property>
+                <property name="maximum">
+                 <number>51</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QSlider" name="horizontalSlider_Bps">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>2</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimum">
-             <number>100</number>
-            </property>
-            <property name="maximum">
-             <number>8000</number>
-            </property>
-            <property name="pageStep">
-             <number>200</number>
-            </property>
-            <property name="value">
-             <number>1000</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string>码率控制：</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_VidPreset">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="text">
-             <string>[VeryFast]</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>视频码率：</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
+          <item row="4" column="1">
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>差</string>
+               <string>快</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QSlider" name="horizontalSlider_Preset">
+              <property name="toolTip">
+               <string>在视频码率相近时，编码速度越慢的方案图像质量越高，但编码速度也越慢。
+通常不要高于&quot;VeryFast&quot;，修改这个设置请谨慎。
+例如在超过&quot;Medium&quot;的设置之后，当画面快速变化时，i7等级的CPU也难以实时编码1080p@30fps。</string>
+              </property>
               <property name="maximum">
                <number>8</number>
               </property>
@@ -535,34 +603,183 @@ background-color: rgb(255, 255, 255);
             </item>
            </layout>
           </item>
-          <item row="3" column="0">
+          <item row="5" column="0">
            <widget class="QLabel" name="label_8">
             <property name="text">
              <string>关键帧：</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QSpinBox" name="spinBox_Bps">
+          <item row="5" column="1">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Keyframe">
+            <property name="toolTip">
+             <string>关键帧间隔时间越短，播放视频时拖动进度越轻松。
+但编码速度会变慢，视频文件也更大。建议值1到10之间。</string>
+            </property>
+            <property name="prefix">
+             <string>每 </string>
+            </property>
+            <property name="suffix">
+             <string> 秒一个</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.500000000000000</double>
+            </property>
+            <property name="value">
+             <double>2.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLabel" name="label_VidPreset">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>[VeryFast]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>编码速度：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboBox_Bps">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>2</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+            </property>
+            <item>
+             <property name="text">
+              <string>固定码率</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>恒定质量</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>可变码率</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>码率控制：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_20">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>1</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="minimum">
-             <number>100</number>
-            </property>
-            <property name="maximum">
-             <number>8000</number>
-            </property>
-            <property name="singleStep">
-             <number>100</number>
-            </property>
-            <property name="value">
-             <number>1000</number>
+            <property name="text">
+             <string/>
             </property>
            </widget>
+          </item>
+          <item row="6" column="0" colspan="3">
+           <layout class="QHBoxLayout" name="horizontalLayout_14">
+            <item>
+             <widget class="QLabel" name="label_22">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>参考帧数：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBox_refFrame">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>3</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>值越大编码越慢，但能一定程度提高视频图像质量和减少文件体积。
+如果不了解其意义，请使用默认值 4 。</string>
+              </property>
+              <property name="maximum">
+               <number>8</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_21">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>最大B帧：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBox_bFrame">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>3</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>使用B帧可以提高压缩比，但编码速度会变慢。
+如果不了解其意义，请使用默认值 0 。</string>
+              </property>
+              <property name="maximum">
+               <number>8</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>

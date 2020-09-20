@@ -16,7 +16,7 @@ VideoSynthesizer::VideoSynthesizer()
 
 VideoSynthesizer::~VideoSynthesizer()
 {
-    close();
+    close(nullptr, nullptr);
     uninit();
 }
 
@@ -165,6 +165,8 @@ bool VideoSynthesizer::open(const QString &sourceName)
     }
     fprintf(stderr, "VideoSynthesizer open:%s\n", sourceName.toUtf8().data() );
     QStringList files = sourceName.split('|', QString::SkipEmptyParts);
+    int64_t tim = QDateTime::currentMSecsSinceEpoch() - QDateTime(QDate(1904,1,1)).toMSecsSinceEpoch();
+
     for (auto fn : files)
     {
         if (fn.startsWith("rtmp://", Qt::CaseInsensitive))
@@ -175,18 +177,21 @@ bool VideoSynthesizer::open(const QString &sourceName)
         {
             GueeMediaWriterFlv* flv = new GueeMediaWriterFlv(m_medStream);
             m_writers.append(flv);
+            flv->setTimeFlg(tim, tim);
             flv->setFilePath(fn.toStdString());
         }
         else if (fn.endsWith(".mp4", Qt::CaseInsensitive))
         {
             GueeMediaWriterMp4* mp4 = new GueeMediaWriterMp4(m_medStream);
             m_writers.append(mp4);
+            mp4->setTimeFlg(tim, tim);
             mp4->setFilePath(fn.toStdString());
         }
         else if (fn.endsWith(".ts", Qt::CaseInsensitive))
         {
             GueeMediaWriterTs* ts = new GueeMediaWriterTs(m_medStream);
             m_writers.append(ts);
+            ts->setTimeFlg(tim, tim);
             ts->setFilePath(fn.toStdString());
         }
     }
@@ -219,16 +224,18 @@ bool VideoSynthesizer::open(const QString &sourceName)
             return true;
 }
 
-void VideoSynthesizer::close()
+void VideoSynthesizer::close(close_step_progress fun, void* param)
 {
     FrameTimestamp  ts;
     ts.start();
     m_status = NoOpen;
     m_audRecorder.endEncode();
+    if (fun) fun(param);
     qDebug() << "m_audRecorder.endEncode:" << ts.elapsed();
-    m_vidEncoder.endEncode();
+    m_vidEncoder.endEncode(fun, param);
     qDebug() << "m_vidEncoder.endEncode:" << ts.elapsed();
     m_medStream.endParse();
+    if (fun) fun(param);
     qDebug() << "m_medStream.endParse:" << ts.elapsed();
     m_timestamp.stop();
     qDebug() << "m_timestamp.stop:" << ts.elapsed();
@@ -291,6 +298,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.optimizeStill = false;
     m_vidParams.fastDecode    = false;
     m_vidParams.rateMode      = VR_ConstantBitrate;
+    m_vidParams.constantQP    = 23;
     m_vidParams.bitrate       = 2000;
     m_vidParams.bitrateMax    = 0;
     m_vidParams.bitrateMin    = 0;
@@ -301,8 +309,8 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.BFrames       = 3;
     m_vidParams.BFramePyramid = 2;
 
-    m_vidParams.BFrames       = 0;
-    m_vidParams.BFramePyramid = 0;
+//    m_vidParams.BFrames       = 0;
+//    m_vidParams.BFramePyramid = 0;
 
     m_backgroundColor = QVector4D(0.05f, 0.05f, 0.05f, 1.0f);
     setSize( 1920, 1080);
@@ -391,6 +399,12 @@ bool VideoSynthesizer::setPsyTune(EPsyTuneType psy)
 bool VideoSynthesizer::setBitrateMode(EVideoRateMode rateMode)
 {
     m_vidParams.rateMode = rateMode;
+    return true;
+}
+
+bool VideoSynthesizer::setConstantQP(int32_t qp)
+{
+    m_vidParams.constantQP = qp;
     return true;
 }
 
@@ -571,31 +585,27 @@ void VideoSynthesizer::renderThread()
             emit frameReady(0);
             qDebug() << "resize to:" << fboRgba->size();
         }
-
-        if ( updateSourceTextures(m_frameData.timestamp) )
-        {
-            isUpdated = true;
-        }
         curTimer = m_frameSync.isNextFrame();
+        if (curTimer >= 0)
+        {
+            m_frameData.timestamp = m_timestamp.elapsed();
+            if ( updateSourceTextures(curTimer) )
+            {
+                isUpdated = true;
+            }
+            if ( curTimer - preTimer > 1000000 ) isUpdated = true;
+        }
 
-        if ( curTimer - preTimer > 1000000 ) isUpdated = true;
 
-        if ( ( curTimer >= 0 && isUpdated ) || m_immediateUpdate )
+        if ( isUpdated || m_immediateUpdate )
         {
             //qDebug() <<"帧时间：" << m_timestamp.elapsed_milli();
 
-            preTimer = m_frameSync.elapsed();
+            preTimer = curTimer;
             if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
             {
-                if (m_frameData.timestamp < 0)
-                {
-                    m_frameData.timestamp = m_timestamp.elapsed();
-                    if (m_frameData.timestamp - preTimeStamp > int32_t(1000000 / m_frameSync.fps()) * 2)
-                    {
-                        m_frameData.timestamp -= int32_t(1000000 / m_frameSync.fps());
-                    }
-                }
                 //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
+                //fprintf(stderr, "帧时间：%d 距离上帧：%d\n", int(m_frameData.timestamp), int(m_frameData.timestamp - preTimeStamp) );
                 preTimeStamp = m_frameData.timestamp;
 
             }
@@ -875,10 +885,12 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
    // glFlush();
     //m_frameData.fbo->toImage().save(QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp));
     m_frameData.buffer->bind();
-
+//int64_t  pp = m_timestamp.elapsed();
     glReadPixels(0, 0, m_frameData.fbo->width(), m_frameData.fbo->height(),
                  m_frameData.internalFormat, m_frameData.dateType, offset);
     uint8_t* dat = static_cast<uint8_t*>(m_frameData.buffer->map(QOpenGLBuffer::ReadOnly));
+//pp = m_timestamp.elapsed() - pp;
+//fprintf(stderr, "glReadPixels time = %d\n", int32_t(pp) );
 
     if (dat)
     {

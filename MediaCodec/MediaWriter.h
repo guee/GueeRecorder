@@ -9,6 +9,7 @@ public:
 
     bool setFilePath( const string& szPath );
 	void setEnable( bool enable = true );
+    void setTimeFlg( int64_t creationMS, int64_t modificationMS);
 protected:
     friend GueeMediaStream;
     GueeMediaStream&	m_stream;
@@ -26,13 +27,11 @@ protected:
 	virtual	bool onOpenWrite();
 	virtual	void onCloseWrite();
 
-	string		m_buffer;
-	int64_t		m_totalBytes;
-	//uint8_t*		m_cacheBuffer;		//缓存 
-	//uint32_t		m_cacheOffset;		//当前已经写入的缓存字节数
-	//uint32_t		m_cacheAllocate;	//当前缓存分配的字节数
-	//uint64_t		m_totalBytes;		//累计写入的字节数
-	inline bool appendData( const uint8_t* data, uint32_t size )
+    string		m_buffer;		//缓存
+    int64_t		m_totalBytes;		//累计写入的字节数
+    int64_t     m_creationTimeMS = 0;
+    int64_t     m_modificationTimeMS = 0;
+    inline bool appendData( const uint8_t* data, uint32_t size )
 	{
 		m_buffer.append((const char*)data, size);
 		return true;

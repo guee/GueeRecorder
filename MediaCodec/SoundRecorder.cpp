@@ -203,6 +203,7 @@ void SoundRecorder::endEncode()
         }
         m_sndCallback.uninitResample();
         m_sndMicInput.uninitResample();
+        if (m_waitPcmBuffer.available()) m_waitPcmBuffer.acquire(m_waitPcmBuffer.available());
     }
 }
 

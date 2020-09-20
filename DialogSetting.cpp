@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QFontMetrics>
 #include <QStandardPaths>
+#include <QMenu>
 
 DialogSetting::DialogSetting(QWidget *parent) :
     QDialog(parent),
@@ -20,6 +21,10 @@ DialogSetting::DialogSetting(QWidget *parent) :
 
     QRegExp regx("[^//\\\\:*?\"<>|]+$");
     ui->lineEdit_Filename->setValidator(new QRegExpValidator(regx, this));
+    QSize butSize(ui->doubleSpinBox_Fps->height(), ui->doubleSpinBox_Fps->height());
+
+    ui->pushButton_SizeSub->setMaximumSize(butSize);
+    ui->pushButton_SizeAdd->setMaximumSize(butSize);
 
     setParamsToUi();
 }
@@ -78,8 +83,11 @@ bool DialogSetting::loadProfile()
     vid.setFrameRate(ini.value("fps", vid.frameRate()).toFloat());
     vid.setBitrate(ini.value("bps", vid.bitrate()).toInt());
     vid.setBitrateMode(EVideoRateMode(ini.value("bps-mode", vid.bitrateMode()).toInt()));
+    vid.setConstantQP(ini.value("qp", vid.constantQP()).toInt());
     vid.setPreset(EVideoPreset_x264(ini.value("preset", vid.preset()).toInt()));
     vid.setGopMax(ini.value("gop-max", vid.gopMax()).toInt());
+    vid.setBFrames(ini.value("BFrame", vid.bFrames()).toInt());
+    vid.setRefFrames(ini.value("refFrame", vid.refFrames()).toInt());
     ScreenSource::setRecordCursor(ini.value("recCursor", true).toBool());
     ini.endGroup();
 
@@ -125,8 +133,11 @@ bool DialogSetting::saveProfile()
     ini.setValue("fps", vid.frameRate());
     ini.setValue("bps", vid.bitrate());
     ini.setValue("bps-mode", vid.bitrateMode());
+    ini.setValue("qp", vid.constantQP());
     ini.setValue("preset", vid.preset());
     ini.setValue("gop-max", vid.gopMax());
+    ini.setValue("BFrame", vid.bFrames());
+    ini.setValue("refFrame", vid.refFrames());
     ini.setValue("recCursor", ScreenSource::isRecordCursor());
     ini.endGroup();
 
@@ -227,11 +238,13 @@ void DialogSetting::on_pushButton_Resolution_Userdef_clicked(bool checked)
     Q_UNUSED(checked)
     ui->horizontalSlider_Resolution->setDisabled(true);
     ui->horizontalSlider_Resolution->setValue(ui->horizontalSlider_Resolution->minimum());
+    ui->pushButton_SizeSub->setDisabled(true);
+    ui->pushButton_SizeAdd->setDisabled(true);
 }
 
 void DialogSetting::on_horizontalSlider_Resolution_valueChanged(int value)
 {
-    if(ui->horizontalSlider_Resolution->isEnabled())
+    if(!m_resolutionChanging && ui->horizontalSlider_Resolution->isEnabled())
     {
         m_resolutionChanging = true;
         int w = ui->spinBox_Width->minimum() + (ui->spinBox_Width->maximum() - ui->spinBox_Width->minimum()) * value / 1000;
@@ -241,6 +254,8 @@ void DialogSetting::on_horizontalSlider_Resolution_valueChanged(int value)
         m_resolutionChanging = false;
         m_timResolution->start();
     }
+    ui->pushButton_SizeSub->setDisabled(value == ui->spinBox_Width->minimum());
+    ui->pushButton_SizeAdd->setDisabled(value == ui->spinBox_Width->maximum());
 }
 
 void DialogSetting::on_spinBox_Width_valueChanged(int arg1)
@@ -250,6 +265,7 @@ void DialogSetting::on_spinBox_Width_valueChanged(int arg1)
         m_resolutionChanging = true;
         int h = (arg1 * ui->spinBox_Height->minimum() * 10 / ui->spinBox_Width->minimum() + 5) / 10;
         ui->spinBox_Height->setValue(h);
+        ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Width->minimum()) * 1000 / (ui->spinBox_Width->maximum() - ui->spinBox_Width->minimum()));
         m_resolutionChanging = false;
         m_timResolution->start();
     }
@@ -262,6 +278,7 @@ void DialogSetting::on_spinBox_Height_valueChanged(int arg1)
         m_resolutionChanging = true;
         int w = (arg1 * ui->spinBox_Width->minimum() * 10 / ui->spinBox_Height->minimum() + 5) / 10;
         ui->spinBox_Width->setValue(w);
+        ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Height->minimum()) * 1000 / (ui->spinBox_Height->maximum() - ui->spinBox_Height->minimum()));
         m_resolutionChanging = false;
         m_timResolution->start();
     }
@@ -310,6 +327,14 @@ void DialogSetting::on_spinBox_Bps_valueChanged(int arg1)
 void DialogSetting::on_comboBox_Bps_currentIndexChanged(int index)
 {
     m_video.setBitrateMode(EVideoRateMode(index));
+    if (EVideoRateMode(index) == VR_VariableBitrate)
+    {
+        ui->stackedWidget_QP->setCurrentIndex(0);
+    }
+    else
+    {
+        ui->stackedWidget_QP->setCurrentIndex(1);
+    }
 }
 
 void DialogSetting::on_horizontalSlider_Preset_valueChanged(int value)
@@ -461,7 +486,12 @@ void DialogSetting::setResparamToUi(int32_t w, int32_t h, int32_t r)
 
     ui->spinBox_Width->setDisabled(false);
     ui->spinBox_Height->setDisabled(false);
-    if (ratio >= 0) ui->horizontalSlider_Resolution->setDisabled(false);
+    if (ratio >= 0)
+    {
+        ui->horizontalSlider_Resolution->setDisabled(false);
+        ui->pushButton_SizeSub->setDisabled(false);
+        ui->pushButton_SizeAdd->setDisabled(false);
+    }
 }
 
 void DialogSetting::setParamsToUi()
@@ -474,6 +504,10 @@ void DialogSetting::setParamsToUi()
     ui->comboBox_Bps->setCurrentIndex(m_video.bitrateMode());
     ui->horizontalSlider_Preset->setValue(m_video.preset());
     ui->label_VidPreset->setText(QString("[%1]").arg(video_preset_x264_names[m_video.preset()]));
+    ui->stackedWidget_QP->setCurrentIndex(m_video.bitrateMode() == VR_VariableBitrate ? 0 : 1);
+    ui->spinBox_QP->setValue(m_video.constantQP());
+    ui->spinBox_refFrame->setValue(m_video.refFrames());
+    ui->spinBox_bFrame->setValue(m_video.bFrames());
 
     ui->label_Folder->setToolTip(userSetting().videoDir);
     QFontMetrics fm(ui->label_Folder->font(), ui->label_Folder);
@@ -624,4 +658,51 @@ void DialogSetting::on_radioButton_SampleStereo_clicked(bool checked)
         ui->spinBox_AudioBitrate->setRange(m_video.minAudioBitrate(), m_video.maxAudioBitrate());
         ui->spinBox_AudioBitrate->setValue(oldBitrate * 2 / oldChannels);
     }
+}
+
+void DialogSetting::on_pushButton_SizeSub_clicked()
+{
+    int32_t step = ui->spinBox_Width->minimum();
+    int32_t w = qMax(step, (ui->spinBox_Width->value() - 1) / step * step);
+    ui->spinBox_Width->setValue(w);
+    ui->pushButton_SizeSub->setDisabled(w == ui->spinBox_Width->minimum());
+    ui->pushButton_SizeAdd->setDisabled(w == ui->spinBox_Width->maximum());
+
+}
+
+void DialogSetting::on_pushButton_SizeAdd_clicked()
+{
+    int32_t step = ui->spinBox_Width->minimum();
+    int32_t w = qMin(ui->spinBox_Width->maximum(), (ui->spinBox_Width->value() + step) / step * step);
+    ui->spinBox_Width->setValue(w);
+    ui->pushButton_SizeSub->setDisabled(w == ui->spinBox_Width->minimum());
+    ui->pushButton_SizeAdd->setDisabled(w == ui->spinBox_Width->maximum());
+}
+
+void DialogSetting::on_spinBox_QP_valueChanged(int arg1)
+{
+    ui->horizontalSlider_QP->setDisabled(true);
+    ui->horizontalSlider_QP->setValue(arg1);
+    ui->horizontalSlider_QP->setDisabled(false);
+    m_video.setConstantQP(arg1);
+}
+
+void DialogSetting::on_horizontalSlider_QP_valueChanged(int value)
+{
+    if (ui->horizontalSlider_QP->isEnabled())
+    {
+        ui->spinBox_QP->setValue(value);
+    }
+}
+
+
+
+void DialogSetting::on_spinBox_refFrame_valueChanged(int arg1)
+{
+    m_video.setRefFrames(arg1);
+}
+
+void DialogSetting::on_spinBox_bFrame_valueChanged(int arg1)
+{
+    m_video.setBFrames(arg1);
 }

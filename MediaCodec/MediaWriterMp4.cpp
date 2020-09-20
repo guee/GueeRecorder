@@ -4,6 +4,11 @@
 GueeMediaWriterMp4::GueeMediaWriterMp4(GueeMediaStream& stream)
         : GueeMediaWriter(stream)
 {
+    memset(&m_mvhd, 0, sizeof(m_mvhd));
+    m_defaultVideoTrackId = 0;
+    m_defaultAudioTrackId = 0;
+    m_lastWriteTrackId = 0;
+    m_mdatSizeOffset = 0;
 }
 GueeMediaWriterMp4::~GueeMediaWriterMp4()
 {
@@ -19,7 +24,8 @@ bool GueeMediaWriterMp4::onWriteHeader()
 	m_lastWriteTrackId = 0;
 	m_isAdtsAAC = audioParams.useADTS;
 
-	set_ftyp("mp42isom");
+    //set_ftyp("mp42isom");
+    set_ftyp("isomiso2avc1mp41");
     writeBox(m_boxRoot.find(FourCC('f','t','y','p')), true);
     writeBox(new Mp4Box(FourCC('f','r','e','e'), &m_boxRoot), true);
     m_mdatSizeOffset = uint32_t(m_totalBytes);
@@ -298,6 +304,7 @@ void GueeMediaWriterMp4::onCloseWrite()
 		}
 		trak.mdhd.duration = trak.durationMs * trak.mdhd.timeScalc / 1000;
 		trak.tkhd.duration = trak.durationMs * m_mvhd.timeScalc / 1000;
+        //fprintf(stderr, "trak.mdhd.timeScalc=%d, trak.tkhd.duration=%d", trak.mdhd.timeScalc, int(trak.tkhd.duration) );
 		set_trak_tkhd(trak);
 		set_mdia_mdhd(trak);
 		if (m_mvhd.duration < trak.tkhd.duration) m_mvhd.duration = trak.tkhd.duration;
@@ -345,8 +352,8 @@ bool GueeMediaWriterMp4::set_moov_mvhd()
         mvhdBox	= new Mp4Box(FourCC('m','v','h','d'), moovBox);
 		m_mvhd.version = 1;
 		m_mvhd.flags[0] = m_mvhd.flags[1] = m_mvhd.flags[2] = 0;
-		m_mvhd.creationTime = 0;
-		m_mvhd.modificationTime = 0;
+        m_mvhd.creationTime = uint64_t(m_creationTimeMS / 1000);
+        m_mvhd.modificationTime = uint64_t(m_modificationTimeMS/ 1000);
 		m_mvhd.timeScalc = 10000;
 		m_mvhd.duration = 0;
         m_mvhd.rate.u32_16.high = 1;
@@ -367,7 +374,7 @@ bool GueeMediaWriterMp4::set_moov_mvhd()
 		mvhdPtr->creationTime = endianFix32((uint32_t)m_mvhd.creationTime);
 		mvhdPtr->modificationTime = endianFix32((uint32_t)m_mvhd.modificationTime);
 		mvhdPtr->timeScalc = endianFix32(m_mvhd.timeScalc);
-		mvhdPtr->duration = endianFix32((uint32_t)m_mvhd.duration);
+        mvhdPtr->duration = endianFix32(uint32_t(m_mvhd.duration));
 		mvhdPtr->rate = endianFix32(m_mvhd.rate);
 		mvhdPtr->volume = endianFix16(m_mvhd.volume);
 		memcpy(mvhdPtr->matrix, m_mvhd.matrix, sizeof(uint32_t) * 9);
@@ -458,8 +465,8 @@ bool GueeMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 		trak.tkhd.version = 0;
 		trak.tkhd.flags[0] = trak.tkhd.flags[1];
 		trak.tkhd.flags[2] = 7;
-		trak.tkhd.creationTime = 0;
-		trak.tkhd.modificationTime = 0;
+        trak.tkhd.creationTime = uint64_t(m_creationTimeMS / 1000);
+        trak.tkhd.modificationTime = uint64_t(m_modificationTimeMS/ 1000);
 		trak.tkhd.trackId = m_mvhd.nextTrackId++;
 		trak.tkhd.duration = 0;
 		trak.tkhd.layer = 0;
@@ -479,10 +486,10 @@ bool GueeMediaWriterMp4::set_trak_tkhd(TrackInfo& trak)
 		tkhdPtr->flags[0] = trak.tkhd.flags[0];
 		tkhdPtr->flags[1] = trak.tkhd.flags[1];
 		tkhdPtr->flags[2] = trak.tkhd.flags[2];
-		tkhdPtr->creationTime = endianFix32((uint32_t)trak.tkhd.creationTime);
-		tkhdPtr->modificationTime = endianFix32((uint32_t)trak.tkhd.modificationTime);
+        tkhdPtr->creationTime = endianFix32(uint32_t(trak.tkhd.creationTime));
+        tkhdPtr->modificationTime = endianFix32(uint32_t(trak.tkhd.modificationTime));
 		tkhdPtr->trackId = endianFix32(trak.tkhd.trackId);
-		tkhdPtr->duration = endianFix32((uint32_t)trak.tkhd.duration);
+        tkhdPtr->duration = endianFix32(uint32_t(trak.tkhd.duration));
 		tkhdPtr->layer = endianFix16(trak.tkhd.layer);
 		tkhdPtr->alternateGroup = endianFix16(trak.tkhd.alternateGroup);
 		tkhdPtr->volume = endianFix16(trak.tkhd.volume);
@@ -522,8 +529,8 @@ bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
         mdhdBox = new Mp4Box(FourCC('m','d','h','d'), mdiaBox);
 		trak.mdhd.version = 1;
 		trak.mdhd.flags[0] = trak.tkhd.flags[1] = trak.mdhd.flags[2] = 0;
-		trak.mdhd.creationTime = 0;
-		trak.mdhd.modificationTime = 0;
+        trak.mdhd.creationTime = uint64_t(m_creationTimeMS / 1000);
+        trak.mdhd.modificationTime = uint64_t(m_modificationTimeMS/ 1000);
 		trak.mdhd.timeScalc = 0;
 		trak.mdhd.duration = 0;
 		trak.mdhd.language = 0;
@@ -536,11 +543,11 @@ bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 		mdhdPtr->flags[0] = trak.mdhd.flags[0];
 		mdhdPtr->flags[1] = trak.mdhd.flags[1];
 		mdhdPtr->flags[2] = trak.mdhd.flags[2];
-		mdhdPtr->creationTime = endianFix32((uint32_t)trak.mdhd.creationTime);
-		mdhdPtr->modificationTime = endianFix32((uint32_t)trak.mdhd.modificationTime);
+        mdhdPtr->creationTime = endianFix32(uint32_t(trak.mdhd.creationTime));
+        mdhdPtr->modificationTime = endianFix32(uint32_t(trak.mdhd.modificationTime));
 		mdhdPtr->timeScalc = endianFix32(trak.mdhd.timeScalc);
-		mdhdPtr->duration = endianFix32((uint32_t)trak.mdhd.duration);
-		mdhdPtr->language = endianFix32(trak.mdhd.language);
+        mdhdPtr->duration = endianFix32(uint32_t(trak.mdhd.duration));
+        mdhdPtr->language = endianFix16(uint16_t(trak.mdhd.language));
 	}
 	else
 	{
@@ -554,7 +561,7 @@ bool GueeMediaWriterMp4::set_mdia_mdhd(TrackInfo & trak)
 		mdhdPtr->modificationTime = endianFix64(trak.mdhd.modificationTime);
 		mdhdPtr->timeScalc = endianFix32(trak.mdhd.timeScalc);
 		mdhdPtr->duration = endianFix64(trak.mdhd.duration);
-		mdhdPtr->language = endianFix32(trak.mdhd.language);
+        mdhdPtr->language = endianFix16(uint16_t(trak.mdhd.language));
 	}
 	return true;
 }
