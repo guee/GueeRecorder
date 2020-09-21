@@ -1,5 +1,6 @@
 #include "StackedWidgetAddLayer.h"
 #include "ui_StackedWidgetAddLayer.h"
+#undef None
 #include <QFileDialog>
 #include <QCameraInfo>
 #include <QPainter>
@@ -12,6 +13,7 @@
 #include "./InputSource/ScreenLayer.h"
 #include "./InputSource/CameraLayer.h"
 #include "./InputSource/PictureLayer.h"
+
 
 
 StackedWidgetAddLayer::StackedWidgetAddLayer(QWidget *parent) :

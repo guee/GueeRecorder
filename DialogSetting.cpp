@@ -1,6 +1,7 @@
 #include "DialogSetting.h"
 #include "ui_DialogSetting.h"
 #include "./InputSource/ScreenSource.h"
+#undef None     //x.h
 #include <QFileDialog>
 #include <QFontMetrics>
 #include <QStandardPaths>
