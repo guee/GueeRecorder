@@ -1,6 +1,7 @@
 #include "FormLayerTools.h"
 #include "ui_FormLayerTools.h"
 #include "InputSource/ScreenLayer.h"
+#include <QStandardItemModel>
 
 FormLayerTools::FormLayerTools(VideoSynthesizer* videoObj, QWidget *parent) :
     QWidget(parent),
@@ -282,13 +283,13 @@ void FormLayerTools::resetLayerList()
                 break;
             case ScreenLayer::specWindow:
                 ico.load(":/typeIconWindow.png");
-                tit = QString("窗口：")
-                        .arg("");
+                tit = QString("窗口：%1")
+                        .arg(ScreenLayer::windowName(opt.windowId));
                 break;
             case ScreenLayer::clientOfWindow:
                 ico.load(":/typeIconWindow.png");
-                tit = QString("窗口内容：")
-                        .arg("");
+                tit = QString("窗口内容：%1")
+                        .arg(ScreenLayer::windowName(opt.windowId));
                 break;
             }
         }

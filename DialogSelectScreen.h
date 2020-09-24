@@ -17,12 +17,11 @@ public:
     explicit DialogSelectScreen(QWidget *parent = nullptr);
     ~DialogSelectScreen();
     Ui::DialogSelectScreen *ui;
-
     ScreenLayer::Option& option();
+    void timerEvent(QTimerEvent* event);
 private:
-    QRect m_mainOldGeometry;
-
-
+    int32_t m_infoShowProg = 0;
+    void setInfoShow(const QString& info);
 private slots:
     void on_widget_selected(bool cancel);
     void on_widget_editing(bool ready, const QRect& box);

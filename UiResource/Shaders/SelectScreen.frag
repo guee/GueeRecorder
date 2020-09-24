@@ -22,6 +22,37 @@ void main(void)
 {
     vec2 pos = floor(qt_TexCoord0.xy * bmpSize);
     float potSiz = pointSize * 0.5;
+
+    gl_FragColor = texture2D(qt_Texture0, qt_TexCoord0.st);
+    if ( showInfo && pos.x >= infoBoxTL.x && pos.x <= infoBoxBR.x
+         && pos.y >= infoBoxTL.y && pos.y <= infoBoxBR.y )
+    {
+        if ( pos.x >= whiteBoxTL.x && pos.x <= whiteBoxBR.x
+             && pos.y >= whiteBoxTL.y && pos.y <= whiteBoxBR.y )
+        {
+            if ( pos.x >= zoomBoxTL.x && pos.x <= ( zoomBoxTL.x + zoomBoxSize.x - 1.0 )
+                 && pos.y >= zoomBoxTL.y && ( pos.y <= zoomBoxTL.y + zoomBoxSize.y - 1.0 ) )
+            {
+                vec2 t = floor(( pos - zoomBoxTL ) / zoomPixel);
+                vec2 s = ( t - vec2(14.0, 10.0) + mousePos + 0.5 ) / bmpSize;
+                gl_FragColor = texture2D(qt_Texture0, s);
+                if ( t.x == 14.0 || t.y == 10.0 )
+                {
+                    gl_FragColor = mix( gl_FragColor, lineColor, 0.5 );
+                }
+            }
+            else
+            {
+                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        }
+        else
+        {
+            gl_FragColor = vec4(gl_FragColor.rgb * 0.2, 1.0);
+        }
+        return;
+    }
+
     if (boxEditing)
     {
         if (abs(pos.y - topLeft.y) <= potSiz || abs(pos.y - bottomRight.y) <= potSiz)
@@ -65,42 +96,13 @@ void main(void)
             }
         }
     }
-    if ( showInfo && pos.x >= infoBoxTL.x && pos.x <= infoBoxBR.x
-         && pos.y >= infoBoxTL.y && pos.y <= infoBoxBR.y )
+
+    if ( pos.x <= topLeft.x || pos.x >= bottomRight.x ||
+         pos.y <= topLeft.y || pos.y >= bottomRight.y )
     {
-        if ( pos.x >= whiteBoxTL.x && pos.x <= whiteBoxBR.x
-             && pos.y >= whiteBoxTL.y && pos.y <= whiteBoxBR.y )
-        {
-            if ( pos.x >= zoomBoxTL.x && pos.x <= ( zoomBoxTL.x + zoomBoxSize.x - 1.0 )
-                 && pos.y >= zoomBoxTL.y && ( pos.y <= zoomBoxTL.y + zoomBoxSize.y - 1.0 ) )
-            {
-                vec2 t = floor(( pos - zoomBoxTL ) / zoomPixel);
-                vec2 s = ( t - vec2(14.0, 10.0) + mousePos + 0.5 ) / bmpSize;
-                gl_FragColor = texture2D(qt_Texture0, s);
-                if ( t.x == 14.0 || t.y == 10.0 )
-                {
-                    gl_FragColor = mix( gl_FragColor, lineColor, 0.5 );
-                }
-            }
-            else
-            {
-                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-            }
-        }
-        else
-        {
-            gl_FragColor = vec4(texture2D(qt_Texture0, qt_TexCoord0.st).rgb * 0.2, 1.0);
-        }
+        gl_FragColor.r *= 0.5;
+        gl_FragColor.g *= 0.5;
+        gl_FragColor.b *= 0.5;
     }
-    else
-    {
-        gl_FragColor = texture2D(qt_Texture0, qt_TexCoord0.st);
-        if ( pos.x <= topLeft.x || pos.x >= bottomRight.x ||
-             pos.y <= topLeft.y || pos.y >= bottomRight.y )
-        {
-            gl_FragColor.r *= 0.5;
-            gl_FragColor.g *= 0.5;
-            gl_FragColor.b *= 0.5;
-        }
-    }
+
 }

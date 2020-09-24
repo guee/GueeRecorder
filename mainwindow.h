@@ -46,7 +46,6 @@ private slots:
     void on_pushButtonMediaSelect_clicked(bool checked);
     void on_pushButtonMenu_clicked();
 
-
 private:
     Ui::MainWindow *ui;
     VideoSynthesizer& m_video;

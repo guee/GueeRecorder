@@ -20,9 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
 //            Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
     Qt::WindowFlags flags = (Qt::Window | Qt::FramelessWindowHint );
     this->setWindowFlags(flags);
-    this->setAttribute(Qt::WA_TranslucentBackground);
+    //this->setAttribute(Qt::WA_TranslucentBackground);
+    //this->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
+    //this->setWindowTitle(QApplication::applicationDisplayName());
 
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
@@ -402,6 +404,8 @@ void MainWindow::on_widgetPreview_initGL()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
+    ScreenLayer::enum_window(0,0,0);
+    return;
     if (m_video.status() >= BaseLayer::Opened)
     {
         return;

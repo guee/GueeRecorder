@@ -21,7 +21,6 @@ GlScreenSelect::~GlScreenSelect()
     }
 
     setMouseTracking(false);
-    releaseMouse();
     releaseKeyboard();
 
     makeCurrent();
@@ -101,10 +100,6 @@ void GlScreenSelect::mouseReleaseEvent(QMouseEvent *event)
                                      m_realBox.top() / m_mainScale,
                                      m_realBox.width() / m_mainScale,
                                      m_realBox.height() / m_mainScale).toRect());
-            if ( m_leftDown == false && m_toolsBox.contains(event->pos()) )
-            {
-                releaseMouse();
-            }
             update();
         }
         else if (event->button() == Qt::RightButton)
@@ -139,17 +134,13 @@ void GlScreenSelect::mouseReleaseEvent(QMouseEvent *event)
                                          m_realBox.top() / m_mainScale,
                                          m_realBox.width() / m_mainScale,
                                          m_realBox.height() / m_mainScale).toRect());
-                if ( m_leftDown == false && m_toolsBox.contains(event->pos()) )
-                {
-                    releaseMouse();
-                }
 
                 update();
             }
         }
         else if (event->button() == Qt::RightButton)
         {
-            emit selected(false);
+            emit selected(true);
         }
     }
 }
@@ -167,20 +158,12 @@ void GlScreenSelect::mouseMoveEvent(QMouseEvent *event)
         }
         else
         {
-            if ( m_leftDown == false && m_toolsBox.contains(event->pos()) )
+            QPoint pos = ScreenLayer::mousePhysicalCoordinates();
+            Qt::WindowFrameSection hit = hitTest(pos);
+            if ( m_hitType != hit )
             {
-                setCursor(Qt::ArrowCursor);
-                releaseMouse();
-            }
-            else
-            {
-                QPoint pos = ScreenLayer::mousePhysicalCoordinates();
-                Qt::WindowFrameSection hit = hitTest(pos);
-                if ( m_hitType != hit )
-                {
-                    m_hitType = hit;
-                    setHitCursor(hit);
-                }
+                m_hitType = hit;
+                setHitCursor(hit);
             }
         }
     }
@@ -215,11 +198,12 @@ void GlScreenSelect::mouseMoveEvent(QMouseEvent *event)
 
 void GlScreenSelect::keyPressEvent(QKeyEvent *event)
 {
+    fprintf( stderr, "event->key()=%d\n", event->key());
     if(event->key() == Qt::Key_Escape)
     {
         emit selected(true);
     }
-    else if(event->key() == Qt::Key_Enter)
+    else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
     {
         emit selected(false);
         return;
@@ -344,7 +328,7 @@ void GlScreenSelect::enterEvent(QEvent *event)
 {
     Q_UNUSED(event)
 
-    grabMouse();
+    //grabMouse();
     grabKeyboard();
     //setCursor(Qt::BlankCursor);
     //setCursor(Qt::PointingHandCursor);
@@ -381,6 +365,12 @@ void GlScreenSelect::timerEvent(QTimerEvent *event)
     }
 }
 
+bool GlScreenSelect::saveSelectToFile(const QString &filePath)
+{
+    QImage img = m_imgScreen.copy(m_selOpt.geometry + m_selOpt.margins);
+    return img.save(filePath, nullptr, 100);
+}
+
 void GlScreenSelect::getMouseOnWindow()
 {
     QPoint phyPos = ScreenLayer::mousePhysicalCoordinates();
@@ -390,18 +380,11 @@ void GlScreenSelect::getMouseOnWindow()
     {
         m_lastMovePos = phyPos;
         m_currMouseRect.setRect(wndPos.x() - 1, wndPos.y() - 1, 3, 3);
-        QRegion rgn(rect());
-        rgn = rgn.subtracted(QRegion(m_currMouseRect));
-        parentWidget()->setMask(rgn);
         needUpdate = true;
     }
 
-    ScreenLayer::Option opt = ScreenLayer::posOnWindow(phyPos);
-    if (opt.windowId == this->winId() || opt.windowId == parentWidget()->winId())
-    {
-        if (needUpdate) update();
-        return;
-    }
+    ScreenLayer::Option opt = ScreenLayer::posOnWindow(phyPos, parentWidget()->winId());
+//    qDebug() << "On" << opt.windowId << ",My" << this->winId() << ",Pa" << parentWidget()->winId();
 
     if ( opt.mode != m_selOpt.mode || opt.windowId != m_selOpt.windowId || opt.geometry != m_selOpt.geometry || opt.margins != m_selOpt.margins )
     {

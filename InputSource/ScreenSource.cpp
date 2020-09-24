@@ -15,6 +15,9 @@ QVector<QRect> ScreenSource::m_screenRects;
 QRect ScreenSource::m_screenBound;
 bool ScreenSource::m_recordCursor = false;
 bool ScreenSource::m_cursorUseable = false;
+Atom ScreenSource::m_atom_wm_state = 0;
+Atom ScreenSource::m_atom_net_wm_state = 0;
+Atom ScreenSource::m_atom_net_wm_state_hidden = 0;
 
 ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     : BaseSource(typeName, sourceName)
@@ -93,6 +96,10 @@ bool ScreenSource::static_init()
         }
     }
     readScreenConfig();
+
+    m_atom_wm_state = XInternAtom(ScreenSource::xDisplay(), "WM_STATE", true);
+    m_atom_net_wm_state = XInternAtom(ScreenSource::xDisplay(), "_NET_WM_STATE", true);
+    m_atom_net_wm_state_hidden = XInternAtom(ScreenSource::xDisplay(), "_NET_WM_STATE_HIDDEN", true);
     return true;
 }
 

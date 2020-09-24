@@ -38,17 +38,20 @@ public:
     static QRect screenBound();
     static bool fullScreenImage(QImage& img);
     static QPoint mousePhysicalCoordinates();
-    static Option posOnWindow(const QPoint& pos);
+    static QString windowName(Window wid);
+    static bool windowIsMinimized(Window wid);
+    static void enum_window(Display*display, Window window, int depth);
+    static Option posOnWindow(const QPoint& pos, Window exclude);
     //static QRect mapToLogicaRect(const QRect& rect);
     bool setShotOption(const Option& opt);
     Option shotOption() const { return m_shotOption; }
+    static Window findRealWindow(Window window);
 private:
     friend ScreenSource;
     Option    m_shotOption;
     QRect     m_shotOnScreen;
     virtual BaseSource* onCreateSource(const QString &sourceName);
     virtual void onReleaseSource(BaseSource* source);
-    static Window findRealWindow(Window window);
 };
 
 #endif // SCREENINPUT_H

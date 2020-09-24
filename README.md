@@ -1,8 +1,6 @@
-本程序还在持续开发中，暂时只在UOS上进行了测试。
-临时提供本程序在 UOS 上编译的二进制测试包。分为Loongson版和AMD64版，放在了我的个人网站上。
-[点击打开下载页面](http://www.loongson.xyz/Articles/Content/18)</br>
+本程序还在持续开发中，临时提供二进制测试包。分为Loongson版和AMD64版，放在了我的个人网站上。</br>
+[点击打开下载页面（含使用说明）](http://www.loongson.xyz/Articles/Content/18)</br>
 因为打包时没有检查调用的库文件哪些是系统中已有的，哪些是后来新增的，把所有用到的库文件全都放进了压缩包，文件就比较大。</br>
-[使用说明](http://www.loongson.xyz/GueeRecorder/GueeRecorder-Help.docx)</br>
 [开发日记](http://www.loongson.xyz/Articles/Content/19)</br>
 
 # GueeRecorder （Guee 录屏机） 前言
@@ -53,7 +51,7 @@
 　　　　sudo apt-get install libgl1-mesa-dev</br>
 　　　　sudo apt-get install libqt5x11extras5-dev</br>
 　　　　sudo apt-get install libxinerama-dev</br>
-　　　　sudo apt-get install libxfixes-dev
+　　　　sudo apt-get install libxfixes-dev</br>
 　　　　sudo apt-get install libx264-dev</br>
 　　　　sudo apt-get install libfaac-dev</br>
 

@@ -1,4 +1,5 @@
 #include "ScreenLayer.h"
+#include <X11/extensions/shape.h>
 
 ScreenLayer::ScreenLayer()
 {
@@ -65,81 +66,210 @@ QPoint ScreenLayer::mousePhysicalCoordinates()
     return QPoint(root_x, root_y);
 }
 
-ScreenLayer::Option ScreenLayer::posOnWindow(const QPoint& pos)
+QString ScreenLayer::windowName(Window wid)
 {
-    Option opt;
-    ScreenSource::static_init();
-    int32_t cx, cy;
-    if(XTranslateCoordinates(ScreenSource::xDisplay(), ScreenSource::xRootWindow(), ScreenSource::xRootWindow(), pos.x(), pos.y(), &cx, &cy, &opt.windowId))
+    QString title;
+    XTextProperty text;
+    Window realWnd = findRealWindow(wid);
+    if (realWnd) wid = realWnd;
+    if (XGetWMName(ScreenSource::xDisplay(), wid, &text) && text.value)
     {
-        XWindowAttributes attributes;
-        if(opt.windowId != None && XGetWindowAttributes(ScreenSource::xDisplay(), opt.windowId, &attributes))
+        int count = 0;
+        char **list = nullptr;
+
+        if (Success == XmbTextPropertyToTextList(ScreenSource::xDisplay(), &text, &list, &count))
         {
-            opt.geometry = QRect(attributes.x, attributes.y, attributes.width, attributes.height);
-            opt.margins = QMargins(attributes.border_width, attributes.border_width, attributes.border_width, attributes.border_width);
-            auto scrIt = std::find(ScreenSource::screenRects().begin(), ScreenSource::screenRects().end(), opt.geometry);
-            if ( opt.margins.isNull() && scrIt != ScreenSource::screenRects().end() )
+            for ( int i=0; i < count; ++i)
             {
-                Window root, parent, *childs;
-                unsigned int childcount;
-                if(XQueryTree(ScreenSource::xDisplay(), opt.windowId, &root, &parent, &childs, &childcount))
+                if (list[i] && list[i][0])
                 {
-                    if (root == parent)
+                    title = QString::fromUtf8(list[i]);
+                    break;
+                }
+            }
+            XFreeStringList(list);
+        }
+        XFree(text.value);
+    }
+
+    if (title.isEmpty())
+    {
+        if (XGetWMIconName(ScreenSource::xDisplay(), wid, &text) && text.value)
+        {
+            int count = 0;
+            char **list = nullptr;
+
+            if (Success == XmbTextPropertyToTextList(ScreenSource::xDisplay(), &text, &list, &count))
+            {
+                for ( int i=0; i < count; ++i)
+                {
+                    if (list[i] && list[i][0])
                     {
-                        opt.mode = specScreen;
-                        opt.screenIndex = static_cast<int32_t>(scrIt - ScreenSource::screenRects().begin());
-                        return opt;
+                        title = QString::fromUtf8(list[i]);
+                        break;
                     }
                 }
+                XFreeStringList(list);
             }
-            QRect outer = opt.geometry;
-            QRect inner = opt.geometry - opt.margins;
-            Window realWindow = findRealWindow(opt.windowId);
-            if(realWindow != None)
+            XFree(text.value);
+        }
+        //fprintf(stderr, "XGetWMIconName=%s\n", title.toUtf8().data());
+    }
+
+    return title;
+}
+
+bool ScreenLayer::windowIsMinimized(Window wid)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long items, bytes_after;
+    Atom *atoms = nullptr;
+
+    int result = XGetWindowProperty(ScreenSource::xDisplay(), wid,
+                                    ScreenSource::atom_net_wm_state(),
+            0, 1024, false, XCB_ATOM_ATOM, &actual_type, &actual_format, &items,
+            &bytes_after, reinterpret_cast<unsigned char**>(&atoms));
+
+    if(result == Success)
+    {
+        Atom atomHide = ScreenSource::atom_net_wm_state_hidden();
+        for ( int i = 0; i < items; ++i)
+        {
+            if ( atomHide == atoms[i])
             {
-                Window child;
-                if(XTranslateCoordinates(ScreenSource::xDisplay(), realWindow, ScreenSource::xRootWindow(), 0, 0, &cx, &cy, &child)
-                         && XGetWindowAttributes(ScreenSource::xDisplay(), realWindow, &attributes))
-                {
-                    inner = QRect(cx, cy, attributes.width, attributes.height);
-                }
-
-//                Atom actual_type;
-//                int actual_format;
-//                unsigned long items, bytes_left;
-//                int32_t *data = nullptr;
-//                int result = XGetWindowProperty(xDisplay(), realWindow,
-//                                                XInternAtom(xDisplay(), "_NET_FRAME_EXTENTS", true),
-//                                                0, 4, false, AnyPropertyType, &actual_type, &actual_format, &items,
-//                                                &bytes_left, reinterpret_cast<unsigned char**>(&data));
-//                if(result == Success)
-//                {
-//                    if(actual_type == XCB_ATOM_CARDINAL && items == 4 && bytes_left == 0 && actual_format == 32)
-//                    {
-//                        Window child;
-//                        QMargins margins(data[0], data[2], data[1], data[3]);
-//                        if(XTranslateCoordinates(xDisplay(), realWindow, xRootWindow(), 0, 0, &cx, &cy, &child)
-//                                 && XGetWindowAttributes(xDisplay(), realWindow, &attributes))
-//                        {
-//                            opt.geometry = QRect(cx, cy, attributes.width, attributes.height);
-//                            inner = opt.geometry;
-//                            outer = opt.geometry + margins;
-//                            opt.windowId = realWindow;
-//                        }
-//                        else
-//                        {
-//                            inner = outer - margins;
-//                        }
-//                    }
-//                }
-//                if(data != nullptr)
-//                {
-//                    XFree(data);
-//                }
+                XFree(atoms);
+                return true;
             }
+        }
+    }
+    XFree(atoms);
+    return false;
+}
 
+void ScreenLayer::enum_window(Display*display, Window window, int depth)
+{
+    XTextProperty text;
 
-            if ( inner.contains(pos) )
+    if ( nullptr == display ) display = ScreenSource::xDisplay();
+    if ( 0 ==window)  window = ScreenSource::xRootWindow();
+    XGetWMName(display, window, &text);
+
+    if (window == 0x1200271)
+    {
+        fprintf(stderr, "adfas");
+    }
+    Window realWindow = ScreenLayer::findRealWindow(window);
+
+    XWindowAttributes attributes;
+    if(XGetWindowAttributes(display, window, &attributes))
+    {
+        if (attributes.map_state == IsViewable)
+        {
+            for ( int i=0; i < depth; ++i)
+                fprintf(stderr,"  ");
+            fprintf(stderr,"[%d]id=0x%x / %x [%s]\n", depth, window, realWindow, ScreenLayer::windowName(window).toUtf8().data());
+
+            int32_t dx, dy;
+            Window atWid;
+            if(XTranslateCoordinates(ScreenSource::xDisplay(), window, ScreenSource::xRootWindow(),
+                                     0, 0, &dx, &dy, &atWid))
+            {
+                for ( int i=0; i <= depth; ++i)
+                    fprintf(stderr,"  ");
+                fprintf(stderr,"%s (%d[%d],%d[%d])-(%d,%d) border_width=%d\n",
+                        ScreenLayer::windowIsMinimized(window) ? "Minimize" : "", dx, attributes.x,
+                        dy,attributes.y, attributes.width, attributes.height, attributes.border_width);
+            }
+        }
+    }
+        Window root, parent;
+        Window* children;
+        unsigned int n;
+        XQueryTree(display, window, &root, &parent, &children, &n);
+        if (children)
+        {
+            for (int i = 0; i < n; ++i)
+            {
+                enum_window(display, children[i], depth + 1);
+            }
+            XFree(children);
+        }
+
+}
+
+ScreenLayer::Option ScreenLayer::posOnWindow(const QPoint &pos, Window exclude)
+{
+    Option opt;
+    Window root, parent;
+    Window* children;
+    unsigned int n;
+    QVector<Window> reals;
+    opt.mode = unspecified;
+    opt.windowId = 0;
+    if (XQueryTree(ScreenSource::xDisplay(), ScreenSource::xRootWindow(),
+               &root, &parent, &children, &n) )
+    {
+        for (int i = 0; i < int(n); ++i)
+        {
+            if (windowIsMinimized(children[i]))
+            {
+                --n;
+                memmove(children + i, children + i + 1, sizeof(Window) * (n - uint32_t(i)));
+                --i;
+            }
+            else
+            {
+                Window realWindow = findRealWindow(children[i]);
+                if (None == realWindow || windowIsMinimized(realWindow))
+                {
+                    --n;
+                    memmove(children + i, children + i + 1, sizeof(Window) * (n - uint32_t(i)));
+                    --i;
+                }
+                else
+                {
+                    reals.append(realWindow);
+                }
+            }
+        }
+        for (int i = int(n-1); i >= 0; --i)
+        {
+            if (children[i] == exclude || reals[i] == exclude) continue;
+            XWindowAttributes attributes;
+            if(!XGetWindowAttributes(ScreenSource::xDisplay(), children[i], &attributes))
+                continue;
+            if (attributes.map_state != IsViewable)
+                continue;
+            opt.windowId = children[i];
+            opt.margins = QMargins(attributes.border_width, attributes.border_width, attributes.border_width, attributes.border_width);
+            opt.geometry = QRect(attributes.x, attributes.y, attributes.width, attributes.height);
+            QRect outer = opt.geometry + opt.margins;
+            QRect inner = opt.geometry;
+            if (!outer.contains(pos))
+                continue;
+            if (ScreenSource::screenRects().size() > i && outer == inner)
+            {
+                auto scrIt = std::find(ScreenSource::screenRects().begin(), ScreenSource::screenRects().end(), outer);
+                if ( opt.margins.isNull() && scrIt != ScreenSource::screenRects().end() )
+                {
+                    opt.mode = specScreen;
+                    opt.screenIndex = static_cast<int32_t>(scrIt - ScreenSource::screenRects().begin());
+                    break;
+                }
+            }
+            if (reals[i] != opt.windowId)
+            {
+                //opt.windowId = realWindow;
+                int offsetX, offsetY;
+                Window child;
+                if(XTranslateCoordinates(ScreenSource::xDisplay(), reals[i], ScreenSource::xRootWindow(), 0, 0, &offsetX, &offsetY, &child)
+                         && XGetWindowAttributes(ScreenSource::xDisplay(), reals[i], &attributes))
+                {
+                    inner = QRect(offsetX, offsetY, attributes.width, attributes.height);
+                }
+            }
+            if ( inner != outer && inner.contains(pos) )
             {
                 opt.mode = clientOfWindow;
                 opt.margins.setLeft(opt.geometry.left() - inner.left());
@@ -154,12 +284,12 @@ ScreenLayer::Option ScreenLayer::posOnWindow(const QPoint& pos)
                 opt.margins.setTop(opt.geometry.top() - outer.top());
                 opt.margins.setRight(outer.right() - opt.geometry.right());
                 opt.margins.setBottom(outer.bottom() - opt.geometry.bottom());
-
             }
+            break;
         }
+        XFree(children);
     }
     return opt;
-
 }
 
 //QRect ScreenLayer::mapToLogicaRect(const QRect &rect)
@@ -205,40 +335,39 @@ void ScreenLayer::onReleaseSource(BaseSource* source)
 
 Window ScreenLayer::findRealWindow(Window window)
 {
-    // is this the real window?
     Atom actual_type;
     int actual_format;
-    unsigned long items, bytes_left;
+    unsigned long items, bytes_after;
     unsigned char *data = nullptr;
-    XGetWindowProperty(ScreenSource::xDisplay(), window, XInternAtom(ScreenSource::xDisplay(), "WM_STATE", true),
-                       0, 0, false, AnyPropertyType, &actual_type, &actual_format, &items, &bytes_left, &data);
-    if(data != nullptr)
-        XFree(data);
-    if(actual_type != None)
-        return window;
-
-    // get the child windows
-    Window root, parent, *childs;
-    unsigned int childcount;
-    if(!XQueryTree(ScreenSource::xDisplay(), window, &root, &parent, &childs, &childcount)) {
-        return None;
-    }
-
-    // recursively call this function for all childs
-    Window real_window = None;
-    for(unsigned int i = childcount; i > 0; ) {
-        --i;
-        Window w = findRealWindow(childs[i]);
-        if(w != None) {
-            real_window = w;
-            break;
+    Window realWindow = None;
+    //只有能取得 WM_STATE 属性的，才是与XServer session managers通信的窗口。
+    if ( Success == XGetWindowProperty(ScreenSource::xDisplay(), window, ScreenSource::atom_wm_state(),
+                       0, 0, false, AnyPropertyType, &actual_type, &actual_format, &items, &bytes_after, &data))
+    {
+        if(data != nullptr)
+            XFree(data);
+        if(actual_type != None)
+            return window;
+        Window root, parent, *childs;
+        unsigned int childcount;
+        //查询子窗口失败，就返回 None
+        if(!XQueryTree(ScreenSource::xDisplay(), window, &root, &parent, &childs, &childcount))
+        {
+            return None;
         }
+        //继续枚举子窗口，直到找到第一个与XServer通信的窗口。
+
+        for(unsigned int i = childcount; i > 0; ) {
+            --i;
+            Window w = findRealWindow(childs[i]);
+            if(w != None)
+            {
+                realWindow = w;
+                break;
+            }
+        }
+        if(childs != nullptr)
+            XFree(childs);
     }
-
-    // free child window list
-    if(childs != nullptr)
-        XFree(childs);
-
-    return real_window;
-
+    return realWindow;
 }

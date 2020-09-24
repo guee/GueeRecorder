@@ -30,6 +30,7 @@ public:
     ScreenLayer::Option& option() { return m_selOpt; }
     QRect& box() { return m_realBox; }
     void setToolsBox(const QRect& rect) { m_toolsBox = rect;}
+    bool saveSelectToFile(const QString& filePath);
 private:
     bool   m_boxEditing = false;
     bool   m_leftDown = false;

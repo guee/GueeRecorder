@@ -25,10 +25,14 @@ public:
     static bool isRecordCursor();
     static bool readScreenConfig();
     static QImage::Format checkPixelFormat(XImage* image);
-    static QVector<QRect>& screenRects() {return m_screenRects;}
-    static QRect& screenBound() {return m_screenBound;}
-    static Display* xDisplay() { return m_x11_Display;}
-    static Window xRootWindow() {return m_x11_RootWindow;}
+    static QVector<QRect>& screenRects() {if(nullptr == m_x11_Display) static_init(); return m_screenRects;}
+    static QRect& screenBound() {if(nullptr == m_x11_Display) static_init(); return m_screenBound;}
+    static Display* xDisplay() { if(nullptr == m_x11_Display) static_init(); return m_x11_Display;}
+    static Window xRootWindow() {if(nullptr == m_x11_Display) static_init(); return m_x11_RootWindow;}
+
+    static Atom atom_wm_state() {if(nullptr == m_x11_Display) static_init(); return m_atom_wm_state; }
+    static Atom atom_net_wm_state() {if(nullptr == m_x11_Display) static_init(); return m_atom_net_wm_state; }
+    static Atom atom_net_wm_state_hidden() {if(nullptr == m_x11_Display) static_init(); return m_atom_net_wm_state_hidden; }
 
     bool allocImage(uint width, uint height);
     void freeImage();
@@ -48,6 +52,9 @@ protected:
     static QRect m_screenBound;
     static bool m_recordCursor;
     static bool m_cursorUseable;
+    static Atom m_atom_wm_state;
+    static Atom m_atom_net_wm_state;
+    static Atom m_atom_net_wm_state_hidden;
 
     XImage *m_x11_image;
     XShmSegmentInfo m_x11_shm_info;

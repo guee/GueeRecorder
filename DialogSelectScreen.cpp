@@ -1,5 +1,6 @@
 #include "DialogSelectScreen.h"
 #include "ui_DialogSelectScreen.h"
+#include <QFileDialog>
 
 DialogSelectScreen::DialogSelectScreen(QWidget *parent) :
     QDialog(parent),
@@ -12,26 +13,8 @@ DialogSelectScreen::DialogSelectScreen(QWidget *parent) :
     this->setWindowFlags(flags);
     setMouseTracking(true);
     ui->widgetTools->hide();
+    ui->widgetInfo->hide();
 
-    if (parent)
-    {
-        m_mainOldGeometry = parent->geometry();
-        parent->hide();
-        //由于隐藏窗口时的渐隐动画时间可能较长，因此换一种方式使主窗口基本不可见，耗时较短。
-        parent->setMask(QRegion(0,0,1,1));
-        if (parent->pos() == QPoint(0,0))
-        {
-            parent->move(1,1);
-        }
-        else
-        {
-            parent->move(0, 0);
-        }
-        //等待一段时间后对桌面进行截图。
-        QThread::msleep(50);
-        parent->setUpdatesEnabled(false);
-        parent->hide();
-    }
     this->activateWindow();
 
     QRect fullScr = ScreenLayer::screenBound();
@@ -53,22 +36,15 @@ DialogSelectScreen::DialogSelectScreen(QWidget *parent) :
             break;
         }
     }
-    //fullScr.setWidth(2000);
-    //fullScr.setHeight(1000);
     this->setGeometry(fullScr);
     ui->widget->setGeometry(fullScr);
+    ui->widgetTools->setCursor(Qt::ArrowCursor);
+    //connect(ui->widget, &GlScreenSelect::selected, this, &DialogSelectScreen::on_widget_selected);
 }
 
 DialogSelectScreen::~DialogSelectScreen()
 {
     delete ui;
-    if (parentWidget())
-    {
-        parentWidget()->show();
-        parentWidget()->setMask(QRegion(0, 0, m_mainOldGeometry.width(), m_mainOldGeometry.height()));
-        parentWidget()->setGeometry(m_mainOldGeometry);
-        parentWidget()->setUpdatesEnabled(true);
-    }
 }
 
 ScreenLayer::Option &DialogSelectScreen::option()
@@ -76,8 +52,32 @@ ScreenLayer::Option &DialogSelectScreen::option()
     return ui->widget->option();
 }
 
+void DialogSelectScreen::timerEvent(QTimerEvent *event)
+{
+    m_infoShowProg -= 10;
+    ui->widgetInfo->setStyleSheet(QString("QWidget#widgetInfo{background-color: rgb(0, 0, 0, %1);}").arg(qMin(255,qMax(0,m_infoShowProg * 255 / 100))));
+    if (m_infoShowProg <= 0)
+    {
+        killTimer(event->timerId());
+        ui->widgetInfo->hide();
+    }
+}
+
+void DialogSelectScreen::setInfoShow(const QString &info)
+{
+    m_infoShowProg = 400;
+    ui->labelInfo->setText(info);
+    int x = (width() - ui->widgetInfo->width()) / 2;
+    int y = (height() - ui->widgetInfo->height()) / 2;
+    ui->widgetInfo->move(x, y);
+    ui->widgetInfo->setStyleSheet("QWidget#widgetInfo{background-color: rgb(0, 0, 0, 255);}");
+    ui->widgetInfo->show();
+    startTimer(50);
+}
+
 void DialogSelectScreen::on_widget_selected(bool cancel)
 {
+    fprintf(stderr, "on_widget_selected : %d\n", cancel);
     if ( cancel )
         this->reject();
     else
@@ -158,6 +158,7 @@ void DialogSelectScreen::on_widget_editing(bool ready, const QRect& box)
         ui->widgetTools->move(selPos);
         ui->widgetTools->show();
         ui->widget->setToolsBox(ui->widgetTools->geometry());
+        ui->toolButtonSave->setEnabled(true);
     }
     else
     {
@@ -177,5 +178,33 @@ void DialogSelectScreen::on_toolButtonCancel_clicked()
 
 void DialogSelectScreen::on_toolButtonSave_clicked()
 {
+//    QFileDialog dlg(this);
+//    dlg.setAcceptMode(QFileDialog::AcceptSave);
+//    dlg.setFileMode(QFileDialog::AnyFile);
+//    dlg.setWindowTitle("保存截图文件");
+//    dlg.setNameFilter("Picture (*.jpg *.jpeg *.bmp *.png)");
+//    static QString dir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+//    dlg.setDirectory(dir);
+//    Qt::WindowFlags flags = (Qt::Window | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+//    //Qt::WindowFlags flags = (Qt::Window | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint );
+
+//    dlg.setWindowFlags(dlg.windowFlags() | Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint);
+//    dlg.exec();
+    //dlg.setDefaultSuffix(".jpg")
+//    QString file = QFileDialog::getSaveFileName(this, "Save", QString(), "Picture (*.jpg *.jpeg *.bmp *.png)");
+//    if (!file.isEmpty())
+//    {
+//        ui->widget->saveSelectToFile(file);
+//    }
+
+    QString path = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    if (!path.endsWith('/')) path += "/";
+
+    path.append(QString("截图 %1.png").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd[HH-mm-ss]")));
+    if (ui->widget->saveSelectToFile(path))
+    {
+        ui->toolButtonSave->setEnabled(false);
+        setInfoShow("截图已经存储到：" + path);
+    }
 
 }
