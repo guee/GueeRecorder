@@ -197,9 +197,6 @@ void GlWidgetPreview::resizeGL(int width, int height)
                                 qRound(rt.width() * m_displayOfSceeen.width()),
                                 qRound(rt.height() * m_displayOfSceeen.height()));
     }
-
-
-    if (width && height) resetToolboxPos(false);
 }
 
 void GlWidgetPreview::fixOffsetAsScreen()
@@ -238,6 +235,7 @@ void GlWidgetPreview::setVideoObject(VideoSynthesizer *videoObj)
     if ( m_layerTools == nullptr )
     {
         m_layerTools = new FormLayerTools(m_video, this);
+        m_layerTools->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
         connect( m_layerTools, &FormLayerTools::removeLayer, this, &GlWidgetPreview::on_layerToolbox_removeLayer );
         connect( m_layerTools, &FormLayerTools::selectLayer, this, &GlWidgetPreview::on_layerToolbox_selectLayer );
         connect( m_layerTools, &FormLayerTools::movedLayer, this, &GlWidgetPreview::on_layerToolbox_movedLayer );
@@ -248,12 +246,6 @@ void GlWidgetPreview::mousePressEvent(QMouseEvent *event)
 {
     if ( event->button() == Qt::LeftButton )
     {
-        if ( m_layerTools->isVisible() && m_layerTools->geometry().contains(event->pos()))
-        {
-            return;
-        }
-        m_layerTools->hide();
-
        // ui.widgetContents->hide();
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
@@ -451,10 +443,6 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton )
     {
-        if ( m_layerTools->isVisible() && m_layerTools->geometry().contains(event->pos()))
-        {
-            return;
-        }
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
         if (m_hitType == Qt::NoSection && m_enterLayer)
@@ -462,12 +450,12 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
             m_editingLayer = m_enterLayer;
             m_boxOfEditing = m_boxEnterLayer;
         }
-        resetToolboxPos(true);
+        resetToolboxPos(false);
     }
     else if (event->button() == Qt::RightButton )
     {
         m_editingLayer = nullptr;
-        m_layerTools->hide();
+        resetToolboxPos(true);
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
     }
@@ -487,13 +475,6 @@ void GlWidgetPreview::leaveEvent(QEvent *event)
 {
     Q_UNUSED(event)
     m_enterLayer = nullptr;
-    if (m_layerTools->isVisible())
-    {
-        if (!m_layerTools->geometry().contains(mapFromGlobal( QCursor::pos() )))
-        {
-            m_layerTools->hide();
-        }
-    }
 }
 
 void GlWidgetPreview::makeObject()
@@ -518,25 +499,18 @@ void GlWidgetPreview::makeObject()
     m_program->setAttributeBuffer(1, GL_FLOAT, sizeof(QVector3D), 2, sizeof(BaseLayer::VertexArritb));
 }
 
-void GlWidgetPreview::resetToolboxPos(bool immShow)
+void GlWidgetPreview::resetToolboxPos(bool mustHide)
 {
-    if (m_editingLayer)
+    if (m_editingLayer && !mustHide)
     {
-        if ( m_boxOfEditing.center().x() > m_displayOfSceeen.width() / 2 )
-        {
-            m_layerTools->setGeometry(0, 0, m_layerTools->width(), height());
-            m_layerTools->setStyleIsLeft(true);
-        }
-        else
-        {
-            m_layerTools->setGeometry(width() - m_layerTools->width(), 0, m_layerTools->width(), height());
-            m_layerTools->setStyleIsLeft(false);
-        }
-        if (immShow)
-        {
-            m_layerTools->setCurrLayer(m_editingLayer);
-            m_layerTools->show();
-        }
+        QRect rt(parentWidget()->mapToGlobal(QPoint(0,0)),
+                 parentWidget()->frameSize());
+
+        m_layerTools->setGeometry(rt.right(), rt.top(), m_layerTools->width(), rt.height());
+        m_layerTools->setStyleIsLeft(false);
+
+        m_layerTools->setCurrLayer(m_editingLayer);
+        m_layerTools->show();
     }
     else
     {

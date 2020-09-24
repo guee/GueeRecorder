@@ -295,6 +295,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         //setUpdatesEnabled(false);
         m_pressKeyGlobalPos = event->globalPos();
         m_pressKeyGeometry = geometry();
+        ui->widgetPreview->resetToolboxPos(true);
     }
 }
 
@@ -306,6 +307,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
         //setUpdatesEnabled(true);
         releaseMouse();
         ui->widgetPreview->fixOffsetAsScreen();
+        ui->widgetPreview->resetToolboxPos(false);
     }
 }
 

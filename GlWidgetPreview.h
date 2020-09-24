@@ -26,6 +26,7 @@ public:
     QSize sizeHint() const override;
     void fixOffsetAsScreen();
     void setVideoObject(VideoSynthesizer* videoObj);
+    void resetToolboxPos(bool mustHide);
 signals:
     void initGL();
 
@@ -62,7 +63,6 @@ private:
     bool m_boxEditing = false;
     Qt::WindowFrameSection m_hitType = Qt::NoSection;
     FormLayerTools* m_layerTools = nullptr;
-    void resetToolboxPos(bool immShow);
     void hitTest(const QPoint& pos);
     void setHitCursor(Qt::WindowFrameSection hit);
     inline bool checkOffsetX(int32_t& v, int32_t x)
