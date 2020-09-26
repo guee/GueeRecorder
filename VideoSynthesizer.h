@@ -136,9 +136,15 @@ private:
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
     void putFrameToEncoder(GLuint textureId);
+    virtual void onLayerOpened(BaseLayer* layer) override;
+    virtual void onLayerRemoved(BaseLayer* layer) override;
+    virtual void onSizeChanged(BaseLayer* layer) override;
 signals:
     void frameReady(uint textureId);
-    void initDone( bool success);
+    void initDone(bool success);
+    void layerAdded(BaseLayer* layer);
+    void layerRemoved(BaseLayer* layer);
+    void layerMoved(BaseLayer* layer);
 };
 
 #endif // VIDEOSYNTHESIZER_H

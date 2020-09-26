@@ -21,18 +21,7 @@ BaseLayer::BaseLayer()
 BaseLayer::~BaseLayer()
 {
     close();
-
-    while(m_childs.size())
-    {
-        delete m_childs.front();
-    }
-
-    if (m_parent)
-    {
-        int i = m_parent->m_childs.indexOf(this);
-        if (i >= 0)
-            m_parent->m_childs.remove(i);
-    }
+    onLayerRemoved(this);
 }
 
 const QString &BaseLayer::sourceName()
@@ -47,8 +36,6 @@ const QString &BaseLayer::sourceName()
 
 bool BaseLayer::open(const QString &sourceName)
 {
-   // if ( )
-
     if ( m_resource )
     {
         if (m_resource->isSameSource(layerType(), sourceName))
@@ -94,7 +81,12 @@ bool BaseLayer::open(const QString &sourceName)
             m_resource = nullptr;
         }
     }
-    return (m_status >= Opened);
+    if (m_status >= Opened)
+    {
+        onLayerOpened(this);
+        return true;
+    }
+    return false;
 }
 
 void BaseLayer::close()
@@ -306,7 +298,7 @@ void BaseLayer::setRect(const QRectF& rect)
     m_userdefOnView.setY((rect.y() - 0.5) * m_glViewportSize.height());
     m_userdefOnView.setWidth(rect.width() * m_glViewportSize.width());
     m_userdefOnView.setHeight(rect.height() * m_glViewportSize.height());
-    onSizeChanged();
+    onSizeChanged(this);
 }
 
 void BaseLayer::setRect(qreal x, qreal y, qreal w, qreal h)
@@ -316,7 +308,7 @@ void BaseLayer::setRect(qreal x, qreal y, qreal w, qreal h)
     m_userdefOnView.setY((y - 0.5) * m_glViewportSize.height());
     m_userdefOnView.setWidth(w * m_glViewportSize.width());
     m_userdefOnView.setHeight(h * m_glViewportSize.height());
-    onSizeChanged();
+    onSizeChanged(this);
 
 }
 
@@ -325,7 +317,7 @@ void BaseLayer::fullViewport(bool full)
     if (m_fullViewport != full)
     {
         m_fullViewport = full;
-        onSizeChanged();
+        onSizeChanged(this);
     }
 }
 
@@ -342,7 +334,7 @@ QRectF BaseLayer::rect() const
 void BaseLayer::setAspectRatioMode(Qt::AspectRatioMode mode)
 {
     m_aspectRatioMode = mode;
-    onSizeChanged();
+    onSizeChanged(this);
 }
 
 Qt::AspectRatioMode BaseLayer::aspectRatioMode() const
@@ -375,7 +367,7 @@ void BaseLayer::setViewportSize(const QSizeF &s, bool childs)
             it->setViewportSize(s, childs);
         }
     }
-    onSizeChanged();
+    onSizeChanged(this);
 }
 
 void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)
@@ -421,35 +413,39 @@ void BaseLayer::setSourcesFramerate(float fps)
     }
 }
 
-void BaseLayer::onSizeChanged()
+void BaseLayer::onSizeChanged(BaseLayer* layer)
 {
-    if (m_resource == nullptr) return;
-    QSizeF s(m_rectOnSourceInited ? m_rectOnSource.size() : QSize(m_resource->width(), m_resource->height()));
-    QRectF u = m_userdefOnView;
-
-    if (m_fullViewport)
+    if (layer == this)
     {
-        u.setRect(m_glViewportSize.width() * -0.5, m_glViewportSize.height() * -0.5, m_glViewportSize.width(), m_glViewportSize.height());
+        if (m_resource == nullptr) return;
+        QSizeF s(m_rectOnSourceInited ? m_rectOnSource.size() : QSize(m_resource->width(), m_resource->height()));
+        QRectF u = m_userdefOnView;
+
+        if (m_fullViewport)
+        {
+            u.setRect(m_glViewportSize.width() * -0.5, m_glViewportSize.height() * -0.5, m_glViewportSize.width(), m_glViewportSize.height());
+        }
+        s.scale(u.size(), m_aspectRatioMode);
+
+        QRectF r(u.x() + ( u.width() - s.width() ) * 0.5,
+                 u.y() + ( u.height() - s.height() ) * 0.5,
+                 s.width(), s.height());
+
+        m_vertex[0].vert.setX(static_cast<float>(r.right()));
+        m_vertex[0].vert.setY(static_cast<float>(r.y()));
+
+        m_vertex[1].vert.setX(static_cast<float>(r.x()));
+        m_vertex[1].vert.setY(static_cast<float>(r.y()));
+
+        m_vertex[2].vert.setX(static_cast<float>(r.x()));
+        m_vertex[2].vert.setY(static_cast<float>(r.bottom()));
+
+        m_vertex[3].vert.setX(static_cast<float>(r.right()));
+        m_vertex[3].vert.setY(static_cast<float>(r.bottom()));
+
+        m_vertexChanged = true;
     }
-    s.scale(u.size(), m_aspectRatioMode);
-
-    QRectF r(u.x() + ( u.width() - s.width() ) * 0.5,
-             u.y() + ( u.height() - s.height() ) * 0.5,
-             s.width(), s.height());
-
-    m_vertex[0].vert.setX(static_cast<float>(r.right()));
-    m_vertex[0].vert.setY(static_cast<float>(r.y()));
-
-    m_vertex[1].vert.setX(static_cast<float>(r.x()));
-    m_vertex[1].vert.setY(static_cast<float>(r.y()));
-
-    m_vertex[2].vert.setX(static_cast<float>(r.x()));
-    m_vertex[2].vert.setY(static_cast<float>(r.bottom()));
-
-    m_vertex[3].vert.setX(static_cast<float>(r.right()));
-    m_vertex[3].vert.setY(static_cast<float>(r.bottom()));
-
-    m_vertexChanged = true;
+    if (m_parent) m_parent->onSizeChanged(layer);
 }
 
 void BaseLayer::setRectOnSource(const QRect& rect)
@@ -468,5 +464,33 @@ void BaseLayer::setRectOnSource(const QRect& rect)
     m_vertex[3].text.setX((m_rectOnSource.right() + 1.0f) / m_resource->m_width);
     m_vertex[3].text.setY((m_rectOnSource.bottom() + 1.0f) / m_resource->m_height);
 
-    onSizeChanged();
+    onSizeChanged(this);
+}
+
+void BaseLayer::onLayerOpened(BaseLayer *layer)
+{
+    if (m_parent) m_parent->onLayerOpened(layer);
+}
+
+void BaseLayer::onLayerRemoved(BaseLayer *layer)
+{
+    if (layer == this)
+    {
+        while(m_childs.size())
+        {
+            delete m_childs.front();
+        }
+    }
+    else
+    {
+        int i = m_childs.indexOf(layer);
+        if (i >= 0)
+        {
+            m_childs.remove(i);
+        }
+    }
+    if (m_parent)
+    {
+        m_parent->onLayerRemoved(layer);
+    }
 }

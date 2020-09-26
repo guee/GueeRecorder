@@ -42,7 +42,7 @@ bool BaseSource::sourceOpen(BaseLayer *layer)
         }
     }
     m_imageLock.unlock();
-    layer->onSizeChanged();
+    layer->onSizeChanged(layer);
     return m_status >= BaseLayer::Opened;
 }
 
@@ -261,7 +261,7 @@ void BaseSource::setFrame(const QVideoFrame &frame)
             m_pixFormat = QImage::Format_Invalid;
             for (auto it:m_layers)
             {
-                it->onSizeChanged();
+                it->onSizeChanged(it);
             }
         }
         else

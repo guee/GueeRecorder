@@ -54,10 +54,6 @@ private:
 
     QMenu* m_camSizeMenu = nullptr;
     void makeCameraSizeMenu(QCamera* cam);
-
-signals:
-    void selectedScreen(ScreenLayer::Option scrOpt);
-    //void selectedCamera()
 };
 
 #endif // STACKEDWIDGETADDCONTENTS_H

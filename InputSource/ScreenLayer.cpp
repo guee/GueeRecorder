@@ -1,5 +1,8 @@
 #include "ScreenLayer.h"
 #include <X11/extensions/shape.h>
+//#include <X11/extensions/Xrender.h>
+#include <X11/extensions/Xcomposite.h>
+#include <X11/Xlib.h>
 
 ScreenLayer::ScreenLayer()
 {
@@ -155,10 +158,6 @@ void ScreenLayer::enum_window(Display*display, Window window, int depth)
     if ( 0 ==window)  window = ScreenSource::xRootWindow();
     XGetWMName(display, window, &text);
 
-    if (window == 0x1200271)
-    {
-        fprintf(stderr, "adfas");
-    }
     Window realWindow = ScreenLayer::findRealWindow(window);
 
     XWindowAttributes attributes;
@@ -168,7 +167,8 @@ void ScreenLayer::enum_window(Display*display, Window window, int depth)
         {
             for ( int i=0; i < depth; ++i)
                 fprintf(stderr,"  ");
-            fprintf(stderr,"[%d]id=0x%x / %x [%s]\n", depth, window, realWindow, ScreenLayer::windowName(window).toUtf8().data());
+            fprintf(stderr,"[%d]id=0x%x / %x, Visual:0x%x, [%s]\n", depth, window, realWindow,
+                    attributes.visual, ScreenLayer::windowName(window).toUtf8().data());
 
             int32_t dx, dy;
             Window atWid;
@@ -196,6 +196,34 @@ void ScreenLayer::enum_window(Display*display, Window window, int depth)
             XFree(children);
         }
 
+}
+
+bool ScreenLayer::windowImage(Window wid)
+{
+    Display* xdisp = XOpenDisplay(nullptr);
+    //重定向窗口绘制，这个是必须的。
+    XCompositeRedirectWindow(xdisp, wid, CompositeRedirectAutomatic);
+    XWindowAttributes attr;
+    XGetWindowAttributes(xdisp, wid, &attr);
+    int64_t tim = QDateTime::currentMSecsSinceEpoch();
+    Pixmap pixmap = XCompositeNameWindowPixmap(xdisp, wid);
+    XImage* image = XGetImage(xdisp, pixmap, 0, 0, attr.width, attr.height, AllPlanes, ZPixmap);
+
+    tim = QDateTime::currentMSecsSinceEpoch() - tim;
+    fprintf(stderr, "TIME:%d\n", int(tim));
+    if (image)
+    {
+        QImage img;
+        if (image->bits_per_pixel == 24)
+            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB888);
+        else
+            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB32);
+        img.save(QString("/home/guee/Pictures/%1.png").arg(QDateTime::currentMSecsSinceEpoch()));
+        XDestroyImage(image);
+    }
+    XFreePixmap(xdisp, pixmap);
+
+    XCompositeUnredirectWindow(ScreenSource::xDisplay(), wid, CompositeRedirectAutomatic);
 }
 
 ScreenLayer::Option ScreenLayer::posOnWindow(const QPoint &pos, Window exclude)

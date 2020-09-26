@@ -26,7 +26,7 @@ public:
     QSize sizeHint() const override;
     void fixOffsetAsScreen();
     void setVideoObject(VideoSynthesizer* videoObj);
-    void resetToolboxPos(bool mustHide);
+
 signals:
     void initGL();
 
@@ -107,9 +107,12 @@ private:
     }
 public slots:
     void on_videoSynthesizer_frameReady(uint textureId);
-    void on_layerToolbox_removeLayer(BaseLayer* layer);
-    void on_layerToolbox_selectLayer(BaseLayer* layer);
-    void on_layerToolbox_movedLayer(BaseLayer* layer);
+    void on_layerAdded(BaseLayer* layer);
+    void on_layerRemoved(BaseLayer* layer);
+    void on_selectLayer(BaseLayer* layer);
+    void on_layerMoved(BaseLayer* layer);
+signals:
+    void selectLayer(BaseLayer* layer);
 };
 
 #endif

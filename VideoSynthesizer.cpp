@@ -908,4 +908,21 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
     m_program->release();
 }
 
+void VideoSynthesizer::onLayerOpened(BaseLayer *layer)
+{
+    emit layerAdded(layer);
+}
+
+void VideoSynthesizer::onLayerRemoved(BaseLayer *layer)
+{
+    BaseLayer::onLayerRemoved(layer);
+    emit layerRemoved(layer);
+}
+
+void VideoSynthesizer::onSizeChanged(BaseLayer *layer)
+{
+    BaseLayer::onSizeChanged(layer);
+    emit layerMoved(layer);
+}
+
 

@@ -41,6 +41,7 @@ public:
     static QString windowName(Window wid);
     static bool windowIsMinimized(Window wid);
     static void enum_window(Display*display, Window window, int depth);
+    static bool windowImage(Window wid);
     static Option posOnWindow(const QPoint& pos, Window exclude);
     //static QRect mapToLogicaRect(const QRect& rect);
     bool setShotOption(const Option& opt);

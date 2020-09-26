@@ -27,11 +27,6 @@ GlWidgetPreview::GlWidgetPreview(QWidget *parent)
 
 GlWidgetPreview::~GlWidgetPreview()
 {
-    if (m_layerTools)
-    {
-        delete m_layerTools;
-        m_layerTools = nullptr;
-    }
     makeCurrent();
     m_vbo.destroy();
     if (m_program)
@@ -232,14 +227,7 @@ void GlWidgetPreview::fixOffsetAsScreen()
 void GlWidgetPreview::setVideoObject(VideoSynthesizer *videoObj)
 {
     m_video = videoObj;
-    if ( m_layerTools == nullptr )
-    {
-        m_layerTools = new FormLayerTools(m_video, this);
-        m_layerTools->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-        connect( m_layerTools, &FormLayerTools::removeLayer, this, &GlWidgetPreview::on_layerToolbox_removeLayer );
-        connect( m_layerTools, &FormLayerTools::selectLayer, this, &GlWidgetPreview::on_layerToolbox_selectLayer );
-        connect( m_layerTools, &FormLayerTools::movedLayer, this, &GlWidgetPreview::on_layerToolbox_movedLayer );
-    }
+
 }
 
 void GlWidgetPreview::mousePressEvent(QMouseEvent *event)
@@ -265,10 +253,12 @@ void GlWidgetPreview::mouseMoveEvent(QMouseEvent *event)
     {
         if (m_hitType == Qt::NoSection && m_enterLayer)
         {
+            bool emitSelect = (m_editingLayer != nullptr);
             m_editingLayer = m_enterLayer;
             m_boxOfEditing = m_boxEnterLayer;
             m_boxOfPressKey = m_boxOfEditing;
             hitTest(m_posOfPressKey);
+            if (emitSelect) emit selectLayer(m_editingLayer);
         }
         if (m_editingLayer)
         {
@@ -450,12 +440,12 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
             m_editingLayer = m_enterLayer;
             m_boxOfEditing = m_boxEnterLayer;
         }
-        resetToolboxPos(false);
+        emit selectLayer(m_editingLayer);
     }
     else if (event->button() == Qt::RightButton )
     {
         m_editingLayer = nullptr;
-        resetToolboxPos(true);
+        emit selectLayer(m_editingLayer);
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
     }
@@ -497,25 +487,6 @@ void GlWidgetPreview::makeObject()
     m_program->enableAttributeArray(1);
     m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(BaseLayer::VertexArritb));
     m_program->setAttributeBuffer(1, GL_FLOAT, sizeof(QVector3D), 2, sizeof(BaseLayer::VertexArritb));
-}
-
-void GlWidgetPreview::resetToolboxPos(bool mustHide)
-{
-    if (m_editingLayer && !mustHide)
-    {
-        QRect rt(parentWidget()->mapToGlobal(QPoint(0,0)),
-                 parentWidget()->frameSize());
-
-        m_layerTools->setGeometry(rt.right(), rt.top(), m_layerTools->width(), rt.height());
-        m_layerTools->setStyleIsLeft(false);
-
-        m_layerTools->setCurrLayer(m_editingLayer);
-        m_layerTools->show();
-    }
-    else
-    {
-        m_layerTools->hide();
-    }
 }
 
 void GlWidgetPreview::hitTest(const QPoint &pos)
@@ -671,7 +642,13 @@ void GlWidgetPreview::on_videoSynthesizer_frameReady(uint textureId)
     }
 }
 
-void GlWidgetPreview::on_layerToolbox_removeLayer(BaseLayer *layer)
+void GlWidgetPreview::on_layerAdded(BaseLayer *layer)
+{
+    on_selectLayer(layer);
+    emit selectLayer(layer);
+}
+
+void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
 {
     if (layer)
     {
@@ -679,14 +656,12 @@ void GlWidgetPreview::on_layerToolbox_removeLayer(BaseLayer *layer)
             m_enterLayer = nullptr;
         if (layer == m_editingLayer)
             m_editingLayer = nullptr;
-        layer->destroy(layer);
-        m_video->immediateUpdate();
     }
-
 }
 
-void GlWidgetPreview::on_layerToolbox_selectLayer(BaseLayer *layer)
+void GlWidgetPreview::on_selectLayer(BaseLayer *layer)
 {
+    if (layer == m_editingLayer) return;
     m_editingLayer = layer;
     m_enterLayer = layer;
     if (layer)
@@ -700,7 +675,7 @@ void GlWidgetPreview::on_layerToolbox_selectLayer(BaseLayer *layer)
     }
 }
 
-void GlWidgetPreview::on_layerToolbox_movedLayer(BaseLayer *layer)
+void GlWidgetPreview::on_layerMoved(BaseLayer *layer)
 {
     if (layer && m_editingLayer == layer)
     {

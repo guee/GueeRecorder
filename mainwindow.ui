@@ -798,65 +798,88 @@ font-size:8px;
      </widget>
     </item>
     <item>
-     <widget class="GlWidgetPreview" name="widgetPreview" native="true">
-      <property name="toolTip">
-       <string>鼠标左键选择图层，鼠标右键放弃选择</string>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <property name="spacing">
+       <number>0</number>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item alignment="Qt::AlignTop">
-        <widget class="StackedWidgetAddLayer" name="stackedWidgetAddContents">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>140</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>添加画面内容为图层</string>
-         </property>
-         <property name="currentIndex">
+      <item>
+       <widget class="GlWidgetPreview" name="widgetPreview" native="true">
+        <property name="toolTip">
+         <string>鼠标左键选择图层，鼠标右键放弃选择</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="spacing">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="page_3"/>
-         <widget class="QWidget" name="page_4"/>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+         <property name="leftMargin">
+          <number>0</number>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
+         <property name="topMargin">
+          <number>0</number>
          </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item alignment="Qt::AlignTop">
+          <widget class="StackedWidgetAddLayer" name="stackedWidgetAddContents">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>140</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>添加画面内容为图层</string>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <widget class="QWidget" name="page_3"/>
+           <widget class="QWidget" name="page_4"/>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="FormLayerTools" name="widgetLayerTools" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>150</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item alignment="Qt::AlignBottom">
      <widget class="QWidget" name="widgetBottom" native="true">
@@ -894,6 +917,12 @@ font-size:8px;
    <class>FormAudioRec</class>
    <extends>QWidget</extends>
    <header>FormAudioRec.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FormLayerTools</class>
+   <extends>QWidget</extends>
+   <header>FormLayerTools.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

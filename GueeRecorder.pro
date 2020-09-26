@@ -5,7 +5,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
 CONFIG += c++11 precompile_header
 PRECOMPILED_HEADER = precompile.h
-LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac
+LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac -lXcomposite
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -52,7 +52,8 @@ SOURCES += \
     Common/FrameTimestamp.cpp \
     Common/FrameRateCalc.cpp \
     VideoSynthesizer.cpp \
-    MediaCodec/WaveFile.cpp
+    MediaCodec/WaveFile.cpp \
+    InputSource/WindowSource.cpp
 
 
 HEADERS += \
@@ -92,7 +93,8 @@ HEADERS += \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
     VideoSynthesizer.h \
-    MediaCodec/WaveFile.h
+    MediaCodec/WaveFile.h \
+    InputSource/WindowSource.h
 
 FORMS += \
     DialogSelectScreen.ui \

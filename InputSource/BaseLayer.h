@@ -106,8 +106,10 @@ protected:
     virtual BaseSource* onCreateSource(const QString &sourceName) = 0;
     virtual void onReleaseSource(BaseSource* source);
     virtual float frameRate() const { return m_parent ? m_parent->frameRate() : -1.0f; }
-    void onSizeChanged();
+    virtual void onSizeChanged(BaseLayer* layer);
     void setRectOnSource(const QRect& rect);
+    virtual void onLayerOpened(BaseLayer* layer);
+    virtual void onLayerRemoved(BaseLayer* layer);
 private:
     static QVector<BaseSource*>    m_resPool;
     static QMutex m_lockSources;

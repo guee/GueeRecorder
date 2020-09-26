@@ -38,12 +38,10 @@ private slots:
 
     void on_pushButtonMinimize_clicked();
 
-    void on_stackedWidgetAddContents_selectedScreen(ScreenLayer::Option scrOpt);
     void on_pushButtonScreenSelect_clicked(bool checked);
-
     void on_pushButtonCameraSelect_clicked(bool checked);
-
     void on_pushButtonMediaSelect_clicked(bool checked);
+
     void on_pushButtonMenu_clicked();
 
 private:

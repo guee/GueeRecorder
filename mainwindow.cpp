@@ -52,9 +52,21 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidgetAddContents->m_mainWindow = this;
 
     ui->widgetPreview->setVideoObject(&m_video);
+    ui->widgetLayerTools->refreshLayers(&m_video);
     connect(&m_video, &VideoSynthesizer::initDone, this, &MainWindow::on_videoSynthesizer_initDone);
     connect(&m_video, &VideoSynthesizer::frameReady, ui->widgetPreview,
             &GlWidgetPreview::on_videoSynthesizer_frameReady, Qt::QueuedConnection);
+
+    connect(&m_video, &VideoSynthesizer::layerAdded, ui->widgetLayerTools, &FormLayerTools::on_layerAdded);
+    connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetLayerTools, &FormLayerTools::on_layerRemoved);
+    connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetLayerTools, &FormLayerTools::on_layerMoved);
+
+    connect(&m_video, &VideoSynthesizer::layerAdded, ui->widgetPreview, &GlWidgetPreview::on_layerAdded);
+    connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetPreview, &GlWidgetPreview::on_layerRemoved);
+    connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetPreview, &GlWidgetPreview::on_layerMoved);
+
+    connect( ui->widgetLayerTools, &FormLayerTools::selectLayer, ui->widgetPreview, &GlWidgetPreview::on_selectLayer );
+    connect( ui->widgetPreview, &GlWidgetPreview::selectLayer, ui->widgetLayerTools, &FormLayerTools::on_selectLayer );
 
     QList<QPushButton*> buts = ui->widgetTitle->findChildren<QPushButton*>();
     for ( auto but:buts )
@@ -295,7 +307,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         //setUpdatesEnabled(false);
         m_pressKeyGlobalPos = event->globalPos();
         m_pressKeyGeometry = geometry();
-        ui->widgetPreview->resetToolboxPos(true);
     }
 }
 
@@ -307,7 +318,6 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
         //setUpdatesEnabled(true);
         releaseMouse();
         ui->widgetPreview->fixOffsetAsScreen();
-        ui->widgetPreview->resetToolboxPos(false);
     }
 }
 
@@ -406,8 +416,10 @@ void MainWindow::on_widgetPreview_initGL()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
-    ScreenLayer::enum_window(0,0,0);
-    return;
+
+    //ScreenLayer::enum_window(0,0,0);
+//    ScreenLayer::windowImage(Window(0x1200029));
+//    return;
     if (m_video.status() >= BaseLayer::Opened)
     {
         return;
@@ -522,15 +534,6 @@ void MainWindow::on_pushButtonClose_clicked()
 void MainWindow::on_pushButtonMinimize_clicked()
 {
     showMinimized();
-}
-
-void MainWindow::on_stackedWidgetAddContents_selectedScreen(ScreenLayer::Option scrOpt)
-{
-    ScreenLayer* scr = static_cast<ScreenLayer*>(m_video.createLayer("screen"));
-
-    scr->setShotOption(scrOpt);
-    scr->open();
-    scr->play();
 }
 
 void MainWindow::on_pushButtonScreenSelect_clicked(bool checked)

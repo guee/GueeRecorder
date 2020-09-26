@@ -78,5 +78,6 @@
         <file>icon64.png</file>
         <file>icon128.png</file>
         <file>icon256.png</file>
+        <file>typeIconCamera.png</file>
     </qresource>
 </RCC>

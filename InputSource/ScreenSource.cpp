@@ -323,7 +323,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
         m_imageLock.unlock();
         return false;
     }
-
+    int64_t tim = QDateTime::currentMSecsSinceEpoch();
     if(m_x11_UseShm)
     {
         if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
@@ -358,6 +358,8 @@ bool ScreenSource::shotScreen(const QRect* rect)
         }
         m_pixFormat = checkPixelFormat(m_x11_image);
     }
+    tim = QDateTime::currentMSecsSinceEpoch() - tim;
+    fprintf(stderr, "TIME:%d\n", int(tim));
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_x11_image->data);
     m_stride = m_x11_image->bytes_per_line;

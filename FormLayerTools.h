@@ -14,11 +14,12 @@ class FormLayerTools : public QWidget
     Q_OBJECT
 
 public:
-    explicit FormLayerTools(VideoSynthesizer* videoObj, QWidget *parent = nullptr);
+    explicit FormLayerTools(QWidget *parent = nullptr);
     virtual~FormLayerTools() override;
     void enterEvent(QEvent*event) override;
     void setCurrLayer(BaseLayer* layer);
     void setStyleIsLeft(bool isLeft);
+    void refreshLayers(VideoSynthesizer* videoObj);
 private slots:
     void on_pushButtonRemove_clicked();
     void on_pushButtonFullScreen_clicked(bool checked);
@@ -33,19 +34,21 @@ private slots:
     void on_spinBoxW_valueChanged(int arg1);
     void on_spinBoxH_valueChanged(int arg1);
     void on_listLayersSelect_currentRowChanged(const QModelIndex& current, const QModelIndex& previous);
+public slots:
+    void on_layerAdded(BaseLayer* layer);
+    void on_layerRemoved(BaseLayer* layer);
+    void on_selectLayer(BaseLayer* layer);
+    void on_layerMoved(BaseLayer* layer);
 private:
     Ui::FormLayerTools *ui;
     VideoSynthesizer*   m_video = nullptr;
     BaseLayer* m_layer = nullptr;
     int32_t m_posChangeByProg = 0;
-    void resetSpinBox();
-    void resetLayerList();
+
     int32_t findLayerItem(BaseLayer* layer);
     void resetButStatus();
 signals:
-    void removeLayer(BaseLayer* layer);
     void selectLayer(BaseLayer* layer);
-    void movedLayer(BaseLayer* layer);
 };
 
 #endif // FORMLAYERTOOLS_H

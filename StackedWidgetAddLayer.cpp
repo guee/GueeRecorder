@@ -293,12 +293,7 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
         layer->setShotOption(scrOpt);
         layer->open();
         layer->play();
-        //emit selectedScreen(scrOpt);
     }
-   //     m_selArea->startSelect(mainWndow);
-//     setMouseTracking(false);
-//     releaseMouse();
-//     releaseKeyboard();
 }
 
 void StackedWidgetAddLayer::on_pushButtonAddCamera_clicked()
