@@ -146,11 +146,6 @@ BaseLayer *VideoSynthesizer::createLayer(const QString &type)
     return layer;
 }
 
-void VideoSynthesizer::immediateUpdate()
-{
-    m_immediateUpdate = true;
-}
-
 bool VideoSynthesizer::open(const QString &sourceName)
 {
     if (!m_threadWorking) return false;
@@ -609,7 +604,6 @@ void VideoSynthesizer::renderThread()
                 preTimeStamp = m_frameData.timestamp;
 
             }
-            bool fromImm = m_immediateUpdate;
             m_immediateUpdate = false;
             fboRgba->bind();
             glViewport(0, 0, m_vidParams.width, m_vidParams.height);
@@ -623,7 +617,7 @@ void VideoSynthesizer::renderThread()
 
             }
 
-            if (!fromImm)
+            if (curTimer >= 0)
             {
                 if ( m_status  == Palying )
                 {
@@ -910,18 +904,21 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
 
 void VideoSynthesizer::onLayerOpened(BaseLayer *layer)
 {
+    m_immediateUpdate = true;
     emit layerAdded(layer);
 }
 
 void VideoSynthesizer::onLayerRemoved(BaseLayer *layer)
 {
     BaseLayer::onLayerRemoved(layer);
+    m_immediateUpdate = true;
     emit layerRemoved(layer);
 }
 
 void VideoSynthesizer::onSizeChanged(BaseLayer *layer)
 {
     BaseLayer::onSizeChanged(layer);
+    m_immediateUpdate = true;
     emit layerMoved(layer);
 }
 

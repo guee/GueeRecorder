@@ -386,11 +386,10 @@ bool BaseLayer::updateSourceTextures(int64_t requestTimestamp)
     bool ret = false;
     for (auto it:m_resPool)
     {
-        if (it->updateToTexture())
+        if (it->updateToTexture(requestTimestamp))
         {
             ret = true;
         }
-        it->requestTimestamp(requestTimestamp);
     }
     return ret;
 }

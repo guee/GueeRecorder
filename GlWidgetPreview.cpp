@@ -420,7 +420,6 @@ void GlWidgetPreview::mouseMoveEvent(QMouseEvent *event)
                 m_boxOfPressKey = m_boxOfEditing;
             }
             update();
-            m_video->immediateUpdate();
         }
     }
     else

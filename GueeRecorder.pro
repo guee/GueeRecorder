@@ -52,8 +52,7 @@ SOURCES += \
     Common/FrameTimestamp.cpp \
     Common/FrameRateCalc.cpp \
     VideoSynthesizer.cpp \
-    MediaCodec/WaveFile.cpp \
-    InputSource/WindowSource.cpp
+    MediaCodec/WaveFile.cpp
 
 
 HEADERS += \
@@ -93,8 +92,7 @@ HEADERS += \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
     VideoSynthesizer.h \
-    MediaCodec/WaveFile.h \
-    InputSource/WindowSource.h
+    MediaCodec/WaveFile.h
 
 FORMS += \
     DialogSelectScreen.ui \

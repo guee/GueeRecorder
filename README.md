@@ -52,6 +52,7 @@
 　　　　sudo apt-get install libqt5x11extras5-dev</br>
 　　　　sudo apt-get install libxinerama-dev</br>
 　　　　sudo apt-get install libxfixes-dev</br>
+　　　　sudo apt-get install libxcomposite-dev</br>
 　　　　sudo apt-get install libx264-dev</br>
 　　　　sudo apt-get install libfaac-dev</br>
 
@@ -65,6 +66,7 @@
 　　　　sudo yum install mesa-libGLU-devel</br>
 　　　　sudo yum install qt5-qtx11extras-devel</br>
 　　　　sudo dnf install libXinerama-devel</br>
+　　　　sudo dnf install libXcomposite-devel</br>
 　　　　sudo dnf install libXfixes-devel</br>
 　　　　sudo dnf install x264-devel</br>
 　　　　//aac编码库需要自行下载和编译源码，请参考 [其他人写的文章](https://www.cnblogs.com/wayns/p/facc-install.html)</br>

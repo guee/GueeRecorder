@@ -1,8 +1,8 @@
 #include "ScreenLayer.h"
-#include <X11/extensions/shape.h>
-//#include <X11/extensions/Xrender.h>
-#include <X11/extensions/Xcomposite.h>
+
+
 #include <X11/Xlib.h>
+#include <QX11Info>
 
 ScreenLayer::ScreenLayer()
 {
@@ -198,33 +198,33 @@ void ScreenLayer::enum_window(Display*display, Window window, int depth)
 
 }
 
-bool ScreenLayer::windowImage(Window wid)
-{
-    Display* xdisp = XOpenDisplay(nullptr);
-    //重定向窗口绘制，这个是必须的。
-    XCompositeRedirectWindow(xdisp, wid, CompositeRedirectAutomatic);
-    XWindowAttributes attr;
-    XGetWindowAttributes(xdisp, wid, &attr);
-    int64_t tim = QDateTime::currentMSecsSinceEpoch();
-    Pixmap pixmap = XCompositeNameWindowPixmap(xdisp, wid);
-    XImage* image = XGetImage(xdisp, pixmap, 0, 0, attr.width, attr.height, AllPlanes, ZPixmap);
+//bool ScreenLayer::windowImage(Window wid)
+//{
+//    Display* xdisp = XOpenDisplay(nullptr);
+//    //重定向窗口绘制，这个是必须的。
+//    XCompositeRedirectWindow(xdisp, wid, CompositeRedirectAutomatic);
+//    XWindowAttributes attr;
+//    XGetWindowAttributes(xdisp, wid, &attr);
+//    int64_t tim = QDateTime::currentMSecsSinceEpoch();
+//    Pixmap pixmap = XCompositeNameWindowPixmap(xdisp, wid);
+//    XImage* image = XGetImage(xdisp, pixmap, 0, 0, attr.width, attr.height, AllPlanes, ZPixmap);
 
-    tim = QDateTime::currentMSecsSinceEpoch() - tim;
-    fprintf(stderr, "TIME:%d\n", int(tim));
-    if (image)
-    {
-        QImage img;
-        if (image->bits_per_pixel == 24)
-            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB888);
-        else
-            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB32);
-        img.save(QString("/home/guee/Pictures/%1.png").arg(QDateTime::currentMSecsSinceEpoch()));
-        XDestroyImage(image);
-    }
-    XFreePixmap(xdisp, pixmap);
+//    tim = QDateTime::currentMSecsSinceEpoch() - tim;
+//    fprintf(stderr, "TIME:%d\n", int(tim));
+//    if (image)
+//    {
+//        QImage img;
+//        if (image->bits_per_pixel == 24)
+//            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB888);
+//        else
+//            img = QImage((uchar*)image->data, attr.width, attr.height, image->bytes_per_line, QImage::Format_RGB32);
+//        img.save(QString("/home/guee/Pictures/%1.png").arg(QDateTime::currentMSecsSinceEpoch()));
+//        XDestroyImage(image);
+//    }
+//    XFreePixmap(xdisp, pixmap);
 
-    XCompositeUnredirectWindow(ScreenSource::xDisplay(), wid, CompositeRedirectAutomatic);
-}
+//    XCompositeUnredirectWindow(ScreenSource::xDisplay(), wid, CompositeRedirectAutomatic);
+//}
 
 ScreenLayer::Option ScreenLayer::posOnWindow(const QPoint &pos, Window exclude)
 {
@@ -348,8 +348,7 @@ bool ScreenLayer::setShotOption(const ScreenLayer::Option &opt)
 
 BaseSource *ScreenLayer::onCreateSource(const QString &sourceName)
 {
-    Q_UNUSED(sourceName)
-    return new ScreenSource(layerType());
+    return new ScreenSource(layerType(), sourceName);
 
 }
 

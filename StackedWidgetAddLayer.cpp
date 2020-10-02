@@ -291,7 +291,14 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
         ScreenLayer* layer = static_cast<ScreenLayer*>(VideoSynthesizer::instance().createLayer("screen"));
         layer->setAspectRatioMode(Qt::KeepAspectRatio);
         layer->setShotOption(scrOpt);
-        layer->open();
+        if (scrOpt.mode >= ScreenLayer::specWindow)
+        {
+            layer->open(QString::number(ulong(scrOpt.windowId)));
+        }
+        else
+        {
+            layer->open();
+        }
         layer->play();
     }
 }

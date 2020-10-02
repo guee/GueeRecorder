@@ -62,8 +62,9 @@ void FormLayerTools::on_pushButtonRemove_clicked()
 {
     if (m_layer)
     {
-        m_layer->destroy(m_layer);
+        BaseLayer* delLay = m_layer;
         m_layer = nullptr;
+        delLay->destroy(delLay);
     }
 }
 

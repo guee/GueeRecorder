@@ -1,15 +1,24 @@
 #include "ScreenSource.h"
 #include "ScreenLayer.h"
+
+#include <QX11Info>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xinerama.h>
+#include <X11/extensions/Xcomposite.h>
+#include <X11/extensions/XShm.h>
+
+#include <GL/glx.h>
+
 #include <sys/sem.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
 
-Display* ScreenSource::m_x11_Display = nullptr;
-int ScreenSource::m_x11_Screen = 0;
-Window ScreenSource::m_x11_RootWindow = 0;
-Visual* ScreenSource::m_x11_Visual = nullptr;
-int ScreenSource::m_x11_Depth = 0;
-bool ScreenSource::m_x11_UseShm = false;
+Display* ScreenSource::m_display = nullptr;
+int ScreenSource::m_screen = 0;
+Window ScreenSource::m_rootWid = 0;
+Visual* ScreenSource::m_visual = nullptr;
+int ScreenSource::m_depth = 0;
+bool ScreenSource::m_useShm = false;
 QVector<QRect> ScreenSource::m_screenRects;
 //QVector<QRect> ScreenSource::m_screenDeadRects;
 QRect ScreenSource::m_screenBound;
@@ -18,26 +27,125 @@ bool ScreenSource::m_cursorUseable = false;
 Atom ScreenSource::m_atom_wm_state = 0;
 Atom ScreenSource::m_atom_net_wm_state = 0;
 Atom ScreenSource::m_atom_net_wm_state_hidden = 0;
+PFNGLXBINDTEXIMAGEEXTPROC ScreenSource::glXBindTexImageEXT = nullptr;
+PFNGLXRELEASETEXIMAGEEXTPROC ScreenSource::glXReleaseTexImageEXT = nullptr;
+QSet<Window> ScreenSource::m_changedWindows;
+
+static bool *curErrorTarget = nullptr;
+static char curErrorText[200];
+static int xerrorlock_handler(Display *disp, XErrorEvent *err)
+{
+    if (curErrorTarget)
+        *curErrorTarget = true;
+
+    XGetErrorText(disp, err->error_code, curErrorText, 200);
+
+    return 0;
+}
+class XErrorLock {
+    bool islock;
+    bool goterr;
+    XErrorHandler prevhandler;
+
+public:
+    XErrorLock()
+    {
+        goterr = false;
+        islock = false;
+        prevhandler = nullptr;
+
+        lock();
+    }
+    ~XErrorLock()
+    {
+        unlock();
+    }
+
+    bool isLocked() {return islock;}
+
+    void unlock()
+    {
+        if (islock) {
+            XSync(ScreenSource::xDisplay(), 0);
+
+            curErrorTarget = nullptr;
+            XSetErrorHandler(prevhandler);
+            prevhandler = nullptr;
+            XUnlockDisplay(ScreenSource::xDisplay());
+            islock = false;
+        }
+    }
+    void lock()
+    {
+        if (!islock) {
+            XLockDisplay(ScreenSource::xDisplay());
+            XSync(ScreenSource::xDisplay(), 0);
+
+            curErrorTarget = &goterr;
+            curErrorText[0] = 0;
+            prevhandler = XSetErrorHandler(xerrorlock_handler);
+
+            islock = true;
+        }
+    }
+
+    bool gotError()
+    {
+        if (!islock)
+            return false;
+
+        XSync(ScreenSource::xDisplay(), 0);
+
+        bool res = goterr;
+        goterr = false;
+        return res;
+    }
+    std::string getErrorText() {return curErrorText;}
+    void resetError()
+    {
+        if (islock)
+            XSync(ScreenSource::xDisplay(), 0);
+
+        goterr = false;
+        curErrorText[0] = 0;
+    }
+};
+
 
 ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     : BaseSource(typeName, sourceName)
 {
-    m_x11_image = nullptr;
-    memset( &m_x11_shm_info, 0, sizeof(m_x11_shm_info) );
-    m_x11_shm_server_attached = false;
+    m_img = nullptr;
+    memset( &m_shmInfo, 0, sizeof(m_shmInfo) );
+    m_shmServerAttached = false;
     qDebug() << "ScreenSource 构造";
 }
 
 ScreenSource::~ScreenSource()
 {
     onClose();
-    freeImage();
+
     qDebug() << "ScreenSource 析构";
 }
 
 bool ScreenSource::onOpen()
 {
-    start();
+    if (!m_sourceName.isEmpty())
+    {
+        m_wid = m_sourceName.toULong();
+        if (false == captureWindow())
+        {
+            onClose();
+            return false;
+        }
+            //m_img = XGetImage(m_display, m_pix, 0, 0, uint(m_attr.width), uint(m_attr.height), AllPlanes, ZPixmap);
+            //XFreePixmap(m_display, m_pix);
+
+    }
+    else
+    {
+        start();
+    }
     return true;
 }
 
@@ -46,6 +154,16 @@ bool ScreenSource::onClose()
     m_semShot.release();
     wait();
     if (m_semShot.available()) m_semShot.acquire(m_semShot.available());
+
+    if (m_wid)
+    {
+        releaseWindow();
+    }
+    else
+    {
+        freeImage();
+    }
+
     return true;
 }
 
@@ -61,20 +179,20 @@ bool ScreenSource::onPause()
 
 bool ScreenSource::static_init()
 {
-    if(m_x11_Display) return true;
-    m_x11_Display = XOpenDisplay(nullptr); //QX11Info::display();
-    if ( m_x11_Display == nullptr)
+    if(m_display) return true;
+    m_display = XOpenDisplay(nullptr); //QX11Info::display();
+    if ( m_display == nullptr)
     {
         qCritical() << "XOpenDisplay(nullptr) 调用返回 nullptr!";
         return false;
     }
 
-    m_x11_Screen = DefaultScreen(m_x11_Display); //QX11Info::appScreen();
-    m_x11_RootWindow = RootWindow(m_x11_Display, m_x11_Screen); //QX11Info::appRootWindow(m_x11_Screen);
-    m_x11_Visual = DefaultVisual(m_x11_Display, m_x11_Screen); //(Visual*) QX11Info::appVisual(m_x11_Screen);
-    m_x11_Depth = DefaultDepth(m_x11_Display, m_x11_Screen); //QX11Info::appDepth(m_x11_Screen);
-    m_x11_UseShm = XShmQueryExtension(m_x11_Display);
-    if(m_x11_UseShm)
+    m_screen = DefaultScreen(m_display);
+    m_rootWid = RootWindow(m_display, m_screen);
+    m_visual = DefaultVisual(m_display, m_screen);
+    m_depth = DefaultDepth(m_display, m_screen);
+    m_useShm = XShmQueryExtension(m_display);
+    if(m_useShm)
     {
         qDebug() << "X11 截屏可以使用共享内存。";
     }
@@ -85,7 +203,7 @@ bool ScreenSource::static_init()
     if(!m_cursorUseable)
     {
         int event, error;
-        if(!XFixesQueryExtension(m_x11_Display, &event, &error))
+        if(!XFixesQueryExtension(m_display, &event, &error))
         {
             qWarning() << "初始化鼠标录制失败，不能录制鼠标。";
             m_cursorUseable = false;
@@ -100,14 +218,17 @@ bool ScreenSource::static_init()
     m_atom_wm_state = XInternAtom(ScreenSource::xDisplay(), "WM_STATE", true);
     m_atom_net_wm_state = XInternAtom(ScreenSource::xDisplay(), "_NET_WM_STATE", true);
     m_atom_net_wm_state_hidden = XInternAtom(ScreenSource::xDisplay(), "_NET_WM_STATE_HIDDEN", true);
+
+    glXBindTexImageEXT = (PFNGLXBINDTEXIMAGEEXTPROC)glXGetProcAddress((GLubyte*)"glXBindTexImageEXT");
+    glXReleaseTexImageEXT = (PFNGLXRELEASETEXIMAGEEXTPROC)glXGetProcAddress((GLubyte*)"glXReleaseTexImageEXT");
     return true;
 }
 
 void ScreenSource::static_uninit()
 {
-    if(m_x11_Display != nullptr) {
-        XCloseDisplay(m_x11_Display);
-        m_x11_Display = nullptr;
+    if(m_display != nullptr) {
+        XCloseDisplay(m_display);
+        m_display = nullptr;
 
     }
 }
@@ -131,10 +252,10 @@ bool ScreenSource::readScreenConfig()
 {
     m_screenRects.clear();
     int event_base, error_base;
-    if(XineramaQueryExtension(m_x11_Display, &event_base, &error_base))
+    if(XineramaQueryExtension(m_display, &event_base, &error_base))
     {
         int num_screens;
-        XineramaScreenInfo *screens = XineramaQueryScreens(m_x11_Display, &num_screens);
+        XineramaScreenInfo *screens = XineramaQueryScreens(m_display, &num_screens);
         for(int i = 0; i < num_screens; ++i) {
             m_screenRects.push_back(QRect(screens[i].x_org, screens[i].y_org, screens[i].width, screens[i].height));
         }
@@ -231,6 +352,8 @@ QImage::Format ScreenSource::checkPixelFormat(XImage* image)
             pixFmt = QImage::Format_ARGB32;
         else if(image->red_mask == 0x000000ff && image->green_mask == 0x0000ff00 && image->blue_mask == 0x00ff0000)
             pixFmt = QImage::Format_RGBA8888;
+        else
+            pixFmt = QImage::Format_ARGB32;
         break;
     default:
         pixFmt = QImage::Format_Invalid;
@@ -240,67 +363,194 @@ QImage::Format ScreenSource::checkPixelFormat(XImage* image)
 
 bool ScreenSource::allocImage(uint width, uint height)
 {
-    if(m_x11_shm_server_attached
-            && m_x11_image->width == static_cast<int>(width)
-            && m_x11_image->height == static_cast<int>(height))
+    if(m_shmServerAttached
+            && m_img->width == static_cast<int>(width)
+            && m_img->height == static_cast<int>(height))
     {
         return true;
     }
     freeImage();
-    m_x11_image = XShmCreateImage(m_x11_Display, m_x11_Visual, static_cast<uint>(m_x11_Depth),
-                                  ZPixmap, nullptr, &m_x11_shm_info, width, height);
-    if(m_x11_image == nullptr)
+    m_img = XShmCreateImage(m_display, m_visual, static_cast<uint>(m_depth),
+                                  ZPixmap, nullptr, &m_shmInfo, width, height);
+    if(m_img == nullptr)
     {
         qDebug() << "x11 不能创建共享内存!";
         return false;
     }
-    m_pixFormat = checkPixelFormat(m_x11_image);
-    m_x11_shm_info.shmid = shmget(IPC_PRIVATE,
-                                  static_cast<size_t>(m_x11_image->bytes_per_line * m_x11_image->height),
+    m_pixFormat = checkPixelFormat(m_img);
+    m_shmInfo.shmid = shmget(IPC_PRIVATE,
+                                  static_cast<size_t>(m_img->bytes_per_line * m_img->height),
                                   IPC_CREAT | 0700);
-    if(m_x11_shm_info.shmid == -1)
+    if(m_shmInfo.shmid == -1)
     {
         qDebug() << "x11 获取共享内存信息失败";
         return false;
     }
-    m_x11_shm_info.shmaddr = reinterpret_cast<char*>(shmat(m_x11_shm_info.shmid, nullptr, SHM_RND));
-    if(m_x11_shm_info.shmaddr == reinterpret_cast<char*>(-1))
+    m_shmInfo.shmaddr = reinterpret_cast<char*>(shmat(m_shmInfo.shmid, nullptr, SHM_RND));
+    if(m_shmInfo.shmaddr == reinterpret_cast<char*>(-1))
     {
         qDebug() << "x11 不能附加到共享内存";
         return false;
     }
-    m_x11_image->data = m_x11_shm_info.shmaddr;
-    if(!XShmAttach(m_x11_Display, &m_x11_shm_info))
+    m_img->data = m_shmInfo.shmaddr;
+    if(!XShmAttach(m_display, &m_shmInfo))
     {
         qDebug() << "x11 不能附加到共享内存";
         return false;
     }
-    m_x11_shm_server_attached = true;
+    m_shmServerAttached = true;
     return true;
 }
 
 void ScreenSource::freeImage()
 {
-    if(m_x11_shm_server_attached)
+    if(m_shmServerAttached)
     {
-        XShmDetach(m_x11_Display, &m_x11_shm_info);
-        m_x11_shm_server_attached = false;
+        XShmDetach(m_display, &m_shmInfo);
+        m_shmServerAttached = false;
     }
-    if(m_x11_shm_info.shmaddr != reinterpret_cast<char*>(-1))
+    if(m_shmInfo.shmaddr != reinterpret_cast<char*>(-1))
     {
-        shmdt(m_x11_shm_info.shmaddr);
-        m_x11_shm_info.shmaddr = reinterpret_cast<char*>(-1);
+        shmdt(m_shmInfo.shmaddr);
+        m_shmInfo.shmaddr = reinterpret_cast<char*>(-1);
     }
-    if(m_x11_shm_info.shmid != -1)
+    if(m_shmInfo.shmid != -1)
     {
-        shmctl(m_x11_shm_info.shmid, IPC_RMID, nullptr);
-        m_x11_shm_info.shmid = -1;
+        shmctl(m_shmInfo.shmid, IPC_RMID, nullptr);
+        m_shmInfo.shmid = -1;
     }
-    if(m_x11_image != nullptr)
+    if(m_img != nullptr)
     {
-        XDestroyImage(m_x11_image);
-        m_x11_image = nullptr;
+        XDestroyImage(m_img);
+        m_img = nullptr;
     }
+}
+
+bool ScreenSource::captureWindow()
+{
+    if (0 == m_wid) return false;
+
+    XSync(m_display, false);
+    if (XGetWindowAttributes(m_display, m_wid, &m_attr))
+    {
+        XErrorLock xlock;
+        XCompositeRedirectWindow(m_display, m_wid, CompositeRedirectAutomatic);
+        if (xlock.gotError())
+        {
+            return false;
+        }
+        XSelectInput(m_display, m_wid,
+                 StructureNotifyMask | ExposureMask |
+                     VisibilityChangeMask);
+        const int config_attrs[] = {GLX_BIND_TO_TEXTURE_RGBA_EXT,
+                        GL_TRUE,
+                        GLX_DRAWABLE_TYPE,
+                        GLX_PIXMAP_BIT,
+                        GLX_BIND_TO_TEXTURE_TARGETS_EXT,
+                        GLX_TEXTURE_2D_BIT_EXT,
+                        GLX_DOUBLEBUFFER,
+                        GL_FALSE,
+                        None};
+        int nelem = 0;
+        GLXFBConfig *configs = glXChooseFBConfig(m_display, m_screen, config_attrs, &nelem);
+        bool found = false;
+        GLXFBConfig config;
+        for (int i = 0; i < nelem; i++) {
+            config = configs[i];
+            XVisualInfo *visual = glXGetVisualFromFBConfig(m_display, config);
+            if (!visual)
+                continue;
+
+            if (m_attr.depth != visual->depth) {
+                XFree(visual);
+                continue;
+            }
+            XFree(visual);
+            found = true;
+            break;
+        }
+        if (!found) {
+            XFree(configs);
+            onClose();
+            return false;
+        }
+        bool draw_opaque = true;
+        int inverted;
+        glXGetFBConfigAttrib(m_display, config, GLX_Y_INVERTED_EXT, &inverted);
+
+        xlock.resetError();
+        m_pix = XCompositeNameWindowPixmap(m_display, m_wid);
+        if (xlock.gotError())
+        {
+            m_pix = 0;
+            XFree(configs);
+            return false;
+        }
+        const int pixmap_attrs[] = {GLX_TEXTURE_TARGET_EXT, GLX_TEXTURE_2D_EXT,
+                        GLX_TEXTURE_FORMAT_EXT,
+                        GLX_TEXTURE_FORMAT_RGBA_EXT, None};
+        m_glxPix = glXCreatePixmap(m_display, config, m_pix, pixmap_attrs);
+        if (xlock.gotError())
+        {
+            XFreePixmap(m_display, m_pix);
+            XFree(configs);
+            m_pix = 0;
+            m_glxPix = 0;
+            return false;
+        }
+        XFree(configs);
+        m_width = m_attr.width;
+        m_height = m_attr.height;
+        m_texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
+        if(!m_texture->create())
+        {
+            onClose();
+            return false;
+        }
+        m_texture->bind();
+        m_texture->setSize(m_width, m_height);
+        m_texture->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+        m_texture->setFormat(QOpenGLTexture::RGBA8_UNorm);
+        glXBindTexImageEXT(m_display, m_glxPix, GLX_FRONT_LEFT_EXT, NULL);
+        if (xlock.gotError())
+        {
+            XFreePixmap(m_display, m_pix);
+            delete m_texture;
+            m_texture = nullptr;
+            m_pix = 0;
+            m_glxPix = 0;
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+void ScreenSource::releaseWindow()
+{
+    if (m_glxPix)
+    {
+        glXReleaseTexImageEXT(m_display, m_glxPix, GLX_FRONT_LEFT_EXT);
+        glXDestroyPixmap(m_display, m_glxPix);
+        m_glxPix = 0;
+    }
+    if (m_pix)
+    {
+        XFreePixmap(m_display, m_pix);
+        m_pix = 0;
+    }
+    if (m_wid)
+    {
+        XCompositeUnredirectWindow(m_display, m_wid, CompositeRedirectAutomatic);
+        XSelectInput(m_display, m_wid, 0);
+        m_wid = 0;
+    }
+    if (m_texture)
+    {
+        delete m_texture;
+        m_texture = nullptr;
+    }
+    XSync(m_display, false);
 }
 
 bool ScreenSource::shotScreen(const QRect* rect)
@@ -324,7 +574,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
         return false;
     }
     int64_t tim = QDateTime::currentMSecsSinceEpoch();
-    if(m_x11_UseShm)
+    if(m_useShm)
     {
         if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
         {
@@ -332,7 +582,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
             return false;
         }
 
-        if(!XShmGetImage(m_x11_Display, m_x11_RootWindow, m_x11_image,
+        if(!XShmGetImage(m_display, m_rootWid, m_img,
                          m_shotRect.x(), m_shotRect.y(), AllPlanes))
         {
             qWarning() << "截取x11屏幕失败。";
@@ -342,27 +592,27 @@ bool ScreenSource::shotScreen(const QRect* rect)
     }
     else
     {
-        if(m_x11_image != nullptr)
+        if(m_img != nullptr)
         {
-            XDestroyImage(m_x11_image);
-            m_x11_image = nullptr;
+            XDestroyImage(m_img);
+            m_img = nullptr;
         }
-        m_x11_image = XGetImage(m_x11_Display, m_x11_RootWindow,
+        m_img = XGetImage(m_display, m_rootWid,
                                 m_shotRect.x(), m_shotRect.y(),
                                 uint32_t(m_width), uint32_t(m_height), AllPlanes, ZPixmap);
-        if(m_x11_image == nullptr)
+        if(m_img == nullptr)
         {
             qWarning() << "截取x11屏幕失败。";
             m_imageLock.unlock();
             return false;
         }
-        m_pixFormat = checkPixelFormat(m_x11_image);
+        m_pixFormat = checkPixelFormat(m_img);
     }
     tim = QDateTime::currentMSecsSinceEpoch() - tim;
-    fprintf(stderr, "TIME:%d\n", int(tim));
+   // fprintf(stderr, "TIME:%d\n", int(tim));
 
-    m_imageBuffer   = reinterpret_cast<uint8_t*>(m_x11_image->data);
-    m_stride = m_x11_image->bytes_per_line;
+    m_imageBuffer   = reinterpret_cast<uint8_t*>(m_img->data);
+    m_stride = m_img->bytes_per_line;
     if (m_recordCursor) drawCursor();
     m_imageLock.unlock();
 
@@ -409,7 +659,7 @@ QRect ScreenSource::calcShotRect()
             if (scr->m_shotOption.windowId)
             {
                 XWindowAttributes attributes;
-                if ( XGetWindowAttributes(m_x11_Display, scr->m_shotOption.windowId, &attributes) )
+                if ( XGetWindowAttributes(m_display, scr->m_shotOption.windowId, &attributes) )
                 {
                     scr->m_shotOnScreen = QRect(attributes.x, attributes.y, attributes.width, attributes.height) + scr->m_shotOption.margins;
                     scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
@@ -425,11 +675,50 @@ QRect ScreenSource::calcShotRect()
     }
     return bound;
 }
-
-void ScreenSource::requestTimestamp(int64_t timestamp)
+bool ScreenSource::updateToTexture(int64_t next_timestamp)
 {
-    BaseSource::requestTimestamp(timestamp);
-    m_semShot.release();
+    if (m_sourceName.isEmpty())
+    {
+        BaseSource::updateToTexture(next_timestamp);
+        m_semShot.release();
+    }
+    else
+    {
+        XLockDisplay(m_display);
+        while (XEventsQueued(m_display, QueuedAfterReading) > 0)
+        {
+            XEvent ev;
+            XNextEvent(m_display, &ev);
+            if (ev.type == ConfigureNotify)
+                m_changedWindows.insert(ev.xconfigure.event);
+            if (ev.type == MapNotify)
+                m_changedWindows.insert(ev.xmap.event);
+            if (ev.type == Expose)
+                m_changedWindows.insert(ev.xexpose.window);
+            if (ev.type == VisibilityNotify)
+                m_changedWindows.insert(ev.xvisibility.window);
+            if (ev.type == DestroyNotify)
+                m_changedWindows.insert(ev.xdestroywindow.event);
+        }
+        XUnlockDisplay(m_display);
+
+        if (m_wid)
+        {
+            auto it = m_changedWindows.find(m_wid);
+            //如果在窗口被重置的列表中找到了窗口，就尝试重新初始化窗口纹理绑定
+            if (it != m_changedWindows.end())
+            {
+                m_changedWindows.erase(it);
+                releaseWindow();
+                m_wid = m_sourceName.toULong();
+                if (!captureWindow())
+                {
+
+                }
+            }
+        }
+    }
+    m_requestTimestamp = next_timestamp;
 }
 
 void ScreenSource::run()
@@ -455,7 +744,7 @@ void ScreenSource::run()
 
 void ScreenSource::drawCursor()
 {
-    XFixesCursorImage * ci = XFixesGetCursorImage(m_x11_Display);
+    XFixesCursorImage * ci = XFixesGetCursorImage(m_display);
     if ( nullptr == ci ) return;
     int bytePerPix = 0, ro, go, bo;
     switch(m_pixFormat)
@@ -483,7 +772,7 @@ void ScreenSource::drawCursor()
     ulong* curRow = ci->pixels + ci->width * (ovrRect.top() - curRect.top())
             + (ovrRect.left() - curRect.left());
     uint8_t* scrRow = const_cast<uint8_t*>(m_imageBuffer) + m_stride * (ovrRect.top() - m_shotRect.top())
-            + (ovrRect.left() - m_shotRect.left()) * m_x11_image->bits_per_pixel / 8;
+            + (ovrRect.left() - m_shotRect.left()) * m_img->bits_per_pixel / 8;
 
     for (int y = 0; y < ovrRect.height(); ++y)
     {

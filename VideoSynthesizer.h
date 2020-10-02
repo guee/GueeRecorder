@@ -24,7 +24,6 @@ public:
     ShaderProgramPool& programPool() {return m_progPool;}
     const QString& layerType() const override { static QString tn = "synthesizer"; return tn; }
     BaseLayer *createLayer(const QString &type);
-    void immediateUpdate();
 
     bool open(const QString &sourceName = QString());
     void close(close_step_progress fun, void* param);

@@ -416,10 +416,6 @@ void MainWindow::on_widgetPreview_initGL()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
-
-    //ScreenLayer::enum_window(0,0,0);
-//    ScreenLayer::windowImage(Window(0x1200029));
-//    return;
     if (m_video.status() >= BaseLayer::Opened)
     {
         return;
