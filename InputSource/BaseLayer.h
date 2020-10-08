@@ -48,7 +48,7 @@ public:
 
     EStatus status() const {return m_status;}
 
-    void draw();
+    virtual void draw();
 
     int32_t widthOfPixel() const { return m_rectOnSource.width(); }
     int32_t heightOfPixel() const { return m_rectOnSource.height(); }
@@ -65,20 +65,36 @@ public:
     BaseLayer* childLayer(int32_t i);
     int32_t layerIndex();
     //以在整个画面上的归一化坐标取得对应的层
-    BaseLayer* childLayer(const QPointF &pos, bool onlyChild = true);
+    //onlyChild ： 只检查本层的子层，不包含本层。
+    //realBox : 只检查层的实际显示区域。
+    BaseLayer* childLayer(const QPointF &pos, bool onlyChild = true, bool realBox = true);
     //以归一化的坐标设置图像在画面上的区域(X坐标从左到右为0到1，Y坐标从上到下为0到1)。
     void setRect(const QRectF& rect);
     void setRect(qreal x, qreal y, qreal w, qreal h );
+    //返回 1 表示需要交换 Hit 左右方向，2 表示交换上下方向，3 表示两者。
+    void movCenter(qreal x, qreal y);
+    int movLeft(qreal left, bool realBox = true);
+    int movRight(qreal right, bool realBox = true);
+    int movTop(qreal top, bool realBox = true);
+    int movBottom(qreal bottom, bool realBox = true);
+    int movTopLeft(qreal top, qreal left, bool realBox = true);
+    int movTopRight(qreal top, qreal right, bool realBox = true);
+    int movBottomLeft(qreal bottom, qreal left, bool realBox = true);
+    int movBottomRight(qreal bottom, qreal right, bool realBox = true);
+    void setWidth(qreal width, bool realBox = true);
+    void setHeight(qreal height, bool realBox = true);
+
+    void setRectOnSource(const QRect& rect);
     void fullViewport(bool full);
     bool isFullViewport() const{ return m_fullViewport;}
     //void
     //取得图像在画面上的归一化坐标区域(X坐标从左到右为0到1，Y坐标从上到下为0到1)。
-    QRectF rect() const;
+    QRectF rect(bool realBox = true) const;
     //设置和取得图像保持比例的模式
     void setAspectRatioMode(Qt::AspectRatioMode mode);
     Qt::AspectRatioMode aspectRatioMode() const;
 
-    void setViewportSize( const QSizeF& s, bool childs = false );
+    void setViewportSize( const QSizeF& glSize, const QSize& pixSize, bool childs = false );
 
     void setShaderProgram(QOpenGLShaderProgram* prog);
 
@@ -88,12 +104,15 @@ protected:
     friend BaseSource;
     EStatus m_status = NoOpen;
     BaseLayer* m_parent = nullptr;
-    QVector<BaseLayer*> m_childs;
+
+
     QString m_friendlyName;
     QRect m_rectOnSource;
     QRectF m_userdefOnView;  //用户定义的在OpenGL绘图区域上的坐标和大小
+    QRectF m_realBoxOnView;
     Qt::AspectRatioMode m_aspectRatioMode = Qt::KeepAspectRatio;  //保持比例的模式
     QSizeF m_glViewportSize;   //OpenGL绘图区域的宽高
+    QSize m_pixViewportSize;
     QOpenGLBuffer* m_vbo = nullptr;
     QOpenGLShaderProgram* m_program = nullptr;
     bool m_fullViewport = true;        //是否缩放到整个画面。
@@ -106,13 +125,22 @@ protected:
     virtual void onReleaseSource(BaseSource* source);
     virtual float frameRate() const { return m_parent ? m_parent->frameRate() : -1.0f; }
     virtual void onSizeChanged(BaseLayer* layer);
-    void setRectOnSource(const QRect& rect);
     virtual void onLayerOpened(BaseLayer* layer);
     virtual void onLayerRemoved(BaseLayer* layer);
+
+    QVector<BaseLayer*>& lockChilds();
+    void unlockChilds();
 private:
     static QVector<BaseSource*>    m_resPool;
     static QMutex m_lockSources;
     static QVector<QOpenGLShaderProgram*>   m_progPool;
+    QVector<BaseLayer*> m_childs;
+    QMutex m_mutexChilds;
+
+    int mov_Left(qreal left, QRectF& box);
+    int mov_Right(qreal right, QRectF& box);
+    int mov_Top(qreal top, QRectF& box);
+    int mov_Bottom(qreal bottom, QRectF& box);
 
     bool            m_rectOnSourceInited = false;
     bool            m_vertexChanged = false;

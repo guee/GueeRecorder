@@ -139,7 +139,7 @@ BaseLayer *VideoSynthesizer::createLayer(const QString &type)
     if (layer)
     {
         layer->setParent(this);
-        layer->setViewportSize(m_glViewportSize);
+        layer->setViewportSize(m_glViewportSize, m_pixViewportSize);
         layer->setShaderProgram(m_progPool.createProgram("base"));
     }
 
@@ -351,6 +351,8 @@ bool VideoSynthesizer::setSize(int32_t width, int32_t height)
         m_glViewportSize.setHeight(height * 2.0 / width);
         m_glViewportSize.setWidth(2.0);
     }
+    m_pixViewportSize.setWidth(width);
+    m_pixViewportSize.setHeight(height);
     m_videoSizeChanged = true;
     return true;
 }
@@ -575,7 +577,7 @@ void VideoSynthesizer::renderThread()
             glBindTexture(GL_TEXTURE_2D, fboRgba->texture());
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-            setViewportSize(m_glViewportSize, true);
+            setViewportSize(m_glViewportSize, m_pixViewportSize, true);
             m_videoSizeChanged = false;
             emit frameReady(0);
             qDebug() << "resize to:" << fboRgba->size();
@@ -611,11 +613,12 @@ void VideoSynthesizer::renderThread()
             //glClearColor(1.0f, m_backgroundColor.y(), m_backgroundColor.z(), m_backgroundColor.w());
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            for (auto it = m_childs.rbegin(); it != m_childs.rend(); ++it)
+            auto &cds = lockChilds();
+            for ( auto it = cds.rbegin(); it!= cds.rend(); ++it)
             {
                 (*it)->draw();
-
             }
+            unlockChilds();
 
             if (curTimer >= 0)
             {

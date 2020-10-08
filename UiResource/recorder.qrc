@@ -79,5 +79,7 @@
         <file>icon128.png</file>
         <file>icon256.png</file>
         <file>typeIconCamera.png</file>
+        <file>butDing_checked_normal.png</file>
+        <file>butDing_normal.png</file>
     </qresource>
 </RCC>

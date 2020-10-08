@@ -6,7 +6,7 @@
 #include <X11/extensions/Xinerama.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/extensions/XShm.h>
-
+#include <X11/Xatom.h>
 #include <GL/glx.h>
 
 #include <sys/sem.h>
@@ -24,12 +24,12 @@ QVector<QRect> ScreenSource::m_screenRects;
 QRect ScreenSource::m_screenBound;
 bool ScreenSource::m_recordCursor = false;
 bool ScreenSource::m_cursorUseable = false;
+bool ScreenSource::m_xCompcapIsValid = false;
 Atom ScreenSource::m_atom_wm_state = 0;
 Atom ScreenSource::m_atom_net_wm_state = 0;
 Atom ScreenSource::m_atom_net_wm_state_hidden = 0;
 PFNGLXBINDTEXIMAGEEXTPROC ScreenSource::glXBindTexImageEXT = nullptr;
 PFNGLXRELEASETEXIMAGEEXTPROC ScreenSource::glXReleaseTexImageEXT = nullptr;
-QSet<Window> ScreenSource::m_changedWindows;
 
 static bool *curErrorTarget = nullptr;
 static char curErrorText[200];
@@ -130,17 +130,38 @@ ScreenSource::~ScreenSource()
 
 bool ScreenSource::onOpen()
 {
-    if (!m_sourceName.isEmpty())
+    if (!m_sourceName.isEmpty() && xCompcapIsValid())
     {
-        m_wid = m_sourceName.toULong();
-        if (false == captureWindow())
+        QStringList lst = m_sourceName.split("\r\n");
+        m_wid = lst.count() > 0 ? lst[0].toULong() : 0;
+        m_windowName = lst.count() > 1 ? lst[1] : "";
+        m_windowClass = lst.count() > 2 ? lst[2] : "";
+        if (m_wid)
         {
-            onClose();
+            Window realWnd = findRealWindow(m_wid);
+            if (realWnd == 0) return false;
+            if (m_windowName.isEmpty())
+            {
+                getWindowName(realWnd, m_windowName);
+            }
+            if (m_windowClass.isEmpty())
+            {
+                getWindowClass(realWnd, m_windowClass);
+            }
+        }
+        else
+        {
+            if (!m_windowName.isEmpty() || !m_windowClass.isEmpty())
+            {
+                m_wid = findTopWindow(m_windowName, m_windowClass);
+            }
+        }
+
+        if (m_wid == 0 && m_windowName.isEmpty() && m_windowClass.isEmpty() )
+        {
             return false;
         }
-            //m_img = XGetImage(m_display, m_pix, 0, 0, uint(m_attr.width), uint(m_attr.height), AllPlanes, ZPixmap);
-            //XFreePixmap(m_display, m_pix);
-
+        m_timeCheck.start();
     }
     else
     {
@@ -149,12 +170,43 @@ bool ScreenSource::onOpen()
     return true;
 }
 
+bool ScreenSource::isSameSource(const QString &type, const QString &source)
+{
+    if (BaseSource::isSameSource(type, source))
+    {
+        return true;
+    }
+    if (m_typeName == type)
+    {
+        if (xCompcapIsValid())
+        {
+            QStringList lst = source.split("\r\n");
+            Window wid = lst.count() > 0 ? lst[0].toULong() : 0;
+            QString windowName = lst.count() > 1 ? lst[1] : "";
+            QString windowClass = lst.count() > 2 ? lst[2] : "";
+
+            if (m_wid != 0 && m_wid == wid)
+            {
+                return true;
+            }
+            else if ( windowName == m_windowName && windowClass == m_windowClass )
+            {
+                 return true;
+            }
+        }
+        else
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool ScreenSource::onClose()
 {
     m_semShot.release();
     wait();
     if (m_semShot.available()) m_semShot.acquire(m_semShot.available());
-
     if (m_wid)
     {
         releaseWindow();
@@ -163,7 +215,6 @@ bool ScreenSource::onClose()
     {
         freeImage();
     }
-
     return true;
 }
 
@@ -361,6 +412,253 @@ QImage::Format ScreenSource::checkPixelFormat(XImage* image)
     return pixFmt;
 }
 
+bool ScreenSource::xCompcapIsValid()
+{
+    if (m_xCompcapIsValid) return true;
+    m_xCompcapIsValid = false;
+    if (!static_init())
+    {
+        return false;
+    }
+
+    int eventBase, errorBase;
+    if (!XCompositeQueryExtension(m_display, &eventBase, &errorBase)) {
+        return false;
+    }
+
+    int major = 0, minor = 2;
+    XCompositeQueryVersion(m_display, &major, &minor);
+
+    if (major == 0 && minor < 2)
+    {
+        return false;
+    }
+    m_xCompcapIsValid = true;
+    return true;
+}
+
+bool ScreenSource::ewmhIsSupported()
+{
+    if (!static_init()) return false;
+
+    Atom netSupportingWmCheck =
+        XInternAtom(m_display, "_NET_SUPPORTING_WM_CHECK", true);
+    Atom actualType;
+    int format = 0;
+    unsigned long num = 0, bytes = 0;
+    unsigned char *data = nullptr;
+    Window ewmh_window = 0;
+
+    int status = XGetWindowProperty(m_display, m_rootWid,
+                    netSupportingWmCheck, 0L, 1L, false,
+                    XA_WINDOW, &actualType, &format, &num,
+                    &bytes, &data);
+
+    if (status == Success) {
+        if (num > 0) {
+            ewmh_window = reinterpret_cast<Window*>(data)[0];
+        }
+        if (data) {
+            XFree(data);
+            data = nullptr;
+        }
+    }
+
+    if (ewmh_window) {
+        status = XGetWindowProperty(m_display, ewmh_window,
+                        netSupportingWmCheck, 0L, 1L, false,
+                        XA_WINDOW, &actualType, &format,
+                        &num, &bytes, &data);
+        if (status != Success || num == 0 ||
+            ewmh_window != reinterpret_cast<Window*>(data)[0])
+        {
+            ewmh_window = 0;
+        }
+        if (status == Success && data) {
+            XFree(data);
+        }
+    }
+    return ewmh_window != 0;
+}
+
+bool ScreenSource::windowIsMinimized(Window wid)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long items, bytes_after;
+    Atom *atoms = nullptr;
+
+    int result = XGetWindowProperty(m_display, wid,
+                                    m_atom_net_wm_state,
+            0, 1024, false, XCB_ATOM_ATOM, &actual_type, &actual_format, &items,
+            &bytes_after, reinterpret_cast<unsigned char**>(&atoms));
+
+    if(result == Success)
+    {
+        for ( int i = 0; i < items; ++i)
+        {
+            if ( m_atom_net_wm_state_hidden == atoms[i])
+            {
+                XFree(atoms);
+                return true;
+            }
+        }
+    }
+    XFree(atoms);
+    return false;
+}
+
+Window ScreenSource::findTopWindow(const QString &windowName, const QString &windowClass)
+{
+    if (windowName.isEmpty() && windowClass.isEmpty()) return 0;
+    QVector<TopWindowInfo> wnds = getTopLevelWindows();
+    for (auto w : wnds)
+    {
+        int find = 0;
+        if (!windowName.isEmpty())
+        {
+            QString s;
+            if (getWindowName(w.widReal, s) && s == windowName)
+            {
+                ++find;
+            }
+        }
+        else
+        {
+            ++find;
+        }
+        if (!windowClass.isEmpty())
+        {
+            QString s;
+            if (getWindowClass(w.widReal, s) && s == windowClass)
+            {
+                ++find;
+            }
+        }
+        else
+        {
+            ++find;
+        }
+        if (find == 2)
+        {
+            return w.widTop;
+        }
+    }
+    return 0;
+}
+
+Window ScreenSource::findRealWindow(Window window)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long items, bytes_after;
+    unsigned char *data = nullptr;
+    Window realWindow = None;
+    //只有能取得 WM_STATE 属性的，才是与XServer session managers通信的窗口。
+    if ( Success == XGetWindowProperty(m_display, window, m_atom_wm_state,
+                       0, 0, false, AnyPropertyType, &actual_type, &actual_format, &items, &bytes_after, &data))
+    {
+        if(data != nullptr)
+            XFree(data);
+        if(actual_type != None)
+            return window;
+        Window root, parent, *childs;
+        unsigned int childcount;
+        //查询子窗口失败，就返回 None
+        if(!XQueryTree(ScreenSource::xDisplay(), window, &root, &parent, &childs, &childcount))
+        {
+            return None;
+        }
+        //继续枚举子窗口，直到找到第一个与XServer通信的窗口。
+        for(unsigned int i = childcount; i > 0; )
+        {
+            --i;
+            Window w = findRealWindow(childs[i]);
+            if(w != None)
+            {
+                realWindow = w;
+                break;
+            }
+        }
+        if(childs != nullptr)
+            XFree(childs);
+    }
+    return realWindow;
+}
+
+QVector<ScreenSource::TopWindowInfo> ScreenSource::getTopLevelWindows(bool queryTree)
+{
+    QVector<TopWindowInfo> windows;
+    if (!static_init()) return windows;
+
+    if (queryTree)
+    {
+        Window root, parent;
+        Window* children = nullptr;
+        unsigned int n;
+        if (XQueryTree(m_display, m_rootWid,
+                   &root, &parent, &children, &n) )
+        {
+            for (unsigned int i = 0; i < n; ++i)
+            {
+                TopWindowInfo wnd;
+                wnd.widTop = children[i];
+                wnd.widReal = findRealWindow(wnd.widTop);
+                if (wnd.widReal)
+                {
+                    windows.push_back(wnd);
+//                    QString name;
+//                    getWindowName(wnd.widReal, name);
+//                    qDebug() << i << "/" << n << ":" << wnd.widTop << "/" << wnd.widReal << name;
+                }
+            }
+            XFree(children);
+            children = nullptr;
+        }
+
+    }
+    else if (ewmhIsSupported())
+    {
+        Atom netClList = XInternAtom(m_display, "_NET_CLIENT_LIST", true);
+        Atom actualType;
+        int format;
+        unsigned long num, bytes;
+        Window* children = nullptr;
+
+        for (int i = 0; i < ScreenCount(m_display); ++i)
+        {
+            Window rootWin = RootWindow(m_display, i);
+
+            int status = XGetWindowProperty(m_display, rootWin, netClList, 0L,
+                            ~0L, false, AnyPropertyType,
+                            &actualType, &format, &num,
+                            &bytes, reinterpret_cast<uint8_t **>(&children));
+
+            if (status != Success) continue;
+            for (unsigned long i = 0; i < num; ++i)
+            {
+                TopWindowInfo wids;
+                wids.widTop = children[i];
+                wids.widReal = children[i];
+                windows.push_back(wids);
+            }
+            XFree(children);
+            children = nullptr;
+        }
+    }
+    return windows;
+}
+
+bool ScreenSource::getWindowClass(Window wid, QString &windowClass)
+{
+    return getWindowString(wid, windowClass, "WM_CLASS");
+}
+
+bool ScreenSource::getWindowName(Window wid, QString &windowName)
+{
+    return getWindowString(wid, windowName, "_NET_WM_NAME");
+}
+
 bool ScreenSource::allocImage(uint width, uint height)
 {
     if(m_shmServerAttached
@@ -521,6 +819,17 @@ bool ScreenSource::captureWindow()
             m_glxPix = 0;
             return false;
         }
+        for (auto it:m_layers)
+        {
+            ScreenLayer* scr = static_cast<ScreenLayer*>(it);
+            if (scr->m_shotOption.mode == ScreenLayer::specWindow
+                    || scr->m_shotOption.mode == ScreenLayer::clientOfWindow)
+            {
+                scr->m_shotOnScreen = QRect(m_attr.x, m_attr.y, m_attr.width, m_attr.height) + scr->m_shotOption.margins;
+                scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
+                scr->setRectOnSource(QRect(0, 0, m_width, m_height) + scr->m_shotOption.margins);
+            }
+        }
         return true;
     }
     return false;
@@ -609,7 +918,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
         m_pixFormat = checkPixelFormat(m_img);
     }
     tim = QDateTime::currentMSecsSinceEpoch() - tim;
-   // fprintf(stderr, "TIME:%d\n", int(tim));
+    //fprintf(stderr, "TIME:%d\n", int(tim));
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_img->data);
     m_stride = m_img->bytes_per_line;
@@ -643,23 +952,69 @@ QRect ScreenSource::calcShotRect()
         switch(scr->m_shotOption.mode)
         {
         case ScreenLayer::specScreen:
-            scr->m_shotOnScreen = m_screenRects[scr->m_shotOption.screenIndex];
-            bound |= scr->m_shotOnScreen;
+            if (scr->m_shotOption.screenIndex < m_screenRects.count())
+            {
+                m_hasImage = true;
+                scr->m_shotOnScreen = m_screenRects[scr->m_shotOption.screenIndex];
+                bound |= scr->m_shotOnScreen;
+            }
+            else
+            {
+                m_hasImage = false;
+            }
             break;
         case ScreenLayer::fullScreen:
+            m_hasImage = true;
             scr->m_shotOnScreen = m_screenBound;
             bound |= scr->m_shotOnScreen;
             break;
         case ScreenLayer::rectOfScreen:
             scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOption.geometry);
-            bound |= scr->m_shotOnScreen;
+            if (scr->m_shotOnScreen.isEmpty())
+            {
+                m_hasImage = false;
+            }
+            else
+            {
+                m_hasImage = true;
+                bound |= scr->m_shotOnScreen;
+            }
             break;
-        case ScreenLayer::specWindow:
         case ScreenLayer::clientOfWindow:
-            if (scr->m_shotOption.windowId)
+            if (windowIsMinimized(scr->m_shotOption.widTop))
+            {
+                m_hasImage = false;
+                break;
+            }
+            m_hasImage = true;
+            if (scr->m_shotOption.widReal)
             {
                 XWindowAttributes attributes;
-                if ( XGetWindowAttributes(m_display, scr->m_shotOption.windowId, &attributes) )
+                if ( XGetWindowAttributes(m_display, scr->m_shotOption.widReal, &attributes) )
+                {
+                    int offsetX, offsetY;
+                    Window child;
+                    if (XTranslateCoordinates(m_display, scr->m_shotOption.widReal, m_rootWid, 0, 0, &offsetX, &offsetY, &child))
+                    {
+                        scr->m_shotOnScreen = QRect(offsetX, offsetY, attributes.width, attributes.height);
+                        scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
+                        bound |= scr->m_shotOnScreen;
+                        break;
+                    }
+                }
+            }
+            //此处不 break，如果失败则用带框架的窗口。
+        case ScreenLayer::specWindow:
+            if (windowIsMinimized(scr->m_shotOption.widTop))
+            {
+                m_hasImage = false;
+                break;
+            }
+            m_hasImage = true;
+            if (scr->m_shotOption.widTop)
+            {
+                XWindowAttributes attributes;
+                if ( XGetWindowAttributes(m_display, scr->m_shotOption.widTop, &attributes) )
                 {
                     scr->m_shotOnScreen = QRect(attributes.x, attributes.y, attributes.width, attributes.height) + scr->m_shotOption.margins;
                     scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
@@ -670,55 +1025,100 @@ QRect ScreenSource::calcShotRect()
         default:
             break;
         }
-
-
     }
     return bound;
 }
+
 bool ScreenSource::updateToTexture(int64_t next_timestamp)
 {
+    bool succ = false;
     if (m_sourceName.isEmpty())
     {
-        BaseSource::updateToTexture(next_timestamp);
+        succ = BaseSource::updateToTexture(next_timestamp);
         m_semShot.release();
+        //qDebug() << "updateToTexture()" << next_timestamp;
     }
     else
     {
+        static QSet<Window> changedWindows;
         XLockDisplay(m_display);
         while (XEventsQueued(m_display, QueuedAfterReading) > 0)
         {
             XEvent ev;
             XNextEvent(m_display, &ev);
             if (ev.type == ConfigureNotify)
-                m_changedWindows.insert(ev.xconfigure.event);
-            if (ev.type == MapNotify)
-                m_changedWindows.insert(ev.xmap.event);
-            if (ev.type == Expose)
-                m_changedWindows.insert(ev.xexpose.window);
-            if (ev.type == VisibilityNotify)
-                m_changedWindows.insert(ev.xvisibility.window);
-            if (ev.type == DestroyNotify)
-                m_changedWindows.insert(ev.xdestroywindow.event);
+                changedWindows.insert(ev.xconfigure.event);
+            else if (ev.type == MapNotify)
+                changedWindows.insert(ev.xmap.event);
+            else if (ev.type == Expose)
+                changedWindows.insert(ev.xexpose.window);
+            else if (ev.type == VisibilityNotify)
+                changedWindows.insert(ev.xvisibility.window);
+            else if (ev.type == DestroyNotify)
+                changedWindows.insert(ev.xdestroywindow.event);
         }
         XUnlockDisplay(m_display);
 
+        if (m_wid == 0)
+        {
+            if (m_timeCheck.elapsed() > 500)
+            {
+                m_wid = findTopWindow(m_windowName, m_windowClass);
+                if (m_wid)
+                {
+                    m_sourceName = QString::number(m_wid);
+                }
+                m_timeCheck.start();
+            }
+        }
+
+
         if (m_wid)
         {
-            auto it = m_changedWindows.find(m_wid);
+            auto it = changedWindows.find(m_wid);
             //如果在窗口被重置的列表中找到了窗口，就尝试重新初始化窗口纹理绑定
-            if (it != m_changedWindows.end())
+            if (it != changedWindows.end())
             {
-                m_changedWindows.erase(it);
-                releaseWindow();
+                changedWindows.erase(it);
+                if ( !windowIsMinimized(m_wid) )
+                {
+                    releaseWindow();
+                    m_wid = m_sourceName.toULong();
+                    if (!captureWindow())
+                    {
+                        releaseWindow();
+                        m_timeCheck.start();
+                    }
+                    else
+                    {
+                        succ = true;
+                    }
+                }
+            }
+            else if(m_glxPix == 0)
+            {
                 m_wid = m_sourceName.toULong();
                 if (!captureWindow())
                 {
-
+                    releaseWindow();
+                    m_timeCheck.start();
                 }
+            }
+            else
+            {
+                succ = true;
+            }
+            if (m_wid && m_timeCheck.elapsed() > 1000)
+            {
+                Window realWnd = findRealWindow(m_wid);
+                getWindowName(realWnd, m_windowName);
+                getWindowClass(realWnd, m_windowClass);
+                m_timeCheck.start();
             }
         }
     }
     m_requestTimestamp = next_timestamp;
+    return succ;
 }
 
 void ScreenSource::run()
@@ -735,7 +1135,6 @@ void ScreenSource::run()
             if (shotScreen())
             {
                 m_imageChanged = true;
-                //qDebug() << "shot screen timestamp:" << timestamp / 1000000.0;
             }
         }
     }
@@ -803,6 +1202,48 @@ void ScreenSource::drawCursor()
         scrRow += m_stride;
     }
     XFree(ci);
+}
+
+bool ScreenSource::getWindowString(Window wid, QString &str, const char *atom)
+{
+    if (!static_init())
+    {
+        return false;
+    }
+    Atom netWmName = XInternAtom(m_display, atom, false);
+    int count = 0;
+    char **list = nullptr;
+    XTextProperty text;
+
+    XGetTextProperty(m_display, wid, &text, netWmName);
+
+    if (!text.nitems)
+    {
+        if (!XGetWMName(m_display, wid, &text))
+        {
+            return false;
+        }
+    }
+
+    if (!text.nitems)
+        return false;
+
+    if (text.encoding == XA_STRING)
+    {
+        str = QString::fromUtf8(reinterpret_cast<char*>(text.value));
+    }
+    else
+    {
+        int ret = XmbTextPropertyToTextList(m_display, &text, &list, &count);
+        if (ret >= Success && count > 0 && *list)
+        {
+            str = QString::fromUtf8(*list);
+            XFreeStringList(list);
+        }
+    }
+    XFree(text.value);
+    return true;
+
 }
 
 

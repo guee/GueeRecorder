@@ -25,7 +25,7 @@ public:
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
     void fixOffsetAsScreen();
-    void setVideoObject(VideoSynthesizer* videoObj);
+    void setVideoObject(VideoSynthesizer* videoObj, FormLayerTools* toolWidget);
 
 signals:
     void initGL();
@@ -65,40 +65,8 @@ private:
     FormLayerTools* m_layerTools = nullptr;
     void hitTest(const QPoint& pos);
     void setHitCursor(Qt::WindowFrameSection hit);
-    inline bool checkOffsetX(int32_t& v, int32_t x)
-    {
-        v += x - m_posOfPressKey.x();
-//        if ( v < 0 )
-//        {
-//            x -= v;
-//            v = 0;
-//            return false;
-//        }
-//        else if ( v >= m_displayOfSceeen.width() )
-//        {
-//            x += m_displayOfSceeen.width() - 1 - v;
-//            v = m_displayOfSceeen.width() - 1;
-//            return false;
-//        }
-        return true;
-    }
-    inline bool checkOffsetY(int32_t& v, int32_t y)
-    {
-        v += y - m_posOfPressKey.y();
-//        if ( v < 0 )
-//        {
-//            y -= v;
-//            v = 0;
-//            return false;
-//        }
-//        if ( v >= m_displayOfSceeen.height() )
-//        {
-//            y += m_displayOfSceeen.height() - 1 - v;
-//            v = m_displayOfSceeen.height() - 1;
-//            return false;
-//        }
-        return true;
-    }
+    void notifySelectLayer(BaseLayer* layer);
+
     inline void swap(int32_t& a, int32_t& b)
     {
         int32_t c = a;

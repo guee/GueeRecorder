@@ -28,6 +28,10 @@ bool PictureSource::onOpen()
     m_height = m_image->height();
     m_pixFormat = m_image->format();
     m_imageChanged = true;
+    for (auto it:m_layers)
+    {
+        it->setRectOnSource(QRect(0, 0, m_width, m_height));
+    }
     return true;
 }
 

@@ -222,7 +222,7 @@ bool BaseLayer::setParent(BaseLayer *parent, int32_t layer)
     }
     if (m_parent)
     {
-        auto &par = m_parent->m_childs;
+        auto &par = m_parent->lockChilds();
         int i = par.indexOf(this);
         if (i < 0)
             return false;
@@ -234,11 +234,13 @@ bool BaseLayer::setParent(BaseLayer *parent, int32_t layer)
             }
         }
         par.remove(i);
+        m_parent->unlockChilds();
     }
-    auto &par = parent->m_childs;
+    auto &par = parent->lockChilds();
     layer = std::min(layer, par.size());
     layer = std::max(layer, 0);
     par.insert(par.begin() + layer, this);
+    parent->unlockChilds();
     m_parent = parent;
     return true;
 }
@@ -250,40 +252,52 @@ int32_t BaseLayer::childLayerCount()
 
 BaseLayer *BaseLayer::childLayer(int32_t i)
 {
-    if (i >= 0 && i < static_cast<int32_t>(m_childs.size()))
+    BaseLayer* lay = nullptr;
+    auto& cds = lockChilds();
+    if (i >= 0 && i < cds.size())
     {
-        return m_childs[static_cast<size_t>(i)];
+        lay = cds[i];
     }
-    return nullptr;
+    unlockChilds();
+    return lay;
 }
 
 int32_t BaseLayer::layerIndex()
 {
     if ( m_parent )
     {
-        for ( int i = 0; i < m_parent->m_childs.size(); ++i)
+        auto& cds = m_parent->lockChilds();
+        for ( int i = 0; i < cds.size(); ++i)
         {
-            if ( m_parent->m_childs[i] == this )
+            if ( cds[i] == this )
             {
-                return static_cast<int32_t>(i);
+                m_parent->unlockChilds();
+                return i;
             }
         }
+        m_parent->unlockChilds();
     }
     return 0;
 }
 
-BaseLayer *BaseLayer::childLayer(const QPointF &pos, bool onlyChild)
+BaseLayer *BaseLayer::childLayer(const QPointF &pos, bool onlyChild, bool realBox)
 {
     BaseLayer* inp = nullptr;
+    m_mutexChilds.lock();
     for ( auto i:m_childs )
     {
         inp = i->childLayer(pos, false);
-        if (inp) return inp;
+        if (inp)
+        {
+            m_mutexChilds.unlock();
+            return inp;
+        }
     }
+    m_mutexChilds.unlock();
     if (!onlyChild)
     {
         QPointF p((pos.x() - 0.5) * m_glViewportSize.width(), (pos.y() - 0.5) * m_glViewportSize.height());
-        if ( m_userdefOnView.contains(p) )
+        if ( realBox ? m_realBoxOnView.contains(p) : m_userdefOnView.contains(p) )
         {
             return this;
         }
@@ -294,6 +308,8 @@ BaseLayer *BaseLayer::childLayer(const QPointF &pos, bool onlyChild)
 void BaseLayer::setRect(const QRectF& rect)
 {
     m_fullViewport = false;
+    if (rect.width() < (m_glViewportSize.width() / m_pixViewportSize.width())) return;
+    if (rect.height() < (m_glViewportSize.height() / m_pixViewportSize.height())) return;
     m_userdefOnView.setX((rect.x() - 0.5) * m_glViewportSize.width());
     m_userdefOnView.setY((rect.y() - 0.5) * m_glViewportSize.height());
     m_userdefOnView.setWidth(rect.width() * m_glViewportSize.width());
@@ -304,12 +320,291 @@ void BaseLayer::setRect(const QRectF& rect)
 void BaseLayer::setRect(qreal x, qreal y, qreal w, qreal h)
 {
     m_fullViewport = false;
+    if (w < (m_glViewportSize.width() / m_pixViewportSize.width())) return;
+    if (h < (m_glViewportSize.height() / m_pixViewportSize.height())) return;
     m_userdefOnView.setX((x - 0.5) * m_glViewportSize.width());
     m_userdefOnView.setY((y - 0.5) * m_glViewportSize.height());
     m_userdefOnView.setWidth(w * m_glViewportSize.width());
     m_userdefOnView.setHeight(h * m_glViewportSize.height());
     onSizeChanged(this);
 
+}
+
+void BaseLayer::movCenter(qreal x, qreal y)
+{
+    m_fullViewport = false;
+    x = (x - 0.5) * m_glViewportSize.width();
+    y = (y - 0.5) * m_glViewportSize.height();
+    m_userdefOnView.moveCenter(QPointF(x, y));
+    onSizeChanged(this);
+}
+
+int BaseLayer::movLeft(qreal left, bool realBox)
+{
+    int swapRound = 0;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        m_userdefOnView = m_realBoxOnView;
+        swapRound = mov_Left(left, m_userdefOnView);
+        if (0 > swapRound) return -1;
+        qreal h = m_userdefOnView.width() * m_realBoxOnView.height() / m_realBoxOnView.width();
+        if (h < (m_glViewportSize.height() / m_pixViewportSize.height())) return - 1;
+        m_userdefOnView.setY(m_realBoxOnView.y() - (h - m_realBoxOnView.height()) * 0.5 );
+        m_userdefOnView.setHeight(h);
+    }
+    else
+    {
+        swapRound = mov_Left(left, m_userdefOnView);
+        if (0 > swapRound) return -1;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound;
+}
+
+int BaseLayer::movRight(qreal right, bool realBox)
+{
+    int swapRound = 0;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        m_userdefOnView = m_realBoxOnView;
+        swapRound = mov_Right(right, m_userdefOnView);
+        if (0 > swapRound) return -1;
+        qreal h = m_userdefOnView.width() * m_realBoxOnView.height() / m_realBoxOnView.width();
+        if (h < (m_glViewportSize.height() / m_pixViewportSize.height())) return -1;
+        m_userdefOnView.setY(m_realBoxOnView.y() - (h - m_realBoxOnView.height()) * 0.5 );
+        m_userdefOnView.setHeight(h);
+    }
+    else
+    {
+        swapRound = mov_Right(right, m_userdefOnView);
+        if (0 > swapRound) return -1;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound;
+}
+
+int BaseLayer::movTop(qreal top, bool realBox)
+{
+    int swapRound = 0;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        m_userdefOnView = m_realBoxOnView;
+        swapRound = mov_Top(top, m_userdefOnView);
+        if (0 > swapRound)
+        {
+            return -1;
+        }
+        qreal w = m_userdefOnView.height() * m_realBoxOnView.width() / m_realBoxOnView.height();
+        if (w < (m_glViewportSize.width() / m_pixViewportSize.width()))
+        {
+            m_userdefOnView = m_realBoxOnView;
+            return -1;
+        }
+        m_userdefOnView.setX(m_realBoxOnView.x() - (w - m_realBoxOnView.width()) * 0.5 );
+        m_userdefOnView.setWidth(w);
+        qDebug() << m_userdefOnView;
+    }
+    else
+    {
+        swapRound = mov_Top(top, m_userdefOnView);
+        if (0 > swapRound) return -1;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound;
+}
+
+int BaseLayer::movBottom(qreal bottom, bool realBox)
+{
+    int swapRound = 0;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        m_userdefOnView = m_realBoxOnView;
+        swapRound = mov_Bottom(bottom, m_userdefOnView);
+        qreal w = m_userdefOnView.height() * m_realBoxOnView.width() / m_realBoxOnView.height();
+        if (w < (m_glViewportSize.width() / m_pixViewportSize.width())) return -1;
+        m_userdefOnView.setX(m_realBoxOnView.x() - (w - m_realBoxOnView.width()) * 0.5 );
+        m_userdefOnView.setWidth(w);
+    }
+    else
+    {
+        swapRound = mov_Bottom(bottom, m_userdefOnView);
+        if (0 > swapRound) return -1;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound;
+}
+
+int BaseLayer::movTopLeft(qreal top, qreal left, bool realBox)
+{
+    QRectF box = (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource) ? m_realBoxOnView : m_userdefOnView;
+    int swapRound1 = mov_Top(top, box);
+    int swapRound2 = mov_Left(left, box);
+    if (0 > swapRound1 || 0 > swapRound2) return -1;
+
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        QSizeF s = m_realBoxOnView.size().scaled(box.size(), m_aspectRatioMode);
+        if (s.width() < (m_glViewportSize.width() / m_pixViewportSize.width()) ||
+            s.height() < (m_glViewportSize.height() / m_pixViewportSize.height()))
+                return -1;
+        m_userdefOnView = box;
+        if (swapRound1)
+            m_userdefOnView.setBottom(box.top() + s.height());
+        else
+            m_userdefOnView.setTop(box.bottom() - s.height());
+        if (swapRound2)
+            m_userdefOnView.setRight(box.left() + s.width());
+        else
+            m_userdefOnView.setLeft(box.right() - s.width());
+    }
+    else
+    {
+        m_userdefOnView = box;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound1 + swapRound2;
+}
+
+int BaseLayer::movTopRight(qreal top, qreal right, bool realBox)
+{
+    QRectF box = (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource) ? m_realBoxOnView : m_userdefOnView;
+    int swapRound1 = mov_Top(top, box);
+    int swapRound2 = mov_Right(right, box);
+    if (0 > swapRound1 || 0 > swapRound2) return -1;
+
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        QSizeF s = m_realBoxOnView.size().scaled(box.size(), m_aspectRatioMode);
+        if (s.width() < (m_glViewportSize.width() / m_pixViewportSize.width()) ||
+            s.height() < (m_glViewportSize.height() / m_pixViewportSize.height()))
+                return -1;
+        m_userdefOnView = box;
+        if (swapRound1)
+            m_userdefOnView.setBottom(box.top() + s.height());
+        else
+            m_userdefOnView.setTop(box.bottom() - s.height());
+        if (swapRound2)
+            m_userdefOnView.setLeft(box.right() - s.width());
+        else
+            m_userdefOnView.setRight(box.left() + s.width());
+    }
+    else
+    {
+        m_userdefOnView = box;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound1 + swapRound2;
+}
+
+int BaseLayer::movBottomLeft(qreal bottom, qreal left, bool realBox)
+{
+    QRectF box = (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource) ? m_realBoxOnView : m_userdefOnView;
+    int swapRound1 = mov_Bottom(bottom, box);
+    int swapRound2 = mov_Left(left, box);
+    if (0 > swapRound1 || 0 > swapRound2) return -1;
+
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        QSizeF s = m_realBoxOnView.size().scaled(box.size(), m_aspectRatioMode);
+        if (s.width() < (m_glViewportSize.width() / m_pixViewportSize.width()) ||
+            s.height() < (m_glViewportSize.height() / m_pixViewportSize.height()))
+                return -1;
+        m_userdefOnView = box;
+        if (swapRound1)
+            m_userdefOnView.setTop(box.bottom() - s.height());
+        else
+            m_userdefOnView.setBottom(box.top() + s.height());
+        if (swapRound2)
+            m_userdefOnView.setRight(box.left() + s.width());
+        else
+            m_userdefOnView.setLeft(box.right() - s.width());
+    }
+    else
+    {
+        m_userdefOnView = box;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound1 + swapRound2;
+}
+
+int BaseLayer::movBottomRight(qreal bottom, qreal right, bool realBox)
+{
+    QRectF box = (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource) ? m_realBoxOnView : m_userdefOnView;
+    int swapRound1 = mov_Bottom(bottom, box);
+    int swapRound2 = mov_Right(right, box);
+    if (0 > swapRound1 || 0 > swapRound2) return -1;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        QSizeF s = m_realBoxOnView.size().scaled(box.size(), m_aspectRatioMode);
+        if (s.width() < (m_glViewportSize.width() / m_pixViewportSize.width()) ||
+            s.height() < (m_glViewportSize.height() / m_pixViewportSize.height()))
+                return -1;
+        m_userdefOnView = box;
+        if (swapRound1)
+            m_userdefOnView.setTop(box.bottom() - s.height());
+        else
+            m_userdefOnView.setBottom(box.top() + s.height());
+        if (swapRound2)
+            m_userdefOnView.setLeft(box.right() - s.width());
+        else
+            m_userdefOnView.setRight(box.left() + s.width());
+    }
+    else
+    {
+        m_userdefOnView = box;
+    }
+    m_fullViewport = false;
+    onSizeChanged(this);
+    return swapRound1 + swapRound2;
+}
+
+void BaseLayer::setWidth(qreal w, bool realBox)
+{
+    m_fullViewport = false;
+    w *= m_glViewportSize.width();
+    if (w < (m_glViewportSize.width() / m_pixViewportSize.width())) return;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        qreal h = w * m_realBoxOnView.height() / m_realBoxOnView.width();
+        m_userdefOnView.setX(m_realBoxOnView.x() - (w - m_realBoxOnView.width()) * 0.5 );
+        m_userdefOnView.setWidth(w);
+        m_userdefOnView.setY(m_realBoxOnView.y() - (h - m_realBoxOnView.height()) * 0.5 );
+        m_userdefOnView.setHeight(h);
+    }
+    else
+    {
+        m_userdefOnView.setX(m_userdefOnView.x() - (w - m_userdefOnView.width()) * 0.5 );
+        m_userdefOnView.setWidth(w);
+    }
+    onSizeChanged(this);
+}
+
+void BaseLayer::setHeight(qreal h, bool realBox)
+{
+    m_fullViewport = false;
+    h *= m_glViewportSize.height();
+    if (h < (m_glViewportSize.height() / m_pixViewportSize.height())) return;
+    if (realBox && m_aspectRatioMode != Qt::IgnoreAspectRatio && m_resource)
+    {
+        qreal w = h * m_realBoxOnView.width() / m_realBoxOnView.height();
+        m_userdefOnView.setX(m_realBoxOnView.x() - (w - m_realBoxOnView.width()) * 0.5 );
+        m_userdefOnView.setWidth(w);
+        m_userdefOnView.setY(m_realBoxOnView.y() - (h - m_realBoxOnView.height()) * 0.5 );
+        m_userdefOnView.setHeight(h);
+    }
+    else
+    {
+        m_userdefOnView.setY(m_userdefOnView.y() - (h - m_userdefOnView.height()) * 0.5 );
+        m_userdefOnView.setHeight(h);
+    }
+    onSizeChanged(this);
 }
 
 void BaseLayer::fullViewport(bool full)
@@ -321,14 +616,21 @@ void BaseLayer::fullViewport(bool full)
     }
 }
 
-QRectF BaseLayer::rect() const
+QRectF BaseLayer::rect(bool realBox) const
 {
+    if (realBox)
+    {
+        return QRectF( m_realBoxOnView.x() / m_glViewportSize.width() + 0.5,
+                    m_realBoxOnView.y() / m_glViewportSize.height() + 0.5,
+                    m_realBoxOnView.width() / m_glViewportSize.width(),
+                    m_realBoxOnView.height() / m_glViewportSize.height());
+    }
     return m_fullViewport ?
                 QRectF(0.0, 0.0, 1.0, 1.0) :
                 QRectF( m_userdefOnView.x() / m_glViewportSize.width() + 0.5,
                 m_userdefOnView.y() / m_glViewportSize.height() + 0.5,
                 m_userdefOnView.width() / m_glViewportSize.width(),
-                m_userdefOnView.height() / m_glViewportSize.height());
+                        m_userdefOnView.height() / m_glViewportSize.height());
 }
 
 void BaseLayer::setAspectRatioMode(Qt::AspectRatioMode mode)
@@ -342,30 +644,33 @@ Qt::AspectRatioMode BaseLayer::aspectRatioMode() const
     return m_aspectRatioMode;
 }
 
-void BaseLayer::setViewportSize(const QSizeF &s, bool childs)
+void BaseLayer::setViewportSize(const QSizeF& glSize, const QSize& pixSize, bool childs)
 {
-    m_glViewportSize = s;
+    m_glViewportSize = glSize;
+    m_pixViewportSize = pixSize;
 
     if (m_fullViewport)
     {
-        m_userdefOnView.setRect(s.width() * -0.5, s.height() * -0.5, s.width(), s.height());
+        m_userdefOnView.setRect(glSize.width() * -0.5, glSize.height() * -0.5, glSize.width(), glSize.height());
     }
 
     if (m_program)
     {
         QMatrix4x4 m;
-        m.ortho(static_cast<float>(s.width() * -0.5), static_cast<float>(s.width() * 0.5),
-                static_cast<float>(s.height() * 0.5), static_cast<float>(s.height() * -0.5),
+        m.ortho(static_cast<float>(glSize.width() * -0.5), static_cast<float>(glSize.width() * 0.5),
+                static_cast<float>(glSize.height() * 0.5), static_cast<float>(glSize.height() * -0.5),
                 -1, 1);
         m_program->bind();
         m_program->setUniformValue("qt_ModelViewProjectionMatrix",m);
     }
     if (childs)
     {
+        m_mutexChilds.lock();
         for (auto it:m_childs)
         {
-            it->setViewportSize(s, childs);
+            it->setViewportSize(glSize, pixSize, childs);
         }
+        m_mutexChilds.unlock();
     }
     onSizeChanged(this);
 }
@@ -376,7 +681,7 @@ void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)
     m_program = prog;
     if (m_program)
     {
-        setViewportSize(m_glViewportSize);
+        setViewportSize(m_glViewportSize, m_pixViewportSize);
     }
 
 }
@@ -398,7 +703,7 @@ BaseSource *BaseLayer::findSource(const QString& typeName, const QString& source
 {
     for (auto it:m_resPool)
     {
-        if (it->m_typeName == typeName && it->m_sourceName == sourceName )
+        if (it->isSameSource(typeName, sourceName) )
             return it;
     }
     return nullptr;
@@ -417,6 +722,7 @@ void BaseLayer::onSizeChanged(BaseLayer* layer)
     if (layer == this)
     {
         if (m_resource == nullptr) return;
+
         QSizeF s(m_rectOnSourceInited ? m_rectOnSource.size() : QSize(m_resource->width(), m_resource->height()));
         QRectF u = m_userdefOnView;
 
@@ -429,6 +735,8 @@ void BaseLayer::onSizeChanged(BaseLayer* layer)
         QRectF r(u.x() + ( u.width() - s.width() ) * 0.5,
                  u.y() + ( u.height() - s.height() ) * 0.5,
                  s.width(), s.height());
+
+        m_realBoxOnView = r;
 
         m_vertex[0].vert.setX(static_cast<float>(r.right()));
         m_vertex[0].vert.setY(static_cast<float>(r.y()));
@@ -449,7 +757,6 @@ void BaseLayer::onSizeChanged(BaseLayer* layer)
 
 void BaseLayer::setRectOnSource(const QRect& rect)
 {
-    m_rectOnSourceInited = true;
     m_rectOnSource = rect;
     m_vertex[0].text.setX((m_rectOnSource.right() + 1.0f) / m_resource->m_width);
     m_vertex[0].text.setY(m_rectOnSource.y() * 1.0f / m_resource->m_height);
@@ -462,8 +769,23 @@ void BaseLayer::setRectOnSource(const QRect& rect)
 
     m_vertex[3].text.setX((m_rectOnSource.right() + 1.0f) / m_resource->m_width);
     m_vertex[3].text.setY((m_rectOnSource.bottom() + 1.0f) / m_resource->m_height);
-
-    onSizeChanged(this);
+    if (!m_rectOnSourceInited)
+    {
+        m_rectOnSourceInited = true;
+        QSizeF s(m_rectOnSource.size());
+        s.scale(m_pixViewportSize, Qt::KeepAspectRatio);
+        if (s.width() > m_rectOnSource.width() || s.height() > m_rectOnSource.height())
+        {
+            s = m_rectOnSource.size();
+        }
+        setRect( (m_pixViewportSize.width() - s.width()) * 0.5 / m_pixViewportSize.width(),
+                 (m_pixViewportSize.height() - s.height()) * 0.5 / m_pixViewportSize.height(),
+                 s.width() / m_pixViewportSize.width(), s.height() / m_pixViewportSize.height());
+    }
+    else
+    {
+        onSizeChanged(this);
+    }
 }
 
 void BaseLayer::onLayerOpened(BaseLayer *layer)
@@ -473,6 +795,7 @@ void BaseLayer::onLayerOpened(BaseLayer *layer)
 
 void BaseLayer::onLayerRemoved(BaseLayer *layer)
 {
+    m_mutexChilds.lock();
     if (layer == this)
     {
         while(m_childs.size())
@@ -488,8 +811,81 @@ void BaseLayer::onLayerRemoved(BaseLayer *layer)
             m_childs.remove(i);
         }
     }
+    m_mutexChilds.unlock();
     if (m_parent)
     {
         m_parent->onLayerRemoved(layer);
     }
+}
+
+QVector<BaseLayer *> &BaseLayer::lockChilds()
+{
+    m_mutexChilds.lock();
+    return m_childs;
+}
+
+void BaseLayer::unlockChilds()
+{
+    m_mutexChilds.unlock();
+}
+
+int BaseLayer::mov_Left(qreal left, QRectF& box)
+{
+    left = (left - 0.5) * m_glViewportSize.width();
+    if (qAbs(left - box.right()) < (m_glViewportSize.width() / m_pixViewportSize.width())) return -1;
+
+    if (left > box.right())
+    {
+       box.moveLeft(box.right());
+       box.setWidth(left - box.left());
+       return 1;
+    }
+    box.setLeft(left);
+    return 0;
+}
+
+int BaseLayer::mov_Right(qreal right, QRectF& box)
+{
+    right = (right - 0.5) * m_glViewportSize.width();
+    if (qAbs(right - box.left()) < (m_glViewportSize.width() / m_pixViewportSize.width())) return -1;
+
+    if (right < box.left())
+    {
+        box.setWidth(box.left() - right);
+        box.moveLeft(right);
+        return 1;
+    }
+    box.setRight(right);
+    return 0;
+}
+
+int BaseLayer::mov_Top(qreal top, QRectF& box)
+{
+    top = (top - 0.5) * m_glViewportSize.height();
+    if (qAbs(top - box.bottom()) < (m_glViewportSize.height() / m_pixViewportSize.height()))
+    {
+        return -1;
+    }
+    if (top > box.bottom())
+    {
+       box.moveTop(box.bottom());
+       box.setHeight(top - box.top());
+       return 2;
+    }
+    box.setTop(top);
+    return 0;
+}
+
+int BaseLayer::mov_Bottom(qreal bottom, QRectF& box)
+{
+    bottom = (bottom - 0.5) * m_glViewportSize.height();
+    if (qAbs(bottom - box.top()) < (m_glViewportSize.height() / m_pixViewportSize.height())) return -1;
+    if (bottom < box.top())
+    {
+       box.setHeight(box.top() - bottom);
+       box.moveTop(bottom);
+       return 2;
+    }
+    box.setBottom(bottom);
+    return 0;
 }

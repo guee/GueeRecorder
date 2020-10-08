@@ -261,26 +261,32 @@ void DialogSetting::on_horizontalSlider_Resolution_valueChanged(int value)
 
 void DialogSetting::on_spinBox_Width_valueChanged(int arg1)
 {
-    if(!m_resolutionChanging && ui->horizontalSlider_Resolution->isEnabled())
+    if(!m_resolutionChanging)
     {
-        m_resolutionChanging = true;
-        int h = (arg1 * ui->spinBox_Height->minimum() * 10 / ui->spinBox_Width->minimum() + 5) / 10;
-        ui->spinBox_Height->setValue(h);
-        ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Width->minimum()) * 1000 / (ui->spinBox_Width->maximum() - ui->spinBox_Width->minimum()));
-        m_resolutionChanging = false;
+        if (ui->horizontalSlider_Resolution->isEnabled())
+        {
+            m_resolutionChanging = true;
+            int h = (arg1 * ui->spinBox_Height->minimum() * 10 / ui->spinBox_Width->minimum() + 5) / 10;
+            ui->spinBox_Height->setValue(h);
+            ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Width->minimum()) * 1000 / (ui->spinBox_Width->maximum() - ui->spinBox_Width->minimum()));
+            m_resolutionChanging = false;
+        }
         m_timResolution->start();
     }
 }
 
 void DialogSetting::on_spinBox_Height_valueChanged(int arg1)
 {
-    if(!m_resolutionChanging && ui->horizontalSlider_Resolution->isEnabled())
+    if(!m_resolutionChanging)
     {
-        m_resolutionChanging = true;
-        int w = (arg1 * ui->spinBox_Width->minimum() * 10 / ui->spinBox_Height->minimum() + 5) / 10;
-        ui->spinBox_Width->setValue(w);
-        ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Height->minimum()) * 1000 / (ui->spinBox_Height->maximum() - ui->spinBox_Height->minimum()));
-        m_resolutionChanging = false;
+        if (ui->horizontalSlider_Resolution->isEnabled())
+        {
+            m_resolutionChanging = true;
+            int w = (arg1 * ui->spinBox_Width->minimum() * 10 / ui->spinBox_Height->minimum() + 5) / 10;
+            ui->spinBox_Width->setValue(w);
+            ui->horizontalSlider_Resolution->setValue((arg1 - ui->spinBox_Height->minimum()) * 1000 / (ui->spinBox_Height->maximum() - ui->spinBox_Height->minimum()));
+            m_resolutionChanging = false;
+        }
         m_timResolution->start();
     }
 }

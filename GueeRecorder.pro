@@ -136,5 +136,4 @@ DISTFILES += \
     Doc/logo.psd \
     Doc/icon.psd \
     Doc/GueeRecorder-Help.docx \
-    Doc/MainUIDesc.png \
-    Doc/截图录屏_20200920235644.jpg
+    Doc/MainUIDesc.png

@@ -8,6 +8,7 @@ FormLayerTools::FormLayerTools(QWidget *parent) :
     ui(new Ui::FormLayerTools)
 {
     ui->setupUi(this);
+    ui->listViewLayers->setAlternatingRowColors(true);
     QStandardItemModel* model = new QStandardItemModel(this);
     ui->listViewLayers->setModel(model);
     QItemSelectionModel* selModel = new QItemSelectionModel(model);
@@ -55,7 +56,11 @@ void FormLayerTools::refreshLayers(VideoSynthesizer *videoObj)
         BaseLayer* layer = m_video->childLayer(i);
         on_layerAdded(layer);
     }
-    setVisible(m_layer);
+}
+
+bool FormLayerTools::windowIsPeg()
+{
+    return ui->pushButtonDing->isChecked();
 }
 
 void FormLayerTools::on_pushButtonRemove_clicked()
@@ -119,30 +124,26 @@ void FormLayerTools::on_pushButtonMoveDown_clicked()
     }
 }
 
-void FormLayerTools::on_pushButtonPrev_clicked()
-{
-    int32_t i = ui->listViewLayers->currentIndex().row();
-    if ( i > 0 )
-    {
-        QStandardItemModel *model = static_cast<QStandardItemModel*>(ui->listViewLayers->model());
-        ui->listViewLayers->setCurrentIndex(model->item(i - 1)->index());
-    }
-}
+//void FormLayerTools::on_pushButtonPrev_clicked()
+//{
+//    int32_t i = ui->listViewLayers->currentIndex().row();
+//    if ( i > 0 )
+//    {
+//        QStandardItemModel *model = static_cast<QStandardItemModel*>(ui->listViewLayers->model());
+//        ui->listViewLayers->setCurrentIndex(model->item(i - 1)->index());
+//    }
+//}
 
-void FormLayerTools::on_pushButtonNext_clicked()
-{
-    int32_t i = ui->listViewLayers->currentIndex().row();
-    QStandardItemModel *model = static_cast<QStandardItemModel*>(ui->listViewLayers->model());
-    if ( i < model->rowCount() - 1 )
-    {
-        ui->listViewLayers->setCurrentIndex(model->item(i + 1)->index());
-    }
-}
+//void FormLayerTools::on_pushButtonNext_clicked()
+//{
+//    int32_t i = ui->listViewLayers->currentIndex().row();
+//    QStandardItemModel *model = static_cast<QStandardItemModel*>(ui->listViewLayers->model());
+//    if ( i < model->rowCount() - 1 )
+//    {
+//        ui->listViewLayers->setCurrentIndex(model->item(i + 1)->index());
+//    }
+//}
 
-void FormLayerTools::on_pushButtonHide_clicked()
-{
-    //hide();
-}
 
 void FormLayerTools::on_spinBoxX_valueChanged(int arg1)
 {
@@ -171,9 +172,7 @@ void FormLayerTools::on_spinBoxW_valueChanged(int arg1)
     if ( m_posChangeByProg ) return;
     if(m_layer)
     {
-        QRectF r = m_layer->rect();
-        r.setWidth(arg1 * 1.0 / m_video->width());
-        m_layer->setRect(r);
+        m_layer->setWidth(arg1 * 1.0 / m_video->width());
     }
 }
 
@@ -182,9 +181,7 @@ void FormLayerTools::on_spinBoxH_valueChanged(int arg1)
     if ( m_posChangeByProg ) return;
     if(m_layer)
     {
-        QRectF r = m_layer->rect();
-        r.setHeight(arg1 * 1.0 / m_video->height());
-        m_layer->setRect(r);
+        m_layer->setHeight(arg1 * 1.0 / m_video->height());
     }
 }
 
@@ -196,13 +193,18 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
     {
         m_layer = reinterpret_cast<BaseLayer*>(current.data(Qt::UserRole+1).toULongLong());
         emit selectLayer(m_layer);
-        ui->labelLayers->setText(QString("%1/%2").arg(m_layer->layerIndex()).arg(m_video->childLayerCount()));
+        ui->labelLayers->setText(QString("%1/%2").arg(m_layer->layerIndex() + 1).arg(m_video->childLayerCount()));
+        ui->scrollAreaOption->setEnabled(true);
+        ui->widgetLayerTools->setEnabled(true);
     }
     else
     {
         m_layer = nullptr;
         emit selectLayer(m_layer);
         ui->labelLayers->setText(QString("-/%2").arg(m_video->childLayerCount()));
+        ui->scrollAreaOption->setEnabled(false);
+        ui->widgetLayerTools->setEnabled(false);
+
     }
     resetButStatus();
     if (m_layer)
@@ -216,8 +218,7 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
         ui->pushButtonFullScreen->setChecked(m_layer->isFullViewport());
         ui->pushButtonAspratio->setChecked(m_layer->aspectRatioMode() != Qt::IgnoreAspectRatio);
         int32_t i = m_layer->layerIndex();
-        ui->pushButtonPrev->setEnabled(i > 0);
-        ui->pushButtonNext->setEnabled(i < m_layer->parent()->childLayerCount() - 1);
+
         ui->pushButtonMoveUp->setEnabled(i > 0);
         ui->pushButtonMoveDown->setEnabled(i < m_layer->parent()->childLayerCount() - 1);
         --m_posChangeByProg;
@@ -245,25 +246,25 @@ void FormLayerTools::on_layerAdded(BaseLayer *layer)
             break;
         case ScreenLayer::fullScreen:
             ico.load(":/typeIconAllScreen.png");
-            tit = QString("所有屏幕 (%1 x %2)")
+            tit = QString("全部 (%1 x %2)")
                     .arg(ScreenLayer::screenBound().width())
                     .arg(ScreenLayer::screenBound().height());
             break;
         case ScreenLayer::rectOfScreen:
             ico.load(":/typeIconScreenArea.png");
-            tit = QString("屏幕区域 (%1 x %2)")
+            tit = QString("区域 (%1 x %2)")
                     .arg(opt.geometry.width())
                     .arg(opt.geometry.height());
             break;
         case ScreenLayer::specWindow:
             ico.load(":/typeIconWindow.png");
-            tit = QString("窗口：%1")
-                    .arg(ScreenLayer::windowName(opt.windowId));
+            tit = QString("%1")
+                    .arg(ScreenLayer::windowName(opt.widReal));
             break;
         case ScreenLayer::clientOfWindow:
             ico.load(":/typeIconWindow.png");
-            tit = QString("窗口内容：%1")
-                    .arg(ScreenLayer::windowName(opt.windowId));
+            tit = QString("%1")
+                    .arg(ScreenLayer::windowName(opt.widReal));
             break;
         }
     }
@@ -278,7 +279,11 @@ void FormLayerTools::on_layerAdded(BaseLayer *layer)
         tit = layer->sourceName();
     }
     QStandardItem* item = new QStandardItem(QIcon(ico), tit);
+    //QStandardItem* item = new QStandardItem(tit);
+    item->setCheckable(true);
+    item->setCheckState(Qt::Checked);
     item->setData(QVariant(reinterpret_cast<qlonglong>(layer)));
+    //item->setData(Qt::Checked, Qt::CheckStateRole);
     model->insertRow(layer->layerIndex(), item);
     if (layer == m_layer )
     {
@@ -322,17 +327,14 @@ void FormLayerTools::on_selectLayer(BaseLayer *layer)
         else
             ui->listViewLayers->setCurrentIndex(QModelIndex());
     }
-    setVisible(m_layer);
 }
 
 void FormLayerTools::on_layerMoved(BaseLayer *layer)
 {
     if (m_layer != layer) return;
     ++m_posChangeByProg;
-    ui->spinBoxX->setEnabled(m_layer);
-    ui->spinBoxY->setEnabled(m_layer);
-    ui->spinBoxW->setEnabled(m_layer);
-    ui->spinBoxH->setEnabled(m_layer);
+
+    //ui->pushButtonFullScreen->setEnabled(m_layer);
     if(m_layer)
     {
         QRectF rt = m_layer->rect();
@@ -340,7 +342,9 @@ void FormLayerTools::on_layerMoved(BaseLayer *layer)
         ui->spinBoxY->setValue( qRound(rt.y() * m_video->height()) );
         ui->spinBoxW->setValue( qRound(rt.width() * m_video->width()) );
         ui->spinBoxH->setValue( qRound(rt.height() * m_video->height()) );
+        ui->pushButtonFullScreen->setChecked(m_layer->isFullViewport());
     }
+
     --m_posChangeByProg;
 }
 
@@ -370,17 +374,23 @@ void FormLayerTools::resetButStatus()
         int32_t i = m_layer->layerIndex();
         if ( i >= 0 )
         {
-            ui->pushButtonPrev->setEnabled(i > 0);
+
             ui->pushButtonMoveUp->setEnabled(i > 0);
-            ui->pushButtonNext->setEnabled(i < m_layer->parent()->childLayerCount() - 1);
+
             ui->pushButtonMoveDown->setEnabled(i < m_layer->parent()->childLayerCount() - 1);
         }
     }
     else
     {
-        ui->pushButtonPrev->setEnabled(false);
+
         ui->pushButtonMoveUp->setEnabled(false);
-        ui->pushButtonNext->setEnabled(false);
+
         ui->pushButtonMoveDown->setEnabled(false);
     }
+}
+
+void FormLayerTools::on_pushButtonDing_clicked(bool checked)
+{
+    if (checked == false && m_layer == nullptr)
+        emit selectLayer(m_layer);
 }

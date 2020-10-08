@@ -386,7 +386,7 @@ void GlScreenSelect::getMouseOnWindow()
     ScreenLayer::Option opt = ScreenLayer::posOnWindow(phyPos, parentWidget()->winId());
 //    qDebug() << "On" << opt.windowId << ",My" << this->winId() << ",Pa" << parentWidget()->winId();
 
-    if ( opt.mode != m_selOpt.mode || opt.windowId != m_selOpt.windowId || opt.geometry != m_selOpt.geometry || opt.margins != m_selOpt.margins )
+    if ( opt.mode != m_selOpt.mode || opt.widTop != m_selOpt.widTop || opt.geometry != m_selOpt.geometry || opt.margins != m_selOpt.margins )
     {
         m_selOpt = opt;
         if ( opt.mode != ScreenLayer::unspecified )

@@ -49,6 +49,8 @@ public:
     //static QOffscreenSurface* m_surface;
     QOpenGLTexture* m_texture = nullptr;
     bool m_imageChanged = false;
+    bool m_hasImage = false;
+    bool m_isVisable = false;
     static int pixelBits(QImage::Format fmt);
 protected:
     virtual bool onOpen() = 0;

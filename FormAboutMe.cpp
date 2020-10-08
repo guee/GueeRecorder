@@ -5,13 +5,9 @@
 #include <QDateTime>
 #include <QLocale>
 
-static QDateTime buildDateTime()
-{
-    QString dt;
-    dt += __DATE__;
-    dt += __TIME__;
-    return QLocale(QLocale::English).toDateTime(dt, "MMM dd yyyyhh:mm:ss");
-}
+
+
+QDateTime buildDateTime();
 
 FormAboutMe::FormAboutMe(QWidget *parent) :
     QWidget(parent),

@@ -9,7 +9,26 @@
 #include "FormWaitFinish.h"
 #include <QDesktopWidget>
 #include <QMessageBox>
-QDateTime buildDateTime();
+#include <QDateTime>
+
+QDateTime buildDateTime()
+{
+    //return QDateTime::fromString(QString("%1 %2").arg(__DATE__, __TIME__), "MMM dd yyyy hh:mm:ss");
+    //return QLocale(QLocale::English).toDateTime(QString("%1 %2").arg(__DATE__, __TIME__), "MMM dd yyyy hh:mm:ss");
+    //UOS v20 升级到 1022 版之后，上面两种写法神奇地失效了，于是只好自己解析了。
+    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    QStringList date = QString(__DATE__).split(" ", QString::SkipEmptyParts);
+    QStringList time = QString(__TIME__).split(":", QString::SkipEmptyParts);
+    if (date.size() == 3 && time.size() == 3)
+    {
+        int m = 1;
+        for (; m <= 12 && date[0] != months[m-1] ; ++m);
+        int d = date[1].toInt();
+        int y = date[2].toInt();
+        return QDateTime(QDate(y, m, d), QTime(time[0].toInt(), time[1].toInt(), time[2].toInt()));
+    }
+    return QDateTime(QDate(2020, 10, 6));
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -50,8 +69,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidgetAddContents->installEventFilter(this);
     ui->stackedWidgetAddContents->hide();
     ui->stackedWidgetAddContents->m_mainWindow = this;
+    ui->widgetLayerTools->hide();
 
-    ui->widgetPreview->setVideoObject(&m_video);
+    ui->widgetPreview->setVideoObject(&m_video, ui->widgetLayerTools);
     ui->widgetLayerTools->refreshLayers(&m_video);
     connect(&m_video, &VideoSynthesizer::initDone, this, &MainWindow::on_videoSynthesizer_initDone);
     connect(&m_video, &VideoSynthesizer::frameReady, ui->widgetPreview,
@@ -87,8 +107,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->widget_AudioRec->resetAudioRecordUI();
 
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
-    QDate dt = QLocale(QLocale::English).toDate(__DATE__, "MMM dd yyyy");
-    QString ver = QString("%1 [%2]").arg(QApplication::applicationVersion(), dt.toString("yyyy-M-d"));
+    QDateTime tt = buildDateTime();
+    qDebug() << tt.toMSecsSinceEpoch();
+    QString ver = QString("%1 [%2]").arg(QApplication::applicationVersion(), buildDateTime().toString("yyyy-M-d"));
 
     ui->labelVersion->setText(ver);
     ui->labelVersion->setToolTip(ver);
@@ -122,6 +143,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                     ui->stackedWidgetAddContents->setCurrentIndex(1);
                 else if (watched == ui->pushButtonMediaSelect)
                     ui->stackedWidgetAddContents->setCurrentIndex(2);
+                ui->stackedWidgetAddContents->raise();
+                ui->stackedWidgetAddContents->setGeometry(0, 0, ui->widgetPreview->width(), ui->stackedWidgetAddContents->height());
                 ui->stackedWidgetAddContents->show();
             }
         }
@@ -154,8 +177,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             QPoint po = QCursor::pos();
             if (!ui->stackedWidgetAddContents->rect().contains(ui->stackedWidgetAddContents->mapFromGlobal(po)) &&
                     !ui->pushButtonScreenSelect->rect().contains(ui->pushButtonScreenSelect->mapFromGlobal(po)) &&
-                    !ui->pushButtonScreenSelect->rect().contains(ui->pushButtonCameraSelect->mapFromGlobal(po)) &&
-                    !ui->pushButtonScreenSelect->rect().contains(ui->pushButtonMediaSelect->mapFromGlobal(po)))
+                    !ui->pushButtonCameraSelect->rect().contains(ui->pushButtonCameraSelect->mapFromGlobal(po)) &&
+                    !ui->pushButtonMediaSelect->rect().contains(ui->pushButtonMediaSelect->mapFromGlobal(po)))
             {
                 qDebug() << "QEvent::Leave B";
                 //mouseOnAddContents = false;
@@ -304,7 +327,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     {
         m_pressLeftWndOffset = pos() - event->globalPos();
 
-        //setUpdatesEnabled(false);
+        ui->widgetPreview->setUpdatesEnabled(false);
         m_pressKeyGlobalPos = event->globalPos();
         m_pressKeyGeometry = geometry();
     }
@@ -315,7 +338,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
     Q_UNUSED(event)
     if ( mouseGrabber() == this )
     {
-        //setUpdatesEnabled(true);
+        ui->widgetPreview->setUpdatesEnabled(true);
         releaseMouse();
         ui->widgetPreview->fixOffsetAsScreen();
     }
@@ -416,6 +439,9 @@ void MainWindow::on_widgetPreview_initGL()
 
 void MainWindow::on_pushButtonRecStart_clicked()
 {
+    //ScreenLayer::posOnWindow(QPoint(500,500), this->winId());
+    //return;
+
     if (m_video.status() >= BaseLayer::Opened)
     {
         return;

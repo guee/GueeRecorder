@@ -127,13 +127,13 @@ bool BaseSource::sourcePause(BaseLayer *layer)
 bool BaseSource::isSameSource(const QString &type, const QString &source)
 {
     m_imageLock.lock();
-    if (m_status == BaseLayer::NoOpen)
+    if (m_status == BaseLayer::NoOpen || m_typeName != type )
     {
         m_imageLock.unlock();
         return false;
     }
     m_imageLock.unlock();
-    if ( m_typeName == type && m_sourceName == source )
+    if ( m_sourceName == source )
         return true;
     return false;
 }
@@ -261,7 +261,7 @@ void BaseSource::setFrame(const QVideoFrame &frame)
             m_pixFormat = QImage::Format_Invalid;
             for (auto it:m_layers)
             {
-                it->onSizeChanged(it);
+                it->setRectOnSource(QRect(0, 0, m_width, m_height));
             }
         }
         else

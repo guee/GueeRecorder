@@ -11,7 +11,7 @@
 GlWidgetPreview::GlWidgetPreview(QWidget *parent)
     : QOpenGLWidget(parent)
 {
-    m_clearColor = QVector4D(0.0, 0.0, 0.0, 1.0);
+    m_clearColor = QVector4D(0.0, 0.05f, 0.1f, 1.0);
     m_vertex[0].vert = QVector3D(1.0, -1.0, 0.0);
     m_vertex[1].vert = QVector3D(-1.0, -1.0, 0.0);
     m_vertex[2].vert = QVector3D(-1.0, 1.0, 0.0);
@@ -71,8 +71,55 @@ void GlWidgetPreview::paintGL()
     glViewport(0, 0, m_viewportSize.width(), m_viewportSize.height());
     glClearColor(m_clearColor.x(), m_clearColor.y(), m_clearColor.z(), m_clearColor.w());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_LINE_SMOOTH);
+    //绘制非预览区域的网格背景
+    glColor4ub(32, 32, 32, 255);
+    for (int x = 0; x < m_viewportSize.width(); x += 32)
+    {
+        for (int y = m_viewportSize.height(); y > 0; y -= 32)
+        {
+            glRectf(x * 2.0f / m_viewportSize.width() -1.0f, y * 2.0f / m_viewportSize.height() - 1.0f,
+                    (x + 16) * 2.0f / m_viewportSize.width() -1.0f, (y - 16) * 2.0f / m_viewportSize.height() - 1.0f);
+            glRectf((x + 16) * 2.0f / m_viewportSize.width() -1.0f, (y - 16) * 2.0f / m_viewportSize.height() - 1.0f,
+                    (x + 32) * 2.0f / m_viewportSize.width() -1.0f, (y - 32) * 2.0f / m_viewportSize.height() - 1.0f);
+        }
+    }
+    //绘制图像超出预览区域的替代图像
+    if (m_editingLayer)
+    {
+        QRect   rtOrg = m_boxOfEditing.translated(m_offsetOfViewport);
+        //qDebug() <<"rtOrg" << rtOrg << ", view" << QRect(m_offsetOfViewport, m_viewportSize) << ", sect" << rtOrg.intersected(QRect(m_offsetOfViewport, m_viewportSize));
+        if (rtOrg.intersected(QRect(m_offsetOfViewport, m_displayOfSceeen.size())) != rtOrg)
+        {
+            QRectF  rt(rtOrg);
+            rt.translate(0.5, 0.5);
+            rt.setCoords(rt.x() / m_viewportSize.width() * 2.0 - 1.0,
+                         ( 1.0 - ( rt.bottom() - 1.0 ) / m_viewportSize.height() ) * 2.0 - 1.0,
+                         ( rt.right() - 1.0 ) / m_viewportSize.width() * 2.0 - 1.0,
+                         ( 1.0 - rt.y() / m_viewportSize.height() ) * 2.0 - 1.0);
+            glColor4ub(64, 96, 128, 255);
+            glRectd(rt.x(), rt.y(), rt.right(), rt.bottom());
 
+            glEnable(GL_SCISSOR_TEST);
+            glColor4ub(64, 128, 192, 255);
+            glScissor( rtOrg.x(), m_viewportSize.height() - rtOrg.bottom(), rtOrg.width(), rtOrg.height() );
+            QPointF stepLen(16.0 / m_viewportSize.width(), 16.0 / m_viewportSize.height());
+            QPointF offset = rt.topLeft();
+            int maxStep = qCeil(rt.width() / stepLen.x()) + qCeil(rt.height() / stepLen.y());
+            for ( int i = 0; i < maxStep; i += 2 )
+            {
+                glBegin(GL_TRIANGLE_STRIP);
+                glVertex2d(offset.x(), rt.top());
+                glVertex2d(rt.left(), offset.y());
+                glVertex2d(offset.x() + stepLen.x(), rt.top());
+                glVertex2d(rt.left(), offset.y() + stepLen.y());
+                glEnd();
+                offset += stepLen * 2;
+            }
+            glDisable(GL_SCISSOR_TEST);
+        }
+    }
+
+    //绘制预览图像
     m_program->bind();
     m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     m_vbo.bind();
@@ -87,9 +134,9 @@ void GlWidgetPreview::paintGL()
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     m_program->release();
 
+    //绘制控制点和边框线
+    //glEnable(GL_LINE_SMOOTH);
     QSizeF potSize( m_edgeSize / m_viewportSize.width(), m_edgeSize / m_viewportSize.height() );
-
-
     if ( m_enterLayer )
     {
         QRectF rt = m_boxEnterLayer.translated(m_offsetOfViewport);
@@ -152,29 +199,27 @@ void GlWidgetPreview::paintGL()
         glRectd( rt.right() - potSize.width(), ( rt.y() + rt.bottom() ) * 0.5 - potSize.height(), rt.right() + potSize.width(), ( rt.y() + rt.bottom() ) * 0.5 + potSize.height() );
         glRectd( rt.right() - potSize.width(), rt.y() - potSize.height(), rt.right() + potSize.width(), rt.y() + potSize.height() );
     }
-
-       // glRectd(x0, y0, x1, y1);
-
-      //  glRectd(x0, y0, x1, y1);
-       // glBegin(GL_LINES);
-       //     glVertex2f(0.0, 0.0);
-       //     glVertex2f(1.5f, 0.0f);
-       // glEnd();
+    //glDisable(GL_LINE_SMOOTH);
 
 }
 void GlWidgetPreview::resizeGL(int width, int height)
 {
     Q_UNUSED(width)
     Q_UNUSED(height)
+
+    m_layerTools->setGeometry(width - m_layerTools->width(), 0 , m_layerTools->width(), height);
+
     fixOffsetAsScreen();
-    float sx = static_cast<float>((m_viewportSize.width() - m_displayOfSceeen.width())) / m_displayOfSceeen.width();
-    float sy = static_cast<float>((m_viewportSize.height() - m_displayOfSceeen.height())) / m_displayOfSceeen.height();
+
+    float sx = float((m_viewportSize.width() - m_displayOfSceeen.width())) / m_displayOfSceeen.width();
+    float sy = float((m_viewportSize.height() - m_displayOfSceeen.height())) / m_displayOfSceeen.height();
     if (m_program == nullptr) return;
     if (m_program->bind())
     {
         QMatrix4x4 m;
         m.ortho(-1.0f - sx, +1.0f + sx, +1.0f + sy, -1.0f - sy, -1.0f, 1.0f);
         m_matrixView = m;
+        m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     }
     if ( m_enterLayer )
     {
@@ -208,7 +253,14 @@ void GlWidgetPreview::fixOffsetAsScreen()
         {
             m_screenScale = ratio;
             m_edgeSize = 5.0 * m_screenScale;
-            m_viewportSize.setWidth(qFloor(width() * m_screenScale));
+            if (m_layerTools->isVisible())
+            {
+                m_viewportSize.setWidth(qFloor((width() - m_layerTools->width()) * m_screenScale));
+            }
+            else
+            {
+                m_viewportSize.setWidth(qFloor(width() * m_screenScale));
+            }
             m_viewportSize.setHeight(qFloor(height() * m_screenScale));
 
             QSizeF dispSize = QSizeF(m_video->width(), m_video->height()).scaled(m_viewportSize, Qt::KeepAspectRatio);
@@ -224,10 +276,10 @@ void GlWidgetPreview::fixOffsetAsScreen()
     }
 }
 
-void GlWidgetPreview::setVideoObject(VideoSynthesizer *videoObj)
+void GlWidgetPreview::setVideoObject(VideoSynthesizer *videoObj, FormLayerTools* toolWidget)
 {
     m_video = videoObj;
-
+    m_layerTools = toolWidget;
 }
 
 void GlWidgetPreview::mousePressEvent(QMouseEvent *event)
@@ -237,11 +289,8 @@ void GlWidgetPreview::mousePressEvent(QMouseEvent *event)
        // ui.widgetContents->hide();
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
-        //if (m_hitType != Qt::NoSection)
-        {
-            m_boxOfPressKey = m_boxOfEditing;
-            m_posOfPressKey = pos;
-        }
+        m_boxOfPressKey = m_boxOfEditing;
+        m_posOfPressKey = pos;
     }
 }
 
@@ -253,12 +302,11 @@ void GlWidgetPreview::mouseMoveEvent(QMouseEvent *event)
     {
         if (m_hitType == Qt::NoSection && m_enterLayer)
         {
-            bool emitSelect = (m_editingLayer != nullptr);
             m_editingLayer = m_enterLayer;
             m_boxOfEditing = m_boxEnterLayer;
             m_boxOfPressKey = m_boxOfEditing;
             hitTest(m_posOfPressKey);
-            if (emitSelect) emit selectLayer(m_editingLayer);
+            notifySelectLayer(m_editingLayer);
         }
         if (m_editingLayer)
         {
@@ -266,158 +314,123 @@ void GlWidgetPreview::mouseMoveEvent(QMouseEvent *event)
             int32_t y = pos.y();
             int32_t l = m_boxOfPressKey.left();
             int32_t t = m_boxOfPressKey.top();
-            int32_t r = m_boxOfPressKey.right();
-            int32_t b = m_boxOfPressKey.bottom();
+            int32_t r = m_boxOfPressKey.right() + 1;
+            int32_t b = m_boxOfPressKey.bottom() + 1;
             Qt::WindowFrameSection hit = m_hitType;
+
             switch(m_hitType)
             {
             case Qt::TitleBarArea:
-                if (!checkOffsetX(l,x))
-                {
-                    r = l + m_boxOfPressKey.width() - 1;
-                }
-                else
-                {
-                    checkOffsetX(r, x);
-                    l = r - m_boxOfPressKey.width() + 1;
-                }
-                if (!checkOffsetY(t, y))
-                {
-                    b = t + m_boxOfPressKey.height() - 1;
-                }
-                else
-                {
-                    checkOffsetY(b, y);
-                    t = b - m_boxOfPressKey.height() + 1;
-                }
+                x = m_boxOfPressKey.center().x() + (x - m_posOfPressKey.x());
+                y = m_boxOfPressKey.center().y() + (y - m_posOfPressKey.y());
+                m_editingLayer->movCenter(x * 1.0 / m_displayOfSceeen.width(),
+                                          y * 1.0 / m_displayOfSceeen.height());
                 break;
             case Qt::LeftSection:
-                checkOffsetX(l,x);
-                if (l > r)
+                l += x - m_posOfPressKey.x();
+                if (m_editingLayer->movLeft(l * 1.0 / m_displayOfSceeen.width()) > 0)
                 {
                     swap(l,r);
                     hit = Qt::RightSection;
                 }
                 break;
             case Qt::RightSection:
-                checkOffsetX(r,x);
-                if (l > r)
+                r += x - m_posOfPressKey.x();
+                if (m_editingLayer->movRight(r * 1.0 / m_displayOfSceeen.width()) > 0)
                 {
                     swap(l,r);
                     hit = Qt::LeftSection;
                 }
                 break;
             case Qt::TopSection:
-                checkOffsetY(t,y);
-                if (t > b)
+                t += y - m_posOfPressKey.y();
+                if (m_editingLayer->movTop(t * 1.0 / m_displayOfSceeen.height()) > 0)
                 {
                     swap(t,b);
                     hit = Qt::BottomSection;
                 }
                 break;
             case Qt::BottomSection:
-                checkOffsetY(b,y);
-                if (t > b)
+                b += y - m_posOfPressKey.y();
+                if (m_editingLayer->movBottom(b * 1.0 / m_displayOfSceeen.height()) > 0)
                 {
                     swap(t,b);
                     hit = Qt::TopSection;
                 }
                 break;
             case Qt::TopLeftSection:
-                checkOffsetY(t,y);
-                checkOffsetX(l,x);
-                if ( t > b && l > r )
+                t += y - m_posOfPressKey.y();
+                l += x - m_posOfPressKey.x();
+                switch(m_editingLayer->movTopLeft(t * 1.0 / m_displayOfSceeen.height(), l * 1.0 / m_displayOfSceeen.width()))
                 {
-                    swap(l, r);
-                    swap(t, b);
-                    hit = Qt::BottomRightSection;
-                }
-                else if (t > b)
-                {
-                    swap(t, b);
-                    hit = Qt::BottomLeftSection;
-                }
-                else if (l > r)
-                {
-                    swap(l, r);
-                    hit = Qt::TopRightSection;
+                case 1:
+                    swap(l, r); hit = Qt::TopRightSection;
+                    break;
+                case 2:
+                    swap(t, b); hit = Qt::BottomLeftSection;
+                    break;
+                case 3:
+                    swap(l, r); swap(t, b); hit = Qt::BottomRightSection;
+                    break;
                 }
                 break;
             case Qt::TopRightSection:
-                checkOffsetY(t,y);
-                checkOffsetX(r,x);
-                if ( t > b && l > r )
+                t += y - m_posOfPressKey.y();
+                r += x - m_posOfPressKey.x();
+                switch(m_editingLayer->movTopRight(t * 1.0 / m_displayOfSceeen.height(), r * 1.0 / m_displayOfSceeen.width()))
                 {
-                    swap(l, r);
-                    swap(t, b);
-                    hit = Qt::BottomLeftSection;
-                }
-                else if (t > b)
-                {
-                    swap(t, b);
-                    hit = Qt::BottomRightSection;
-                }
-                else if (l > r)
-                {
-                    swap(l, r);
-                    hit = Qt::TopLeftSection;
+                case 1:
+                    swap(l, r); hit = Qt::TopLeftSection;
+                    break;
+                case 2:
+                    swap(t, b); hit = Qt::BottomRightSection;
+                    break;
+                case 3:
+                    swap(l, r); swap(t, b); hit = Qt::BottomLeftSection;
+                    break;
                 }
                 break;
             case Qt::BottomLeftSection:
-                checkOffsetY(b,y);
-                checkOffsetX(l,x);
-                if ( t > b && l > r )
+                b += y - m_posOfPressKey.y();
+                l += x - m_posOfPressKey.x();
+                switch(m_editingLayer->movBottomLeft(b * 1.0 / m_displayOfSceeen.height(), l * 1.0 / m_displayOfSceeen.width()))
                 {
-                    swap(l, r);
-                    swap(t, b);
-                    hit = Qt::TopRightSection;
-                }
-                else if (t > b)
-                {
-                    swap(t, b);
-                    hit = Qt::TopLeftSection;
-                }
-                else if (l > r)
-                {
-                    swap(l, r);
-                    hit = Qt::BottomRightSection;
+                case 1:
+                    swap(l, r); hit = Qt::BottomRightSection;
+                    break;
+                case 2:
+                    swap(t, b); hit = Qt::TopLeftSection;
+                    break;
+                case 3:
+                    swap(l, r); swap(t, b); hit = Qt::TopRightSection;
+                    break;
                 }
                 break;
             case Qt::BottomRightSection:
-                checkOffsetY(b,y);
-                checkOffsetX(r,x);
-                if ( t > b && l > r )
+                b += y - m_posOfPressKey.y();
+                r += x - m_posOfPressKey.x();
+                switch(m_editingLayer->movBottomRight(b * 1.0 / m_displayOfSceeen.height(), r * 1.0 / m_displayOfSceeen.width()))
                 {
-                    swap(l, r);
-                    swap(t, b);
-                    hit = Qt::TopLeftSection;
-                }
-                else if (t > b)
-                {
-                    swap(t, b);
-                    hit = Qt::TopRightSection;
-                }
-                else if (l > r)
-                {
-                    swap(l, r);
-                    hit = Qt::BottomLeftSection;
+                case 1:
+                    swap(l, r); hit = Qt::BottomLeftSection;
+                    break;
+                case 2:
+                    swap(t, b); hit = Qt::TopRightSection;
+                    break;
+                case 3:
+                    swap(l, r); swap(t, b); hit = Qt::TopLeftSection;
+                    break;
                 }
                 break;
             default:
                 return;
             }
-            m_boxOfEditing.setRect(l, t, r - l + 1, b - t + 1);
-            m_boxEnterLayer = m_boxOfEditing;
-            m_editingLayer->setRect(m_boxOfEditing.x() * 1.0 / m_displayOfSceeen.width(),
-                                    m_boxOfEditing.y() * 1.0 / m_displayOfSceeen.height(),
-                                    m_boxOfEditing.width() * 1.0 / m_displayOfSceeen.width(),
-                                    m_boxOfEditing.height() * 1.0 / m_displayOfSceeen.height());
             if ( m_hitType != hit )
             {
                 m_hitType = hit;
                 setHitCursor(hit);
                 m_posOfPressKey = pos;
-                m_boxOfPressKey = m_boxOfEditing;
+                m_boxOfPressKey.setRect(l, t, r - l, b - t);
             }
             update();
         }
@@ -439,12 +452,12 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
             m_editingLayer = m_enterLayer;
             m_boxOfEditing = m_boxEnterLayer;
         }
-        emit selectLayer(m_editingLayer);
+        notifySelectLayer(m_editingLayer);
     }
     else if (event->button() == Qt::RightButton )
     {
         m_editingLayer = nullptr;
-        emit selectLayer(m_editingLayer);
+        notifySelectLayer(m_editingLayer);
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
         hitTest(pos);
     }
@@ -628,6 +641,30 @@ void GlWidgetPreview::setHitCursor(Qt::WindowFrameSection hit)
     }
 }
 
+void GlWidgetPreview::notifySelectLayer(BaseLayer *layer)
+{
+    if (!m_layerTools->windowIsPeg())
+    {
+        if (layer)
+        {
+            if (m_layerTools->isHidden())
+            {
+                m_layerTools->show();
+                resizeGL(width(), height());
+            }
+        }
+        else
+        {
+            if (m_layerTools->isVisible())
+            {
+                m_layerTools->hide();
+                resizeGL(width(), height());
+            }
+        }
+    }
+    emit selectLayer(layer);
+}
+
 void GlWidgetPreview::on_videoSynthesizer_frameReady(uint textureId)
 {
     m_sharedTextureId = textureId;
@@ -644,7 +681,7 @@ void GlWidgetPreview::on_videoSynthesizer_frameReady(uint textureId)
 void GlWidgetPreview::on_layerAdded(BaseLayer *layer)
 {
     on_selectLayer(layer);
-    emit selectLayer(layer);
+    notifySelectLayer(layer);
 }
 
 void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
@@ -660,7 +697,11 @@ void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
 
 void GlWidgetPreview::on_selectLayer(BaseLayer *layer)
 {
-    if (layer == m_editingLayer) return;
+    if (layer == nullptr) notifySelectLayer(layer);
+    if (layer == m_editingLayer)
+    {
+        return;
+    }
     m_editingLayer = layer;
     m_enterLayer = layer;
     if (layer)

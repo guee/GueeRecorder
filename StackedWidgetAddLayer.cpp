@@ -261,7 +261,7 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
         {
             scrOpt = dlg->option();
 
-            fprintf(stderr, "Selected window=0x%x\n",scrOpt.windowId );
+            fprintf(stderr, "Selected window=%p\n",scrOpt.widTop );
         }
 
         delete dlg;
@@ -290,16 +290,13 @@ void StackedWidgetAddLayer::on_toolButtonScreenArea_clicked()
     {
         ScreenLayer* layer = static_cast<ScreenLayer*>(VideoSynthesizer::instance().createLayer("screen"));
         layer->setAspectRatioMode(Qt::KeepAspectRatio);
-        layer->setShotOption(scrOpt);
-        if (scrOpt.mode >= ScreenLayer::specWindow)
+        if (layer->open(scrOpt))
         {
-            layer->open(QString::number(ulong(scrOpt.windowId)));
+            layer->play();
         }
         else
-        {
-            layer->open();
+        {   delete layer;
         }
-        layer->play();
     }
 }
 

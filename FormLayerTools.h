@@ -20,20 +20,21 @@ public:
     void setCurrLayer(BaseLayer* layer);
     void setStyleIsLeft(bool isLeft);
     void refreshLayers(VideoSynthesizer* videoObj);
+    bool windowIsPeg();
 private slots:
     void on_pushButtonRemove_clicked();
     void on_pushButtonFullScreen_clicked(bool checked);
     void on_pushButtonAspratio_clicked(bool checked);
     void on_pushButtonMoveUp_clicked();
     void on_pushButtonMoveDown_clicked();
-    void on_pushButtonPrev_clicked();
-    void on_pushButtonNext_clicked();
-    void on_pushButtonHide_clicked();
+
     void on_spinBoxX_valueChanged(int arg1);
     void on_spinBoxY_valueChanged(int arg1);
     void on_spinBoxW_valueChanged(int arg1);
     void on_spinBoxH_valueChanged(int arg1);
     void on_listLayersSelect_currentRowChanged(const QModelIndex& current, const QModelIndex& previous);
+    void on_pushButtonDing_clicked(bool checked);
+
 public slots:
     void on_layerAdded(BaseLayer* layer);
     void on_layerRemoved(BaseLayer* layer);
