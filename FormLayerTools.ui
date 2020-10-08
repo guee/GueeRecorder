@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>195</width>
-    <height>336</height>
+    <height>525</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -79,7 +79,11 @@ QLabel
 {
 color: rgb(240, 240, 240);
 font-size:14px;
-
+}
+QCheckBox
+{
+color: rgb(240, 240, 240);
+font-size:14px;
 }
 QPushButton:hover
 {
@@ -191,6 +195,14 @@ QListView#listViewLayers
 	background-color: rgb(24, 24, 24);
 	color: rgb(255, 255, 255);
 }
+QListView#listViewLayers::indicator
+{
+width: 16px;
+height: 16px;
+	subcontrol-origin:border;
+	subcontrol-position:left;
+}
+
 QListView#listViewLayers:item:alternate
 {
 	background-color: rgb(32, 32, 32);
@@ -199,19 +211,23 @@ QListView#listViewLayers:item:selected
 {
 	background-color: rgb(48, 120, 255);
 }
-QSpinBox{
-border:none;
-border-top-left-radius: 5px;
-border-bottom-left-radius:5px;
-padding-left:0px;
+QSpinBox
+{
+	border:none;
+	border-top-left-radius: 5px;
+	border-bottom-left-radius:5px;
+	padding-left:0px;
 }
-QSpinBox::up-button{
-subcontrol-origin:border;
-subcontrol-position:top right;
+
+QSpinBox::up-button
+{
+	subcontrol-origin:border;
+	subcontrol-position:top right;
 }
-QSpinBox::down-button{
-subcontrol-origin:border;
-subcontrol-position:bottom right;
+QSpinBox::down-button
+{
+	subcontrol-origin:border;
+	subcontrol-position:bottom right;
 }</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
@@ -478,6 +494,7 @@ subcontrol-position:bottom right;
         </property>
         <property name="lineWidth">
          <number>0</number>
+
         </property>
         <property name="widgetResizable">
          <bool>true</bool>
@@ -486,96 +503,197 @@ subcontrol-position:bottom right;
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>0</y>
+           <y>-92</y>
            <width>195</width>
-           <height>163</height>
+           <height>417</height>
           </rect>
          </property>
-         <layout class="QGridLayout" name="gridLayout_2">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
           <property name="leftMargin">
-           <number>8</number>
+           <number>4</number>
           </property>
           <property name="topMargin">
            <number>5</number>
           </property>
           <property name="rightMargin">
-           <number>12</number>
+           <number>4</number>
           </property>
           <property name="bottomMargin">
            <number>5</number>
           </property>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Y:</string>
+          <item>
+           <widget class="QGroupBox" name="groupBox">
+            <property name="title">
+             <string>GroupBox</string>
             </property>
+            <layout class="QFormLayout" name="formLayout">
+             <property name="leftMargin">
+              <number>4</number>
+             </property>
+             <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>X：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSpinBox" name="spinBoxX">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="styleSheet">
+                <string notr="true"/>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Y：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinBoxY">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximum">
+                <number>565656557</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>宽度：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QSpinBox" name="spinBoxW">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>高度：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="spinBoxH">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="spinBoxW">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item>
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="title">
+             <string>GroupBox</string>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="spinBoxY">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximum">
-             <number>565656557</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QSpinBox" name="spinBoxX">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>宽度:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>X:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>高度:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QSpinBox" name="spinBoxH">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+            <layout class="QFormLayout" name="formLayout_2">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="text">
+                <string>透明：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSlider" name="horizontalSlider">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_7">
+               <property name="text">
+                <string>颜色：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSlider" name="horizontalSlider_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="text">
+                <string>对比：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>亮度：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QSlider" name="horizontalSlider_3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QSlider" name="horizontalSlider_4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>饱和：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSlider" name="horizontalSlider_5">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QCheckBox" name="checkBox">
+               <property name="text">
+                <string>着色</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
