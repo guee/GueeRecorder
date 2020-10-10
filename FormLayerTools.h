@@ -16,11 +16,13 @@ class FormLayerTools : public QWidget
 public:
     explicit FormLayerTools(QWidget *parent = nullptr);
     virtual~FormLayerTools() override;
-    void enterEvent(QEvent*event) override;
     void setCurrLayer(BaseLayer* layer);
     void setStyleIsLeft(bool isLeft);
     void refreshLayers(VideoSynthesizer* videoObj);
     bool windowIsPeg();
+
+    bool event(QEvent *event) override;
+
 private slots:
     void on_pushButtonRemove_clicked();
     void on_pushButtonFullScreen_clicked(bool checked);
@@ -34,18 +36,13 @@ private slots:
     void on_spinBoxH_valueChanged(int arg1);
     void on_listLayersSelect_currentRowChanged(const QModelIndex& current, const QModelIndex& previous);
     void on_pushButtonDing_clicked(bool checked);
-
     void on_horizontalSliderHue_valueChanged(int value);
-
     void on_checkBoxTinting_clicked(bool checked);
-
     void on_horizontalSliderSaturability_valueChanged(int value);
-
     void on_horizontalSliderLuminance_valueChanged(int value);
-
     void on_horizontalSliderContrast_valueChanged(int value);
-
     void on_horizontalSliderTransparence_valueChanged(int value);
+    void on_groupBox_ImageColor_clicked(bool checked);
 
 public slots:
     void on_layerAdded(BaseLayer* layer);

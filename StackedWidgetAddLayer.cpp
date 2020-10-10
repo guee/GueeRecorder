@@ -70,6 +70,21 @@ void StackedWidgetAddLayer::timerEvent(QTimerEvent *event)
     on_comboBoxCameras_currentIndexChanged(ui->comboBoxCameras->currentIndex());
 }
 
+bool StackedWidgetAddLayer::event(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTip
+            || event->type() == QEvent::MouseMove
+            || event->type() == QEvent::MouseButtonPress
+            || event->type() == QEvent::MouseButtonRelease
+            || event->type() == QEvent::Enter
+            || event->type() == QEvent::Leave)
+    {
+        event->accept();
+        return true;
+    }
+    return QWidget::event(event);
+}
+
 void StackedWidgetAddLayer::showScreens()
 {
     static QSize iconSize;

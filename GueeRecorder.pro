@@ -73,6 +73,8 @@ HEADERS += \
     InputSource/PictureSource.h \
     InputSource/ScreenLayer.h \
     InputSource/ScreenSource.h \
+    MediaCodec/x264.h \
+    MediaCodec/x264_config.h \
     ShaderProgramPool.h \
     StackedWidgetAddLayer.h \
     mainwindow.h \
@@ -92,9 +94,7 @@ HEADERS += \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
     VideoSynthesizer.h \
-    MediaCodec/WaveFile.h \
-    MediaCodec/x264_config.h \
-    MediaCodec/x264.h
+    MediaCodec/WaveFile.h
 
 FORMS += \
     DialogSelectScreen.ui \

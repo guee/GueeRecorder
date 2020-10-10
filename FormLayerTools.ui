@@ -49,6 +49,12 @@ QScrollBar::handle:vertical:hover{
 QScrollBar::handle:vertical:pressed{
 	background:#D0FFFFFF;
 }
+QScrollBar::add-line:vertical{
+	height: 0px;
+}
+QScrollBar::sub-line:vertical{
+	height: 0px;
+}
 
 QScrollBar::horizontal{
 	border:none;
@@ -69,25 +75,30 @@ QScrollBar::handle:horizontal:hover{
 QScrollBar::handle:horizontal:pressed{
 	background:#D0FFFFFF;
 }
-
+QScrollBar::add-line:horizontal{
+	width: 0px;
+}
+QScrollBar::sub-line:horizontal{
+	width: 0px;
+}
 
 QPushButton
 {
-border:none;
+	border:none;
 }
 QLabel
 {
-color: rgb(240, 240, 240);
-font-size:14px;
+	color: rgb(240, 240, 240);
+	font-size:14px;
 }
 QCheckBox
 {
-color: rgb(240, 240, 240);
-font-size:14px;
+	color: rgb(240, 240, 240);
+	font-size:14px;
 }
 QPushButton:hover
 {
-background-color: rgb(96, 96, 96);
+	background-color: rgb(96, 96, 96);
 }
 
 QPushButton#pushButtonFullScreen
@@ -233,10 +244,27 @@ QGroupBox::title
 {
 	font-size:10px;
 	font-weight:400;
-	color: #2090F0;
+	color: #2080E0;
 	subcontrol-origin:margin;
 	subcontrol-position: top center;
 	background:#00000000;
+}
+QGroupBox::title::hover
+{
+	color: #2090F0;
+}
+QGroupBox::indicator
+{
+	width: 16px;
+	height: 16px;
+	margin-top:2px;
+	subcontrol-origin:margin;
+	subcontrol-position: top center;
+	image: url(&quot;:/butResortDefault_normal.png&quot;);
+}
+QGroupBox::indicator::hover
+{
+	image: url(&quot;:/butResortDefault_enter.png&quot;);
 }</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
@@ -514,9 +542,9 @@ QGroupBox::title
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>-164</y>
-           <width>170</width>
-           <height>368</height>
+           <y>0</y>
+           <width>158</width>
+           <height>356</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -628,9 +656,15 @@ QGroupBox::title
            </widget>
           </item>
           <item>
-           <widget class="QGroupBox" name="groupBox_2">
+           <widget class="QGroupBox" name="groupBox_ImageColor">
+            <property name="toolTip">
+             <string>点击标题还原默认设置</string>
+            </property>
             <property name="title">
-             <string>--  颜色  --</string>
+             <string>颜色</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
             <layout class="QFormLayout" name="formLayout_2">
              <property name="horizontalSpacing">
@@ -648,92 +682,14 @@ QGroupBox::title
              <property name="bottomMargin">
               <number>4</number>
              </property>
-             <item row="1" column="0">
+             <item row="0" column="0">
               <widget class="QLabel" name="label_7">
                <property name="text">
                 <string>颜色：</string>
                </property>
               </widget>
              </item>
-             <item row="6" column="0">
-              <widget class="QLabel" name="label_8">
-               <property name="text">
-                <string>对比：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
-              <widget class="QLabel" name="label_9">
-               <property name="text">
-                <string>亮度：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <widget class="QSlider" name="horizontalSliderLuminance">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>-256</number>
-               </property>
-               <property name="maximum">
-                <number>256</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QSlider" name="horizontalSliderContrast">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>-256</number>
-               </property>
-               <property name="maximum">
-                <number>256</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>饱和：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QSlider" name="horizontalSliderSaturability">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>-256</number>
-               </property>
-               <property name="maximum">
-                <number>256</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
+             <item row="0" column="1">
               <layout class="QVBoxLayout" name="verticalLayout_4">
                <property name="spacing">
                 <number>0</number>
@@ -766,14 +722,92 @@ QGroupBox::title
                </item>
               </layout>
              </item>
-             <item row="7" column="0">
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>饱和：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSlider" name="horizontalSliderSaturability">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>亮度：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QSlider" name="horizontalSliderLuminance">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="text">
+                <string>对比：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QSlider" name="horizontalSliderContrast">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
               <widget class="QLabel" name="label_6">
                <property name="text">
                 <string>透明：</string>
                </property>
               </widget>
              </item>
-             <item row="7" column="1">
+             <item row="6" column="1">
               <widget class="QSlider" name="horizontalSliderTransparence">
                <property name="maximumSize">
                 <size>

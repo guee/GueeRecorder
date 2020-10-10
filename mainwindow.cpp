@@ -14,20 +14,22 @@
 QDateTime buildDateTime()
 {
     //return QDateTime::fromString(QString("%1 %2").arg(__DATE__, __TIME__), "MMM dd yyyy hh:mm:ss");
-    //return QLocale(QLocale::English).toDateTime(QString("%1 %2").arg(__DATE__, __TIME__), "MMM dd yyyy hh:mm:ss");
-    //UOS v20 升级到 1022 版之后，上面两种写法神奇地失效了，于是只好自己解析了。
-    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-    QStringList date = QString(__DATE__).split(" ", QString::SkipEmptyParts);
-    QStringList time = QString(__TIME__).split(":", QString::SkipEmptyParts);
-    if (date.size() == 3 && time.size() == 3)
-    {
-        int m = 1;
-        for (; m <= 12 && date[0] != months[m-1] ; ++m);
-        int d = date[1].toInt();
-        int y = date[2].toInt();
-        return QDateTime(QDate(y, m, d), QTime(time[0].toInt(), time[1].toInt(), time[2].toInt()));
-    }
-    return QDateTime(QDate(2020, 10, 6));
+    QString date = QString(__DATE__).replace("  ", " 0");
+    QString time = QString(__TIME__);
+    return QLocale(QLocale::English).toDateTime(QString("%1 %2").arg(date, time), "MMM dd yyyy hh:mm:ss");
+//之前遇上一个坑，当__DATE__的月份或日期是单数时，数字前面没有补0, Qt对这种格式居然解析不了。在找到原因之前，就临时写了下面的代码自己解析。
+//    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+//    QStringList date = QString(__DATE__).split(" ", QString::SkipEmptyParts);
+//    QStringList time = QString(__TIME__).split(":", QString::SkipEmptyParts);
+//    if (date.size() == 3 && time.size() == 3)
+//    {
+//        int m = 1;
+//        for (; m <= 12 && date[0] != months[m-1] ; ++m);
+//        int d = date[1].toInt();
+//        int y = date[2].toInt();
+//        return QDateTime(QDate(y, m, d), QTime(time[0].toInt(), time[1].toInt(), time[2].toInt()));
+//    }
+//    return QDateTime(QDate(2020, 10, 6));
 }
 
 MainWindow::MainWindow(QWidget *parent)

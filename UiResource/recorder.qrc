@@ -81,5 +81,7 @@
         <file>typeIconCamera.png</file>
         <file>butDing_checked_normal.png</file>
         <file>butDing_normal.png</file>
+        <file>butResortDefault_normal.png</file>
+        <file>butResortDefault_enter.png</file>
     </qresource>
 </RCC>

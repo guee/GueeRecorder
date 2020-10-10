@@ -14,21 +14,12 @@ FormLayerTools::FormLayerTools(QWidget *parent) :
     QItemSelectionModel* selModel = new QItemSelectionModel(model);
     ui->listViewLayers->setSelectionModel(selModel);
     connect(selModel, &QItemSelectionModel::currentRowChanged, this, &FormLayerTools::on_listLayersSelect_currentRowChanged);
+    setCursor(Qt::ArrowCursor);
 }
 
 FormLayerTools::~FormLayerTools()
 {
     delete ui;
-}
-
-void FormLayerTools::enterEvent(QEvent *event)
-{
-    Q_UNUSED(event)
-    setCursor(Qt::ArrowCursor);
-    if (m_layer)
-    {
-        emit selectLayer(m_layer);
-    }
 }
 
 void FormLayerTools::setStyleIsLeft(bool isLeft)
@@ -61,6 +52,21 @@ void FormLayerTools::refreshLayers(VideoSynthesizer *videoObj)
 bool FormLayerTools::windowIsPeg()
 {
     return ui->pushButtonDing->isChecked();
+}
+
+bool FormLayerTools::event(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTip
+            || event->type() == QEvent::MouseMove
+            || event->type() == QEvent::MouseButtonPress
+            || event->type() == QEvent::MouseButtonRelease
+            || event->type() == QEvent::Enter
+            || event->type() == QEvent::Leave)
+    {
+        event->accept();
+        return true;
+    }
+    return QWidget::event(event);
 }
 
 void FormLayerTools::on_pushButtonRemove_clicked()
@@ -217,6 +223,15 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
 
         ui->pushButtonFullScreen->setChecked(m_layer->isFullViewport());
         ui->pushButtonAspratio->setChecked(m_layer->aspectRatioMode() != Qt::IgnoreAspectRatio);
+
+        ui->horizontalSliderHue->setValue(m_layer->imgHue() * float(ui->horizontalSliderHue->maximum()) * 2.0f);
+        ui->checkBoxTinting->setChecked(m_layer->imgHueDye());
+        ui->horizontalSliderSaturability->setValue(m_layer->imgSaturation() * float(ui->horizontalSliderSaturability->maximum()));
+        ui->horizontalSliderLuminance->setValue(m_layer->imgBright() * float(ui->horizontalSliderLuminance->maximum()));
+        ui->horizontalSliderContrast->setValue(m_layer->imgContrast() * float(ui->horizontalSliderContrast->maximum()));
+        ui->horizontalSliderTransparence->setValue(m_layer->imgTransparence() * float(ui->horizontalSliderTransparence->maximum()));
+
+
         int32_t i = m_layer->layerIndex();
 
         ui->pushButtonMoveUp->setEnabled(i > 0);
@@ -280,11 +295,13 @@ void FormLayerTools::on_layerAdded(BaseLayer *layer)
     }
     QStandardItem* item = new QStandardItem(QIcon(ico), tit);
     //QStandardItem* item = new QStandardItem(tit);
-    item->setCheckable(true);
-    item->setCheckState(Qt::Checked);
+    //item->setCheckable(true);
+    //item->setCheckState(Qt::Checked);
     item->setData(QVariant(reinterpret_cast<qlonglong>(layer)));
     //item->setData(Qt::Checked, Qt::CheckStateRole);
     model->insertRow(layer->layerIndex(), item);
+   // ui->listViewLayers->setIndexWidget()
+    //model->setI
     if (layer == m_layer )
     {
         ui->listViewLayers->setCurrentIndex(item->index());
@@ -441,4 +458,25 @@ void FormLayerTools::on_horizontalSliderTransparence_valueChanged(int value)
     {
         m_layer->setImgTransparence(float(value) / float(ui->horizontalSliderTransparence->maximum()));
     }
+}
+
+void FormLayerTools::on_groupBox_ImageColor_clicked(bool checked)
+{
+    ui->horizontalSliderHue->setValue(0);
+    ui->checkBoxTinting->setChecked(false);
+    ui->horizontalSliderSaturability->setValue(0);
+    ui->horizontalSliderLuminance->setValue(0);
+    ui->horizontalSliderContrast->setValue(0);
+    ui->horizontalSliderTransparence->setValue(0);
+
+    if(m_layer)
+    {
+        m_layer->setImgHue(0.0f);
+        m_layer->setImgHueDye(false);
+        m_layer->setImgSaturation(0.0f);
+        m_layer->setImgBright(0.0f);
+        m_layer->setImgContrast(0.0f);
+        m_layer->setImgTransparence(0.0f);
+    }
+    ui->groupBox_ImageColor->setChecked(true);
 }

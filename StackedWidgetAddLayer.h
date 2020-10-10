@@ -29,6 +29,8 @@ public:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void timerEvent(QTimerEvent* event) override;
+
+    bool event(QEvent *event) override;
 private slots:
     void on_toolButtonScreenArea_clicked();
     void on_pushButtonAddCamera_clicked();

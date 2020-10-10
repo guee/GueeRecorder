@@ -162,8 +162,15 @@ void main(void)
     }
     hsl.b = bright >= 0.0 ? 1.0 - pow( 1.0 - hsl.b, b) : pow( hsl.b, 1.0 / b);
     hsl.g = saturation >= 0.0 ? pow( hsl.g, s) : hsl.g * s;
-    hsl.r = hsl.r + hue + 2.0;
-    hsl.r -= floor(hsl.r);
+    if (hueDye)
+    {
+        hsl.r = hue;
+    }
+    else
+    {
+        hsl.r = hsl.r + hue + 2.0;
+        hsl.r -= floor(hsl.r);
+    }
     pix.rgb = hsl2rgb(hsl.r, hsl.g, hsl.b);
     pix.a *= transparence;
     gl_FragColor = pix;
