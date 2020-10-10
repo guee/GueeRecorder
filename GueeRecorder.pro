@@ -123,6 +123,11 @@ DISTFILES += \
     Doc/GueeRecorder-ScreenShot-1.png \
     Doc/GueeRecorder-ScreenShot.png \
     Doc/GueeRecorder.sh \
+    Doc/Pack/GueeRecorder-uos-amd64.deb \
+    Doc/Pack/GueeRecorder-uos-amd64/DEBIAN/control \
+    Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/GueeRecorder \
+    Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/icon256.png \
+    Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/libx264.so.161 \
     Doc/pack.sh \
     Install/GueeRecoder-uos-amd64.zip \
     UiResource/Shaders/RgbToYuv.frag \
