@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>195</width>
-    <height>525</height>
+    <width>170</width>
+    <height>418</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -228,6 +228,15 @@ QSpinBox::down-button
 {
 	subcontrol-origin:border;
 	subcontrol-position:bottom right;
+}
+QGroupBox::title
+{
+	font-size:10px;
+	font-weight:400;
+	color: #2090F0;
+	subcontrol-origin:margin;
+	subcontrol-position: top center;
+	background:#00000000;
 }</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
@@ -272,6 +281,9 @@ QSpinBox::down-button
          </property>
          <property name="rightMargin">
           <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
@@ -494,7 +506,6 @@ QSpinBox::down-button
         </property>
         <property name="lineWidth">
          <number>0</number>
-
         </property>
         <property name="widgetResizable">
          <bool>true</bool>
@@ -503,9 +514,9 @@ QSpinBox::down-button
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>-92</y>
-           <width>195</width>
-           <height>417</height>
+           <y>-164</y>
+           <width>170</width>
+           <height>368</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -513,7 +524,7 @@ QSpinBox::down-button
            <number>4</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
            <number>4</number>
@@ -524,13 +535,19 @@ QSpinBox::down-button
           <item>
            <widget class="QGroupBox" name="groupBox">
             <property name="title">
-             <string>GroupBox</string>
+             <string>--  位置  --</string>
             </property>
             <layout class="QFormLayout" name="formLayout">
              <property name="leftMargin">
               <number>4</number>
              </property>
+             <property name="topMargin">
+              <number>4</number>
+             </property>
              <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <property name="bottomMargin">
               <number>4</number>
              </property>
              <item row="0" column="0">
@@ -613,23 +630,24 @@ QSpinBox::down-button
           <item>
            <widget class="QGroupBox" name="groupBox_2">
             <property name="title">
-             <string>GroupBox</string>
+             <string>--  颜色  --</string>
             </property>
             <layout class="QFormLayout" name="formLayout_2">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>透明：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QSlider" name="horizontalSlider">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
+             <property name="horizontalSpacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>4</number>
+             </property>
+             <property name="topMargin">
+              <number>4</number>
+             </property>
+             <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <property name="bottomMargin">
+              <number>4</number>
+             </property>
              <item row="1" column="0">
               <widget class="QLabel" name="label_7">
                <property name="text">
@@ -637,59 +655,134 @@ QSpinBox::down-button
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QSlider" name="horizontalSlider_2">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
+             <item row="6" column="0">
               <widget class="QLabel" name="label_8">
                <property name="text">
                 <string>对比：</string>
                </property>
               </widget>
              </item>
-             <item row="4" column="0">
+             <item row="5" column="0">
               <widget class="QLabel" name="label_9">
                <property name="text">
                 <string>亮度：</string>
                </property>
               </widget>
              </item>
-             <item row="4" column="1">
-              <widget class="QSlider" name="horizontalSlider_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
              <item row="5" column="1">
-              <widget class="QSlider" name="horizontalSlider_4">
+              <widget class="QSlider" name="horizontalSliderLuminance">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="3" column="0">
+             <item row="6" column="1">
+              <widget class="QSlider" name="horizontalSliderContrast">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
               <widget class="QLabel" name="label_10">
                <property name="text">
                 <string>饱和：</string>
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
-              <widget class="QSlider" name="horizontalSlider_5">
+             <item row="4" column="1">
+              <widget class="QSlider" name="horizontalSliderSaturability">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>-256</number>
+               </property>
+               <property name="maximum">
+                <number>256</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QCheckBox" name="checkBox">
+             <item row="1" column="1">
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSlider" name="horizontalSliderHue">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>24</height>
+                  </size>
+                 </property>
+                 <property name="minimum">
+                  <number>-256</number>
+                 </property>
+                 <property name="maximum">
+                  <number>256</number>
+                 </property>
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBoxTinting">
+                 <property name="text">
+                  <string>着色</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="7" column="0">
+              <widget class="QLabel" name="label_6">
                <property name="text">
-                <string>着色</string>
+                <string>透明：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="1">
+              <widget class="QSlider" name="horizontalSliderTransparence">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
@@ -705,6 +798,26 @@ QSpinBox::down-button
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>pushButtonDing</tabstop>
+  <tabstop>listViewLayers</tabstop>
+  <tabstop>pushButtonFullScreen</tabstop>
+  <tabstop>pushButtonAspratio</tabstop>
+  <tabstop>pushButtonMoveUp</tabstop>
+  <tabstop>pushButtonMoveDown</tabstop>
+  <tabstop>pushButtonRemove</tabstop>
+  <tabstop>scrollAreaOption</tabstop>
+  <tabstop>spinBoxX</tabstop>
+  <tabstop>spinBoxY</tabstop>
+  <tabstop>spinBoxW</tabstop>
+  <tabstop>spinBoxH</tabstop>
+  <tabstop>horizontalSliderHue</tabstop>
+  <tabstop>checkBoxTinting</tabstop>
+  <tabstop>horizontalSliderSaturability</tabstop>
+  <tabstop>horizontalSliderLuminance</tabstop>
+  <tabstop>horizontalSliderContrast</tabstop>
+  <tabstop>horizontalSliderTransparence</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

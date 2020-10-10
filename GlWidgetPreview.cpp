@@ -493,7 +493,7 @@ void GlWidgetPreview::makeObject()
     m_program->bind();
     m_program->setUniformValue("qt_ModelViewProjectionMatrix", m_matrixView);
     m_program->setUniformValue("qt_Texture0", 0);
-
+    m_program->setUniformValue("transparence", 1.0f);
 
     m_program->enableAttributeArray(0);
     m_program->enableAttributeArray(1);

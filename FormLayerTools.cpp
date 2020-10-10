@@ -394,3 +394,51 @@ void FormLayerTools::on_pushButtonDing_clicked(bool checked)
     if (checked == false && m_layer == nullptr)
         emit selectLayer(m_layer);
 }
+
+void FormLayerTools::on_horizontalSliderHue_valueChanged(int value)
+{
+    if(m_layer)
+    {
+        m_layer->setImgHue(float(value) * 0.5f / float(ui->horizontalSliderHue->maximum()));
+    }
+}
+
+void FormLayerTools::on_checkBoxTinting_clicked(bool checked)
+{
+    if(m_layer)
+    {
+        m_layer->setImgHueDye(checked);
+    }
+}
+
+void FormLayerTools::on_horizontalSliderSaturability_valueChanged(int value)
+{
+    if(m_layer)
+    {
+        m_layer->setImgSaturation(float(value) / float(ui->horizontalSliderSaturability->maximum()));
+    }
+}
+
+void FormLayerTools::on_horizontalSliderLuminance_valueChanged(int value)
+{
+    if(m_layer)
+    {
+        m_layer->setImgBright(float(value) / float(ui->horizontalSliderLuminance->maximum()));
+    }
+}
+
+void FormLayerTools::on_horizontalSliderContrast_valueChanged(int value)
+{
+    if(m_layer)
+    {
+        m_layer->setImgContrast(float(value) / float(ui->horizontalSliderContrast->maximum()));
+    }
+}
+
+void FormLayerTools::on_horizontalSliderTransparence_valueChanged(int value)
+{
+    if(m_layer)
+    {
+        m_layer->setImgTransparence(float(value) / float(ui->horizontalSliderTransparence->maximum()));
+    }
+}

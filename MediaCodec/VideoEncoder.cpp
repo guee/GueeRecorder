@@ -26,7 +26,7 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     m_videoParams.BFrames		= -1;
     m_videoParams.BFramePyramid	= 0;
 
-    QString libFileName = QApplication::applicationDirPath() + "/libx264.so.152";
+    QString libFileName = QApplication::applicationDirPath() + "/libx264.so.161";
 
     m_libX264.setFileName(libFileName);
     if (m_libX264.load())

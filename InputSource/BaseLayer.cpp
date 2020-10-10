@@ -152,6 +152,12 @@ void BaseLayer::draw()
     m_program->setUniformValue("qt_Texture0", 0);
     m_program->setUniformValue("yuvFormat", m_resource->m_intputYuvFormat);
     m_program->setUniformValue("textureSize", m_resource->m_texture->width(), m_resource->m_texture->height());
+    m_program->setUniformValue("contrast", m_hslContrast);
+    m_program->setUniformValue("bright", m_hslBright);
+    m_program->setUniformValue("saturation", m_hslSaturation);
+    m_program->setUniformValue("hue", m_hslHue);
+    m_program->setUniformValue("hueDye", m_hslHueDye);
+    m_program->setUniformValue("transparence", 1.0f - m_transparence);
 
     if ( m_vbo == nullptr )
     {
@@ -614,6 +620,66 @@ void BaseLayer::fullViewport(bool full)
         m_fullViewport = full;
         onSizeChanged(this);
     }
+}
+
+float BaseLayer::imgContrast()
+{
+    return m_hslContrast;
+}
+
+void BaseLayer::setImgContrast(float c)
+{
+    m_hslContrast = qMax(-1.0f, qMin(1.0f, c));
+}
+
+float BaseLayer::imgBright()
+{
+    return m_hslBright;
+}
+
+void BaseLayer::setImgBright(float b)
+{
+    m_hslBright = qMax(-1.0f, qMin(1.0f, b));
+}
+
+float BaseLayer::imgSaturation()
+{
+    return m_hslSaturation;
+}
+
+void BaseLayer::setImgSaturation(float s)
+{
+    m_hslSaturation = qMax(-1.0f, qMin(1.0f, s));
+}
+
+float BaseLayer::imgHue()
+{
+    return m_hslHue;
+}
+
+void BaseLayer::setImgHue(float h)
+{
+    m_hslHue = qMax(-1.0f, qMin(1.0f, h));
+}
+
+bool BaseLayer::imgHueDye()
+{
+    return m_hslHueDye;
+}
+
+void BaseLayer::setImgHueDye(bool d)
+{
+    m_hslHueDye = d;
+}
+
+float BaseLayer::imgTransparence()
+{
+    return m_transparence;
+}
+
+void BaseLayer::setImgTransparence(float t)
+{
+    m_transparence = qMax(0.0f, qMin(1.0f, t));
 }
 
 QRectF BaseLayer::rect(bool realBox) const

@@ -3,7 +3,7 @@ QT += x11extras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
-CONFIG += c++11 precompile_header
+CONFIG += c++11 precompile_header $(SYS_ARCH)
 PRECOMPILED_HEADER = precompile.h
 LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac -lXcomposite
 
@@ -92,7 +92,9 @@ HEADERS += \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
     VideoSynthesizer.h \
-    MediaCodec/WaveFile.h
+    MediaCodec/WaveFile.h \
+    MediaCodec/x264_config.h \
+    MediaCodec/x264.h
 
 FORMS += \
     DialogSelectScreen.ui \
@@ -104,7 +106,7 @@ FORMS += \
     mainwindow.ui \
     DialogSetting.ui \
     FormVolumeAction.ui
-#QMAKE_CXXFLAGS += -march='mips64r5'
+
 #QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS_RELEASE += -O3
 #LIBS += -lgomp

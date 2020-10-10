@@ -87,7 +87,20 @@ public:
     void setRectOnSource(const QRect& rect);
     void fullViewport(bool full);
     bool isFullViewport() const{ return m_fullViewport;}
-    //void
+
+    float imgContrast();
+    void setImgContrast(float c);
+    float imgBright();
+    void setImgBright(float b);
+    float imgSaturation();
+    void setImgSaturation(float s);
+    float imgHue();
+    void setImgHue(float h);
+    bool imgHueDye();
+    void setImgHueDye(bool d);
+    float imgTransparence();
+    void setImgTransparence(float t);
+
     //取得图像在画面上的归一化坐标区域(X坐标从左到右为0到1，Y坐标从上到下为0到1)。
     QRectF rect(bool realBox = true) const;
     //设置和取得图像保持比例的模式
@@ -145,6 +158,13 @@ private:
     bool            m_rectOnSourceInited = false;
     bool            m_vertexChanged = false;
     BaseSource* m_resource = nullptr;
+
+    float m_hslContrast = 0.0f;
+    float m_hslBright = 0.0f;
+    float m_hslSaturation = 0.0f;
+    float m_hslHue = 0.0f;
+    float m_transparence = 0.0f;
+    bool m_hslHueDye = false;
 };
 
 #endif // BASELAYER_H

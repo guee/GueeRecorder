@@ -35,6 +35,18 @@ private slots:
     void on_listLayersSelect_currentRowChanged(const QModelIndex& current, const QModelIndex& previous);
     void on_pushButtonDing_clicked(bool checked);
 
+    void on_horizontalSliderHue_valueChanged(int value);
+
+    void on_checkBoxTinting_clicked(bool checked);
+
+    void on_horizontalSliderSaturability_valueChanged(int value);
+
+    void on_horizontalSliderLuminance_valueChanged(int value);
+
+    void on_horizontalSliderContrast_valueChanged(int value);
+
+    void on_horizontalSliderTransparence_valueChanged(int value);
+
 public slots:
     void on_layerAdded(BaseLayer* layer);
     void on_layerRemoved(BaseLayer* layer);
