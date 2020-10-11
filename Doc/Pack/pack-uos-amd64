@@ -1,0 +1,2 @@
+#!/bin/sh
+dpkg -b GueeRecorder-uos-amd64 GueeRecorder-uos-amd64.deb

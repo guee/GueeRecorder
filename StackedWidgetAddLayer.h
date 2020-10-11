@@ -24,10 +24,6 @@ public:
     ~StackedWidgetAddLayer() override;
     virtual void showEvent(QShowEvent *event) override;
     virtual void hideEvent(QHideEvent *event) override;
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
-    virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void timerEvent(QTimerEvent* event) override;
 
     bool event(QEvent *event) override;

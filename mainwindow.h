@@ -25,6 +25,7 @@ public:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void moveEvent(QMoveEvent* event) override;
     virtual void closeEvent(QCloseEvent *event) override;
+    virtual void timerEvent(QTimerEvent* event) override;
 private slots:
     void on_widgetPreview_initGL();
 
@@ -47,6 +48,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     VideoSynthesizer& m_video;
+    int m_delayInitAudio = 0;
     QTimer* m_fpsTimer = nullptr;
     QPoint m_pressKeyGlobalPos;
     QRect m_pressKeyGeometry;

@@ -44,19 +44,19 @@ MainWindow::MainWindow(QWidget *parent)
     //this->setAttribute(Qt::WA_TranslucentBackground);
     //this->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-    this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
+   // this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
+    this->setWindowIcon(QIcon(":/icon32.png"));
     //this->setWindowTitle(QApplication::applicationDisplayName());
 
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
     m_fpsTimer->setInterval(200);
     m_fpsTimer->start();
-
+#ifdef Q_PROCESSOR_MIPS_64
     ui->setupUi(this);
-
+#endif
     ui->widgetLogo->setAttribute(Qt::WA_TransparentForMouseEvents);
     ui->widgetTitleInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
-   // ui->labelVideoInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     ui->widgetTitle->setMouseTracking(true);
     ui->widgetTitle->installEventFilter(this);
@@ -97,7 +97,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
     ui->stackedWidgetRecControl->setCursor(Qt::ArrowCursor);
 
-    //setMouseTracking(true);
     if (!QApplication::screens().isEmpty())
     {
         QRect screen = QApplication::screens()[0]->geometry();
@@ -105,8 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
         move(offset + screen.topLeft());
     }
 
-    DialogSetting::loadProfile();
-    ui->widget_AudioRec->resetAudioRecordUI();
+    DialogSetting::loadProfile(false);
 
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
     QDateTime tt = buildDateTime();
@@ -116,7 +114,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->labelVersion->setText(ver);
     ui->labelVersion->setToolTip(ver);
     ui->labelLogo->setToolTip(ver);
-
+    ui->widgetLayerTools->setFixedWindow(DialogSetting::userSetting().fixedLayWnd);
+    if (DialogSetting::userSetting().fixedLayWnd)
+    {
+        ui->widgetLayerTools->show();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -412,7 +414,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     qDebug() << "closeEvent";
     if (m_video.status() >= BaseLayer::Opened)
     {
-        if (QMessageBox::question(this, "Guee 录屏机", "正在录制视频，是否结束录制并退程序？",
+        if (QMessageBox::question(this, "退出 Guee 录屏机", "正在录制视频，是否结束录制并退程序？",
                                   QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)
                 == QMessageBox::Yes)
         {
@@ -434,9 +436,21 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    if (event->timerId() == m_delayInitAudio)
+    {
+        killTimer(m_delayInitAudio);
+        m_delayInitAudio = 0;
+        DialogSetting::loadProfile(true);
+        ui->widget_AudioRec->resetAudioRecordUI();
+    }
+}
+
 void MainWindow::on_widgetPreview_initGL()
 {
     m_video.init(ui->widgetPreview->context());
+    m_delayInitAudio = startTimer(200);
 }
 
 void MainWindow::on_pushButtonRecStart_clicked()

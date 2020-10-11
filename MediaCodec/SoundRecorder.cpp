@@ -290,7 +290,7 @@ void SoundRecorder::run()
                 {
                     m_mediaStream->putAudioFrame(encBuf, encOutSize, frameBegin * 1000 / m_audioParams.sampleRate);
                 }
-                qDebug() << "[null]Time:" << VideoSynthesizer::instance().timestamp() / 1000 << ", frameBegin:" << frameBegin << ", encOutSize:" << encOutSize;
+                //qDebug() << "[null]Time:" << VideoSynthesizer::instance().timestamp() / 1000 << ", frameBegin:" << frameBegin << ", encOutSize:" << encOutSize;
                 frameBegin += sampPerFrame;
             }
 
@@ -831,7 +831,7 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
         {
             //计算需要抛弃的字节数
             int32_t skip = num - (m_bufferSize - m_dataSize);
-            qDebug() << (m_isCallbackType?"PCB":"MIC") << "Smple:" << m_sampleBegin << ", 输入的音频数据：" << num <<"大于m_bufferSize(" << m_bufferSize << ")-m_dataSize(" << m_dataSize << ")，需要跳过："<<skip;
+            //qDebug() << (m_isCallbackType?"PCB":"MIC") << "Smple:" << m_sampleBegin << ", 输入的音频数据：" << num <<"大于m_bufferSize(" << m_bufferSize << ")-m_dataSize(" << m_dataSize << ")，需要跳过："<<skip;
             if ( skip > m_dataSize)
             {
                 //需要抛弃的字节数大于了现有数据，就还需要抛弃一部分输入数据

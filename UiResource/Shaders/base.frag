@@ -147,31 +147,34 @@ vec3 hsl2rgb(float h, float s, float l)
 void main(void)
 {
     vec4 pix = getRGB_Pixel(qt_TexCoord0.st);
-    float c = contrast >= 0.0 ? 1.0 + contrast * 9.0 : 1.0 + contrast * 9.0 / 10.0;
-    float b = bright >= 0.0 ? 1.0 + bright * 9.0 : 1.0 + bright * 9.0 / 10.0;
-    float s = saturation >= 0.0 ? 1.0/(1.0 + saturation * 9.0) : 1.0 + saturation * 1.0;
-    vec3 hsl = rgb2hsl(pix.rgb);
-    if (contrast >= 0.0)
+    if (contrast != 0.0 || bright != 0.0 || saturation != 0.0)
     {
-        hsl.b = hsl.b <= 0.5 ? pow(hsl.b * 2.0, c) * 0.5 : (1.0 - pow((1.0 - (hsl.b - 0.5) * 2.0), c)) * 0.5 + 0.5;
+        float c = contrast >= 0.0 ? 1.0 + contrast * 9.0 : 1.0 + contrast * 9.0 / 10.0;
+        float b = bright >= 0.0 ? 1.0 + bright * 9.0 : 1.0 + bright * 9.0 / 10.0;
+        float s = saturation >= 0.0 ? 1.0/(1.0 + saturation * 9.0) : 1.0 + saturation * 1.0;
+        vec3 hsl = rgb2hsl(pix.rgb);
+        if (contrast >= 0.0)
+        {
+            hsl.b = hsl.b <= 0.5 ? pow(hsl.b * 2.0, c) * 0.5 : (1.0 - pow((1.0 - (hsl.b - 0.5) * 2.0), c)) * 0.5 + 0.5;
+        }
+        else
+        {
+            hsl.b = hsl.b * c + (1.0 - c) * 0.5;
+            hsl.g = hsl.g * c;
+        }
+        hsl.b = bright >= 0.0 ? 1.0 - pow( 1.0 - hsl.b, b) : pow( hsl.b, 1.0 / b);
+        hsl.g = saturation >= 0.0 ? pow( hsl.g, s) : hsl.g * s;
+        if (hueDye)
+        {
+            hsl.r = hue;
+        }
+        else
+        {
+            hsl.r = hsl.r + hue + 2.0;
+            hsl.r -= floor(hsl.r);
+        }
+        pix.rgb = hsl2rgb(hsl.r, hsl.g, hsl.b);
     }
-    else
-    {
-        hsl.b = hsl.b * c + (1.0 - c) * 0.5;
-        hsl.g = hsl.g * c;
-    }
-    hsl.b = bright >= 0.0 ? 1.0 - pow( 1.0 - hsl.b, b) : pow( hsl.b, 1.0 / b);
-    hsl.g = saturation >= 0.0 ? pow( hsl.g, s) : hsl.g * s;
-    if (hueDye)
-    {
-        hsl.r = hue;
-    }
-    else
-    {
-        hsl.r = hsl.r + hue + 2.0;
-        hsl.r -= floor(hsl.r);
-    }
-    pix.rgb = hsl2rgb(hsl.r, hsl.g, hsl.b);
     pix.a *= transparence;
     gl_FragColor = pix;
 }

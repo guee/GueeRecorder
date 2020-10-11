@@ -80,6 +80,11 @@ void VideoSynthesizer::init(QOpenGLContext* shardContext)
 
         }
 
+        qDebug() <<"GL_VENDOR:" << QString::fromUtf8((const char*)glGetString(GL_VENDOR));
+        qDebug() <<"GL_RENDERER:" << QString::fromUtf8((const char*)glGetString(GL_RENDERER));
+        qDebug() <<"GL_VERSION:" << QString::fromUtf8((const char*)glGetString(GL_VERSION));
+        //qDebug() <<"GL_EXTENSIONS:" << QString::fromUtf8((const char*)glGetString(GL_EXTENSIONS));
+
         m_videoSizeChanged = false;
         m_threadWorking = true;
         m_frameSync.init(m_vidParams.frameRate);
@@ -652,7 +657,7 @@ void VideoSynthesizer::renderThread()
                 isUpdated = false;
             }
         }
-        msleep(1);
+        msleep(2);
         //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 

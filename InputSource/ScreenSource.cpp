@@ -286,17 +286,13 @@ void ScreenSource::static_uninit()
 
 bool ScreenSource::setRecordCursor(bool record)
 {
-    if (m_cursorUseable)
-    {
-        m_recordCursor = record;
-        return true;
-    }
-    return false;
+    m_recordCursor = record;
+    return true;
 }
 
 bool ScreenSource::isRecordCursor()
 {
-    return m_cursorUseable && m_recordCursor;
+    return m_recordCursor;
 }
 
 bool ScreenSource::readScreenConfig()
@@ -922,7 +918,7 @@ bool ScreenSource::shotScreen(const QRect* rect)
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_img->data);
     m_stride = m_img->bytes_per_line;
-    if (m_recordCursor) drawCursor();
+    if (m_cursorUseable && m_recordCursor) drawCursor();
     m_imageLock.unlock();
 
     for (auto it:m_layers)

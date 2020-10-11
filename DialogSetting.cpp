@@ -35,10 +35,9 @@ DialogSetting::~DialogSetting()
     delete ui;
 }
 
-bool DialogSetting::loadProfile()
+bool DialogSetting::loadProfile(bool initAudio)
 {
     QString optDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-
 
     if (!optDir.isEmpty())
     {
@@ -56,63 +55,80 @@ bool DialogSetting::loadProfile()
     }
     userSetting().profile = optDir + "/setting.ini";
     QSettings ini(userSetting().profile, QSettings::IniFormat);
-    ini.beginGroup("FileSave");
-    userSetting().videoDir = ini.value("dir").toString();
-    if (userSetting().videoDir.isEmpty())
-    {
-        userSetting().videoDir = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
-        ini.setValue("dir", userSetting().videoDir);
-    }
-    userSetting().fileName = ini.value("name").toString();
-    if (userSetting().fileName.isEmpty())
-    {
-        userSetting().fileName = QApplication::applicationName();
-        ini.setValue("name", userSetting().fileName);
-    }
-    userSetting().fileType = ini.value("type").toString();
-    if (userSetting().fileType.isEmpty())
-    {
-        userSetting().fileType = "mp4";
-        ini.setValue("type", userSetting().fileType);
-    }
-    ini.endGroup();
 
     VideoSynthesizer& vid = VideoSynthesizer::instance();
-    ini.beginGroup("Video");
-    vid.setSize(ini.value("width", vid.width()).toInt(),
-                ini.value("height", vid.height()).toInt());
-    vid.setFrameRate(ini.value("fps", vid.frameRate()).toFloat());
-    vid.setBitrate(ini.value("bps", vid.bitrate()).toInt());
-    vid.setBitrateMode(EVideoRateMode(ini.value("bps-mode", vid.bitrateMode()).toInt()));
-    vid.setConstantQP(ini.value("qp", vid.constantQP()).toInt());
-    vid.setPreset(EVideoPreset_x264(ini.value("preset", vid.preset()).toInt()));
-    vid.setGopMax(ini.value("gop-max", vid.gopMax()).toInt());
-    vid.setBFrames(ini.value("BFrame", vid.bFrames()).toInt());
-    vid.setRefFrames(ini.value("refFrame", vid.refFrames()).toInt());
-    ScreenSource::setRecordCursor(ini.value("recCursor", true).toBool());
-    ini.endGroup();
 
-    ini.beginGroup("Audio");
-    vid.setSampleBits(ESampleBits(ini.value("bits", vid.sampleBits()).toInt()));
-    vid.setSampleRate(ini.value("fps", vid.sampleRate()).toInt());
-    vid.setChannels(ini.value("channels", vid.channels()).toInt());
-    vid.setAudioBitrate(ini.value("bps", vid.bitrate()).toInt());
-    vid.audCallbackDev().selectDev(ini.value("cbDev", "").toString());
-    vid.audCallbackDev().setEnable(ini.value("cbEnabled", true).toBool());
-    vid.audCallbackDev().setVolume(ini.value("cbVolume", 1.0).toReal());
-    vid.audMicInputDev().selectDev(ini.value("micDev", "").toString());
-    vid.audMicInputDev().setEnable(ini.value("micEnabled", true).toBool());
-    vid.audMicInputDev().setVolume(ini.value("micVolume", 1.0).toReal());
-    vid.enableAudio(ini.value("enabled", true).toBool());
-    ini.endGroup();
+    if ( !initAudio )
+    {
+        ini.beginGroup("ui");
+        userSetting().fixedLayWnd = ini.value("fixedLayWnd").toBool();
+        ini.endGroup();
+
+        ini.beginGroup("FileSave");
+        userSetting().videoDir = ini.value("dir").toString();
+        if (userSetting().videoDir.isEmpty())
+        {
+            userSetting().videoDir = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
+            ini.setValue("dir", userSetting().videoDir);
+        }
+        userSetting().fileName = ini.value("name").toString();
+        if (userSetting().fileName.isEmpty())
+        {
+            userSetting().fileName = QApplication::applicationName();
+            ini.setValue("name", userSetting().fileName);
+        }
+        userSetting().fileType = ini.value("type").toString();
+        if (userSetting().fileType.isEmpty())
+        {
+            userSetting().fileType = "mp4";
+            ini.setValue("type", userSetting().fileType);
+        }
+        ini.endGroup();
+
+        ini.beginGroup("Video");
+        vid.setSize(ini.value("width", vid.width()).toInt(),
+                    ini.value("height", vid.height()).toInt());
+        vid.setFrameRate(ini.value("fps", vid.frameRate()).toFloat());
+        vid.setBitrate(ini.value("bps", vid.bitrate()).toInt());
+        vid.setBitrateMode(EVideoRateMode(ini.value("bps-mode", vid.bitrateMode()).toInt()));
+        vid.setConstantQP(ini.value("qp", vid.constantQP()).toInt());
+        vid.setPreset(EVideoPreset_x264(ini.value("preset", vid.preset()).toInt()));
+        vid.setGopMax(ini.value("gop-max", vid.gopMax()).toInt());
+        vid.setBFrames(ini.value("BFrame", vid.bFrames()).toInt());
+        vid.setRefFrames(ini.value("refFrame", vid.refFrames()).toInt());
+        ScreenSource::setRecordCursor(ini.value("recCursor", true).toBool());
+        ini.endGroup();
+    }
+    else
+    {
+        ini.beginGroup("Audio");
+        vid.setSampleBits(ESampleBits(ini.value("bits", vid.sampleBits()).toInt()));
+        vid.setSampleRate(ini.value("fps", vid.sampleRate()).toInt());
+        vid.setChannels(ini.value("channels", vid.channels()).toInt());
+        vid.setAudioBitrate(ini.value("bps", vid.bitrate()).toInt());
+        vid.audCallbackDev().selectDev(ini.value("cbDev", "").toString());
+        vid.audCallbackDev().setEnable(ini.value("cbEnabled", true).toBool());
+        vid.audCallbackDev().setVolume(ini.value("cbVolume", 1.0).toReal());
+        vid.audMicInputDev().selectDev(ini.value("micDev", "").toString());
+        vid.audMicInputDev().setEnable(ini.value("micEnabled", true).toBool());
+        vid.audMicInputDev().setVolume(ini.value("micVolume", 1.0).toReal());
+        vid.enableAudio(ini.value("enabled", true).toBool());
+        ini.endGroup();
+
+    }
+
+
     return true;
 }
 
 bool DialogSetting::saveProfile()
 {
     QSettings ini(userSetting().profile, QSettings::IniFormat);
-    ini.beginGroup("FileSave");
+    ini.beginGroup("ui");
+    ini.setValue("fixedLayWnd", userSetting().fixedLayWnd);
+    ini.endGroup();
 
+    ini.beginGroup("FileSave");
     if (userSetting().videoDir.isEmpty())
         userSetting().videoDir = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
     ini.setValue("dir", userSetting().videoDir);
@@ -124,7 +140,6 @@ bool DialogSetting::saveProfile()
     if (userSetting().fileType.isEmpty())
         userSetting().fileType = "mp4";
     ini.setValue("type", userSetting().fileType);
-
     ini.endGroup();
 
     VideoSynthesizer& vid = VideoSynthesizer::instance();

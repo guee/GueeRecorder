@@ -24,9 +24,11 @@ public:
         QString videoDir;
         QString fileName;
         QString fileType;
+
+        bool fixedLayWnd;
     };
     static UserSetting& userSetting() {static UserSetting s; return s;}
-    static bool loadProfile();
+    static bool loadProfile( bool initAudio );
     static bool saveProfile();
     void resizeEvent(QResizeEvent* event);
     void timerEvent(QTimerEvent* event);

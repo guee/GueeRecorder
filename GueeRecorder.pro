@@ -7,6 +7,14 @@ CONFIG += c++11 precompile_header $(SYS_ARCH)
 PRECOMPILED_HEADER = precompile.h
 LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac -lXcomposite
 
+COMPILER=$$system($$QMAKE_CC -v 2>&1)
+#contains 必须和 { 在同一行
+contains(COMPILER, mips64el-linux-gnuabi64){
+    LIBS += $$PWD/lib/loongson/libx264.so.161
+}
+contains(DEFINES, x86_64-linux-gnu){
+    LIBS += $$PWD/lib/amd64/libx264.so.161
+}
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -108,7 +116,11 @@ FORMS += \
     FormVolumeAction.ui
 
 #QMAKE_CXXFLAGS += -fopenmp
-QMAKE_CXXFLAGS_RELEASE += -O3
+contains(DEFINES, Q_PROCESSOR_MIPS_64)
+{
+#QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
+QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
+}
 #LIBS += -lgomp
 
 # Default rules for deployment.
@@ -123,7 +135,6 @@ DISTFILES += \
     Doc/GueeRecorder-ScreenShot-1.png \
     Doc/GueeRecorder-ScreenShot.png \
     Doc/GueeRecorder.sh \
-    Doc/Pack/GueeRecorder-uos-amd64.deb \
     Doc/Pack/GueeRecorder-uos-amd64/DEBIAN/control \
     Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/GueeRecorder \
     Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/icon256.png \
@@ -143,4 +154,12 @@ DISTFILES += \
     Doc/logo.psd \
     Doc/icon.psd \
     Doc/GueeRecorder-Help.docx \
-    Doc/MainUIDesc.png
+    Doc/MainUIDesc.png \
+    Doc/Pack/pack-fedora-loongson \
+    Doc/Pack/pack-uos-amd64 \
+    Doc/Pack/pack-uos-loongson \
+    Doc/Pack/GueeRecorder-uos-loongson/DEBIAN/control \
+    Doc/Pack/GueeRecorder-uos-loongson/usr/share/applications/guee-recorder.desktop \
+    Doc/Pack/GueeRecorder-uos-loongson/usr/bin/GueeRecorder \
+    Doc/Pack/GueeRecorder-uos-loongson/usr/lib/mips64el-linux-gnuabi64/libx264.so.161 \
+    Doc/Pack/GueeRecorder-uos-loongson/usr/share/icons/hicolor/256x256/apps/guee-recorder.png

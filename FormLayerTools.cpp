@@ -2,6 +2,7 @@
 #include "ui_FormLayerTools.h"
 #include "InputSource/ScreenLayer.h"
 #include <QStandardItemModel>
+#include "DialogSetting.h"
 
 FormLayerTools::FormLayerTools(QWidget *parent) :
     QWidget(parent),
@@ -56,6 +57,10 @@ bool FormLayerTools::windowIsPeg()
 
 bool FormLayerTools::event(QEvent *event)
 {
+    if (event->type() == QEvent::Enter)
+    {
+        emit selectLayer(m_layer);
+    }
     if (event->type() == QEvent::ToolTip
             || event->type() == QEvent::MouseMove
             || event->type() == QEvent::MouseButtonPress
@@ -67,6 +72,11 @@ bool FormLayerTools::event(QEvent *event)
         return true;
     }
     return QWidget::event(event);
+}
+
+void FormLayerTools::setFixedWindow(bool fixed)
+{
+    ui->pushButtonDing->setChecked(fixed);
 }
 
 void FormLayerTools::on_pushButtonRemove_clicked()
@@ -408,8 +418,12 @@ void FormLayerTools::resetButStatus()
 
 void FormLayerTools::on_pushButtonDing_clicked(bool checked)
 {
+    DialogSetting::userSetting().fixedLayWnd = checked;
+    DialogSetting::saveProfile();
     if (checked == false && m_layer == nullptr)
+    {
         emit selectLayer(m_layer);
+    }
 }
 
 void FormLayerTools::on_horizontalSliderHue_valueChanged(int value)

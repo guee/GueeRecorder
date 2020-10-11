@@ -22,7 +22,7 @@ public:
     bool windowIsPeg();
 
     bool event(QEvent *event) override;
-
+    void setFixedWindow(bool fixed);
 private slots:
     void on_pushButtonRemove_clicked();
     void on_pushButtonFullScreen_clicked(bool checked);

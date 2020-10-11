@@ -44,26 +44,6 @@ void StackedWidgetAddLayer::hideEvent(QHideEvent *event)
     closeCameraPreview();
 }
 
-void StackedWidgetAddLayer::mousePressEvent(QMouseEvent *event)
-{
-    Q_UNUSED(event)
-}
-
-void StackedWidgetAddLayer::mouseReleaseEvent(QMouseEvent *event)
-{
-    Q_UNUSED(event)
-}
-
-void StackedWidgetAddLayer::mouseMoveEvent(QMouseEvent *event)
-{
-    Q_UNUSED(event)
-}
-
-void StackedWidgetAddLayer::keyPressEvent(QKeyEvent *event)
-{
-    Q_UNUSED(event)
-}
-
 void StackedWidgetAddLayer::timerEvent(QTimerEvent *event)
 {
     killTimer(event->timerId());
@@ -186,6 +166,7 @@ void StackedWidgetAddLayer::showScreens()
 
 void StackedWidgetAddLayer::showCameras()
 {
+    if (m_selectedCamera) return;
     static QList<QCameraInfo> camsLast;
     QList<QCameraInfo> cams = QCameraInfo::availableCameras();
     if (nullptr == m_selectedCamera)

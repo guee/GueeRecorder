@@ -137,7 +137,7 @@ void GlWidgetPreview::paintGL()
     //绘制控制点和边框线
     //glEnable(GL_LINE_SMOOTH);
     QSizeF potSize( m_edgeSize / m_viewportSize.width(), m_edgeSize / m_viewportSize.height() );
-    if ( m_enterLayer )
+    if ( m_enterLayer && m_enterLayer != m_editingLayer )
     {
         QRectF rt = m_boxEnterLayer.translated(m_offsetOfViewport);
         rt.translate(0.5, 0.5);
@@ -204,10 +204,10 @@ void GlWidgetPreview::paintGL()
 }
 void GlWidgetPreview::resizeGL(int width, int height)
 {
-    Q_UNUSED(width)
-    Q_UNUSED(height)
-
-    m_layerTools->setGeometry(width - m_layerTools->width(), 0 , m_layerTools->width(), height);
+    if (width > 0 && height > 0)
+    {
+        m_layerTools->setGeometry(width - m_layerTools->width(), 0 , m_layerTools->width(), height);
+    }
 
     fixOffsetAsScreen();
 
@@ -253,7 +253,7 @@ void GlWidgetPreview::fixOffsetAsScreen()
         {
             m_screenScale = ratio;
             m_edgeSize = 5.0 * m_screenScale;
-            if (m_layerTools->isVisible())
+            if (m_layerTools->isVisible() || m_layerTools->windowIsPeg())
             {
                 m_viewportSize.setWidth(qFloor((width() - m_layerTools->width()) * m_screenScale));
             }
@@ -651,6 +651,7 @@ void GlWidgetPreview::notifySelectLayer(BaseLayer *layer)
             {
                 m_layerTools->show();
                 resizeGL(width(), height());
+                update();
             }
         }
         else
@@ -659,6 +660,7 @@ void GlWidgetPreview::notifySelectLayer(BaseLayer *layer)
             {
                 m_layerTools->hide();
                 resizeGL(width(), height());
+                update();
             }
         }
     }
@@ -700,6 +702,7 @@ void GlWidgetPreview::on_selectLayer(BaseLayer *layer)
     if (layer == nullptr) notifySelectLayer(layer);
     if (layer == m_editingLayer)
     {
+        m_enterLayer = nullptr;
         return;
     }
     m_editingLayer = layer;
