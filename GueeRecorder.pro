@@ -10,11 +10,20 @@ LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac -lXcomposite
 COMPILER=$$system($$QMAKE_CC -v 2>&1)
 #contains 必须和 { 在同一行
 contains(COMPILER, mips64el-linux-gnuabi64){
-    LIBS += $$PWD/lib/loongson/libx264.so.161
+    LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libx264.so.161
+    #QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
+    QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
+    QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
+
+    QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-linux-gnuabi64\'
 }
-contains(DEFINES, x86_64-linux-gnu){
-    LIBS += $$PWD/lib/amd64/libx264.so.161
+contains(COMPILER, x86_64-linux-gnu){
+    LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
+    QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
 }
+#QMAKE_CXXFLAGS += -fopenmp
+#LIBS += -lgomp
+
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -115,13 +124,7 @@ FORMS += \
     DialogSetting.ui \
     FormVolumeAction.ui
 
-#QMAKE_CXXFLAGS += -fopenmp
-contains(DEFINES, Q_PROCESSOR_MIPS_64)
-{
-#QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
-QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
-}
-#LIBS += -lgomp
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -141,6 +144,34 @@ DISTFILES += \
     Doc/Pack/GueeRecorder-uos-amd64/opt/apps/net.guee.gueerecoder/libx264.so.161 \
     Doc/pack.sh \
     Install/GueeRecoder-uos-amd64.zip \
+    Package/pack-fedora-loongson \
+    Package/pack-uos \
+    Package/uos-amd64/DEBIAN/control \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/guee-recorder.desktop \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/GueeRecorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libx264.so.161 \
+    Package/uos-amd64/opt/apps/net.guee.recorder/info \
+    Package/uos-loongson/DEBIAN/control \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/applications/guee-recorder.desktop \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/GueeRecorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/mips64el-linux-gnuabi64/libx264.so.161 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/info \
     UiResource/Shaders/RgbToYuv.frag \
     UiResource/Shaders/RgbToYuv.vert \
     UiResource/Shaders/SelectScreen.frag \
@@ -155,7 +186,6 @@ DISTFILES += \
     Doc/icon.psd \
     Doc/GueeRecorder-Help.docx \
     Doc/MainUIDesc.png \
-    Doc/Pack/pack-fedora-loongson \
     Doc/Pack/pack-uos-amd64 \
     Doc/Pack/pack-uos-loongson \
     Doc/Pack/GueeRecorder-uos-loongson/DEBIAN/control \

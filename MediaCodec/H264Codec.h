@@ -75,15 +75,14 @@ static const char * const video_preset_intel_names[] = { "Speed", "Balanced", "Q
 //视频编码器码率控制方式设置
 enum EVideoRateMode
 {
-	VR_ConstantBitrate,		//固定码率(CBR)		
+    VR_ConstantQP,			//恒定质量(CQP)
+                            //x264 使用 X264_RC_CQP恒定质量
+                            //Nvenc	NV_ENC_PARAMS_RC_CBR, 如果 VBV 参数有值，则使用 NV_ENC_PARAMS_RC_VBR_MINQP
+                            //Cuda	RC_CQP / RC_VBR_MINQP
+    VR_ConstantBitrate,		//固定码率(CBR)
 							//x264 使用 X264_RC_CRF 进行控制
 							//Nvenc	NV_ENC_PARAMS_RC_CBR
 							//Cuda	RC_CBR
-
-	VR_ConstantQP,			//恒定质量(CQP)		
-							//x264 使用 X264_RC_CQP恒定质量
-							//Nvenc	NV_ENC_PARAMS_RC_CBR, 如果 VBV 参数有值，则使用 NV_ENC_PARAMS_RC_VBR_MINQP
-							//Cuda	RC_CQP / RC_VBR_MINQP
     VR_VariableBitrate,		//可变码率(VBR)
                             //x264 使用 X264_RC_ABR平均码率 进行控制
                             //Nvenc	NV_ENC_PARAMS_RC_VBR

@@ -44,17 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
     //this->setAttribute(Qt::WA_TranslucentBackground);
     //this->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-   // this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
-    this->setWindowIcon(QIcon(":/icon32.png"));
+    //this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
+    this->setWindowIcon(QIcon(":/icons/hicolor/64x64/apps/GueeRecorder.png"));
     //this->setWindowTitle(QApplication::applicationDisplayName());
 
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
     m_fpsTimer->setInterval(200);
     m_fpsTimer->start();
-#ifdef Q_PROCESSOR_MIPS_64
+
     ui->setupUi(this);
-#endif
+
     ui->widgetLogo->setAttribute(Qt::WA_TransparentForMouseEvents);
     ui->widgetTitleInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
 

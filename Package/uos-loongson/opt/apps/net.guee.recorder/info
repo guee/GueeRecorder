@@ -1,0 +1,21 @@
+{
+    "appid": "net.guee.recorder",
+    "name": "guee-recorder",
+    "version": "1.0.0.0",
+    "arch": ["amd64", "mips64","arm64","sw_64"],
+    "permissions": {
+        "autostart": false,
+        "notification": false,
+        "trayicon": false,
+        "clipboard": true,
+        "account": false,
+        "bluetooth": false,
+        "camera": true,
+        "audio_record": true,
+        "installed_apps": false
+    },
+    "support-plugins": [
+    ],
+    "plugins": [
+    ]
+}

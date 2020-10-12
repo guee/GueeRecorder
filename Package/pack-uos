@@ -1,0 +1,31 @@
+#!/bin/bash
+
+PACK_REL="0"
+
+OLD_IFS="$IFS"
+IFS=": "
+while read line
+do
+arr=($line)
+
+if [ "${arr[0]}" == "Package" ]; then
+    PACK_NAME="${arr[1]}"
+fi
+if [ "${arr[0]}" == "Architecture" ]; then
+    PACK_ARCH="${arr[1]}"
+fi
+if [ "${arr[0]}" == "Version" ]; then
+    PACK_VER="${arr[1]}"
+fi
+if [ "${arr[0]}" == "Release" ]; then
+    PACK_REL="${arr[1]}"
+fi
+done < $1/DEBIAN/control
+IFS="$OLD_IFS"
+
+FileName=$PACK_NAME-$PACK_VER-$PACK_REL.$PACK_ARCH.deb
+
+dpkg-deb -b $1 $FileName
+
+
+

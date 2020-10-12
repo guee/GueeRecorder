@@ -721,13 +721,6 @@ bool GueeVideoEncoder::set264BitrateParams()
     if ( m_videoParams.bitrate ) m_x264Param.rc.i_bitrate	= m_videoParams.bitrate;
     switch( m_videoParams.rateMode )
 	{
-    case VR_ConstantBitrate:
-        m_x264Param.rc.i_rc_method	= X264_RC_CRF;
-        m_x264Param.rc.f_rf_constant = m_videoParams.constantQP;
-        //m_x264Param.rc.f_rf_constant_max = 51;
-        //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrate;
-        //m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.bitrate;
-        break;
     case VR_ConstantQP:
         m_x264Param.rc.i_rc_method			= X264_RC_CQP;
         //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrateMax;
@@ -736,6 +729,13 @@ bool GueeVideoEncoder::set264BitrateParams()
         m_x264Param.rc.i_qp_constant = m_videoParams.constantQP;
         m_x264Param.rc.i_qp_min = qMin(m_x264Param.rc.i_qp_min, m_x264Param.rc.i_qp_constant);
         //m_x264Param.rc.i_qp_max = 51;
+        break;
+    case VR_ConstantBitrate:
+        m_x264Param.rc.i_rc_method	= X264_RC_CRF;
+        m_x264Param.rc.f_rf_constant = m_videoParams.constantQP;
+        //m_x264Param.rc.f_rf_constant_max = 51;
+        //m_x264Param.rc.i_vbv_max_bitrate	= m_videoParams.bitrate;
+        //m_x264Param.rc.i_vbv_buffer_size	= m_videoParams.bitrate;
         break;
 	case VR_VariableBitrate:
 		m_x264Param.rc.i_rc_method	= X264_RC_ABR;
