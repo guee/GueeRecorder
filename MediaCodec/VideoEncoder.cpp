@@ -106,7 +106,7 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
             videoParams->vbvBuffer < 0 || videoParams->bitrateMax < 0 ||
             videoParams->encoder < VE_X264 || videoParams->encoder > VE_INTEL ||
             videoParams->profile < VF_Auto || videoParams->profile > VF_High ||
-            videoParams->rateMode < VR_ConstantBitrate || videoParams->rateMode > VR_VariableBitrate )
+            videoParams->rateMode < 0 || videoParams->rateMode > VR_VariableBitrate )
 		{
 			return false;
 		}
