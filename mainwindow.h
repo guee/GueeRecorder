@@ -58,5 +58,7 @@ private:
     void setHitCursor(Qt::WindowFrameSection hit);
     void initMenu();
     static void on_close_step_progress(void* param);
+
+    void setWaitWidget(const QString& str = QString());
 };
 #endif // MAINWINDOW_H

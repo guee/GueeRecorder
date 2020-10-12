@@ -605,7 +605,8 @@ void VideoSynthesizer::renderThread()
         if ( isUpdated || m_immediateUpdate )
         {
             //qDebug() <<"帧时间：" << m_timestamp.elapsed_milli();
-
+            //FrameTimestamp bb;
+            //bb.start();
             preTimer = curTimer;
             if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
             {
@@ -656,8 +657,9 @@ void VideoSynthesizer::renderThread()
                 m_frameRate.add();
                 isUpdated = false;
             }
+            //qDebug() << "PutFrame :" << bb.elapsed_milli();
         }
-        msleep(2);
+        msleep(1);
         //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 

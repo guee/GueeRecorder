@@ -643,6 +643,7 @@ void GlWidgetPreview::setHitCursor(Qt::WindowFrameSection hit)
 
 void GlWidgetPreview::notifySelectLayer(BaseLayer *layer)
 {
+    qDebug() << "notifySelectLayer:" << layer;
     if (!m_layerTools->windowIsPeg())
     {
         if (layer)

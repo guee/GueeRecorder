@@ -236,6 +236,7 @@ bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], i
 
 bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3], int32_t* pitch)
 {
+    //return true;
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     //int64_t pts = (microsecond * m_x264Param.i_fps_num / m_x264Param.i_fps_den + 500000) / 1000000;
     int64_t pts = qRound(double(microsecond) / 1000000.0 * double(m_videoParams.frameRate));

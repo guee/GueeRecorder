@@ -185,11 +185,18 @@ bool ScreenSource::isSameSource(const QString &type, const QString &source)
             QString windowName = lst.count() > 1 ? lst[1] : "";
             QString windowClass = lst.count() > 2 ? lst[2] : "";
 
-            if (m_wid != 0 && m_wid == wid)
+            bool sameName = !windowName.isEmpty() && windowName == m_windowName;
+            if (sameName)
+                sameName = windowClass.isEmpty() || windowClass == m_windowClass;
+
+            if (m_wid != 0)
             {
-                return true;
+                if (m_wid == wid || sameName)
+                {
+                    return true;
+                }
             }
-            else if ( windowName == m_windowName && windowClass == m_windowClass )
+            else if (sameName)
             {
                  return true;
             }

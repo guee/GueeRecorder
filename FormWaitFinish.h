@@ -14,7 +14,7 @@ class FormWaitFinish : public QWidget
 public:
     explicit FormWaitFinish(QWidget *parent = nullptr);
     ~FormWaitFinish();
-
+    void setDispText(const QString& str);
 private:
     Ui::FormWaitFinish *ui;
 };

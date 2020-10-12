@@ -11,6 +11,7 @@ COMPILER=$$system($$QMAKE_CC -v 2>&1)
 #contains 必须和 { 在同一行
 contains(COMPILER, mips64el-linux-gnuabi64){
     LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libx264.so.161
+    LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libfaac.so.0.0.0
     #QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
     QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
     QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
@@ -19,6 +20,7 @@ contains(COMPILER, mips64el-linux-gnuabi64){
 }
 contains(COMPILER, x86_64-linux-gnu){
     LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
+    LIBS += $$PWD/lib/x86_64-linux-gnu/libfaac.so.0.0.0
     QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
 }
 #QMAKE_CXXFLAGS += -fopenmp
@@ -111,7 +113,9 @@ HEADERS += \
     FormVolumeAction.h \
     Common/FrameTimestamp.h \
     VideoSynthesizer.h \
-    MediaCodec/WaveFile.h
+    MediaCodec/WaveFile.h \
+    MediaCodec/faac.h \
+    MediaCodec/faaccfg.h
 
 FORMS += \
     DialogSelectScreen.ui \
@@ -196,4 +200,5 @@ DISTFILES += \
     Doc/Pack/GueeRecorder-uos-loongson/usr/share/icons/hicolor/256x256/apps/guee-recorder.png \
     lib/mips64el-linux-gnuabi64/libx264.so.161 \
     lib/x86_64-linux-gnu/libfaac.so.0.0.0 \
-    lib/x86_64-linux-gnu/libx264.so.161
+    lib/x86_64-linux-gnu/libx264.so.161 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/mips64el-linux-gnuabi64/libfaac.so.0.0.0

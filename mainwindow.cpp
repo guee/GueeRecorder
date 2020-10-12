@@ -325,6 +325,30 @@ void MainWindow::on_close_step_progress(void* param)
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
+void MainWindow::setWaitWidget(const QString &str)
+{
+    static FormWaitFinish *waitWidget = nullptr;
+    if (str.isEmpty())
+    {
+        if (waitWidget)
+        {
+            waitWidget->hide();
+            delete waitWidget;
+            waitWidget = nullptr;
+        }
+    }
+    else
+    {
+        if (waitWidget == nullptr)
+            waitWidget = new FormWaitFinish(this);
+        waitWidget->setDispText(str);
+        waitWidget->setParent(ui->centralwidget);
+        waitWidget->setGeometry(0,0,ui->centralwidget->width(),ui->centralwidget->height());
+        waitWidget->raise();
+        waitWidget->show();
+    }
+}
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     if ( event->button() == Qt::LeftButton )
@@ -444,11 +468,13 @@ void MainWindow::timerEvent(QTimerEvent *event)
         m_delayInitAudio = 0;
         DialogSetting::loadProfile(true);
         ui->widget_AudioRec->resetAudioRecordUI();
+        setWaitWidget();
     }
 }
 
 void MainWindow::on_widgetPreview_initGL()
 {
+    setWaitWidget("正在初始化，请稍候……");
     m_video.init(ui->widgetPreview->context());
     m_delayInitAudio = startTimer(200);
 }
@@ -488,15 +514,12 @@ void MainWindow::on_pushButtonRecStart_clicked()
 
 void MainWindow::on_pushButtonRecStop_clicked()
 {
-    FormWaitFinish wait(this);
-    wait.setParent(ui->centralwidget);
-    wait.setGeometry(0,0,ui->centralwidget->width(),ui->centralwidget->height());
-    wait.raise();
-    wait.show();
+    setWaitWidget("还有一些数据仍在处理，马上完成……");
     ui->stackedWidgetRecControl->setCurrentIndex(0);
     m_video.close(on_close_step_progress, this);
     ui->pushButtonMenu->setDisabled(false);
     ui->pushButtonRecStart->setDisabled(false);
+    setWaitWidget();
 }
 
 void MainWindow::on_pushButtonRecPause_clicked(bool checked)

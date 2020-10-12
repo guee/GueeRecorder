@@ -12,3 +12,8 @@ FormWaitFinish::~FormWaitFinish()
 {
     delete ui;
 }
+
+void FormWaitFinish::setDispText(const QString &str)
+{
+    ui->label->setText(str);
+}

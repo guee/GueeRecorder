@@ -327,9 +327,9 @@ bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBu
         }
         else if (sampleEnd + m_audioParams.sampleRate < frameBegin)
         {
-            qDebug() << (dev.m_isCallbackType?"PCB":"MIC") << "采样数据（sampleEnd="<< sampleEnd
-                     << ", dev.m_sampleBegin:" << dev.m_sampleBegin << ", dev.m_dataSize:"
-                     << dev.m_dataSize << "）滞后超出限制(frameBegin="<<frameBegin<<")，重置采样缓冲区";
+//            qDebug() << (dev.m_isCallbackType?"PCB":"MIC") << "采样数据（sampleEnd="<< sampleEnd
+//                     << ", dev.m_sampleBegin:" << dev.m_sampleBegin << ", dev.m_dataSize:"
+//                     << dev.m_dataSize << "）滞后超出限制(frameBegin="<<frameBegin<<")，重置采样缓冲区";
             dev.m_sampleBegin = m_lastSampleNum;
             dev.m_dataSize = 0;
             ret = true;
@@ -337,7 +337,7 @@ bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBu
     }
     else if (dev.m_sampleBegin >= frameEnd)
     {
-       // qDebug() << (dev.m_isCallbackType?"PCB":"MIC") << "超出采样：" << dev.m_sampleBegin << "~" << sampleEnd << ",  frameEnd:" << frameEnd;
+        //qDebug() << (dev.m_isCallbackType?"PCB":"MIC") << "超出采样：" << dev.m_sampleBegin << "~" << sampleEnd << ",  frameEnd:" << frameEnd;
         ret = true;
     }
     else
@@ -831,7 +831,7 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
         {
             //计算需要抛弃的字节数
             int32_t skip = num - (m_bufferSize - m_dataSize);
-            //qDebug() << (m_isCallbackType?"PCB":"MIC") << "Smple:" << m_sampleBegin << ", 输入的音频数据：" << num <<"大于m_bufferSize(" << m_bufferSize << ")-m_dataSize(" << m_dataSize << ")，需要跳过："<<skip;
+            qDebug() << (m_isCallbackType?"PCB":"MIC") << "Smple:" << m_sampleBegin << ", 输入的音频数据：" << num <<"大于m_bufferSize(" << m_bufferSize << ")-m_dataSize(" << m_dataSize << ")，需要跳过："<<skip;
             if ( skip > m_dataSize)
             {
                 //需要抛弃的字节数大于了现有数据，就还需要抛弃一部分输入数据

@@ -59,7 +59,11 @@ bool FormLayerTools::event(QEvent *event)
 {
     if (event->type() == QEvent::Enter)
     {
-        emit selectLayer(m_layer);
+        if (ui->pushButtonDing->isChecked())
+        {
+            qDebug() << "QEvent::Enter:" << m_layer;
+            emit selectLayer(m_layer);
+        }
     }
     if (event->type() == QEvent::ToolTip
             || event->type() == QEvent::MouseMove
@@ -208,6 +212,7 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
     if ( current.isValid() )
     {
         m_layer = reinterpret_cast<BaseLayer*>(current.data(Qt::UserRole+1).toULongLong());
+        qDebug() << "on_listLayersSelect_currentRowChanged(isValid):" << m_layer;
         emit selectLayer(m_layer);
         ui->labelLayers->setText(QString("%1/%2").arg(m_layer->layerIndex() + 1).arg(m_video->childLayerCount()));
         ui->scrollAreaOption->setEnabled(true);
@@ -216,6 +221,7 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
     else
     {
         m_layer = nullptr;
+        qDebug() << "on_listLayersSelect_currentRowChanged(no valid):" << m_layer;
         emit selectLayer(m_layer);
         ui->labelLayers->setText(QString("-/%2").arg(m_video->childLayerCount()));
         ui->scrollAreaOption->setEnabled(false);
@@ -422,6 +428,7 @@ void FormLayerTools::on_pushButtonDing_clicked(bool checked)
     DialogSetting::saveProfile();
     if (checked == false && m_layer == nullptr)
     {
+        qDebug() << "on_pushButtonDing_clicked:" << m_layer;
         emit selectLayer(m_layer);
     }
 }
