@@ -157,6 +157,7 @@ DISTFILES += \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/GueeRecorder.png \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/GueeRecorder.png \
     Package/uos-amd64/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libfaac.so.0.0.0 \
     Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libx264.so.161 \
     Package/uos-amd64/opt/apps/net.guee.recorder/info \
     Package/uos-loongson/DEBIAN/control \
@@ -192,4 +193,7 @@ DISTFILES += \
     Doc/Pack/GueeRecorder-uos-loongson/usr/share/applications/guee-recorder.desktop \
     Doc/Pack/GueeRecorder-uos-loongson/usr/bin/GueeRecorder \
     Doc/Pack/GueeRecorder-uos-loongson/usr/lib/mips64el-linux-gnuabi64/libx264.so.161 \
-    Doc/Pack/GueeRecorder-uos-loongson/usr/share/icons/hicolor/256x256/apps/guee-recorder.png
+    Doc/Pack/GueeRecorder-uos-loongson/usr/share/icons/hicolor/256x256/apps/guee-recorder.png \
+    lib/mips64el-linux-gnuabi64/libx264.so.161 \
+    lib/x86_64-linux-gnu/libfaac.so.0.0.0 \
+    lib/x86_64-linux-gnu/libx264.so.161
