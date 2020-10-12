@@ -1,16 +1,17 @@
 [Desktop Entry]
+Categories=AudioVideo;Video;Recorder;Qt;
 Comment=High efficiency screen recording software, can fuse a variety of image elements, encoded as video files.
 Comment[zh_CN]=高效率的录屏软件，可以融合多种图像元素，编码为视频文件。
-Version=1.0.0
-Name=Guee Recorder
-Name[zh_CN]=Guee录屏机
+Exec=/opt/apps/net.guee.recorder/files/GueeRecorder
 GenericName=Guee Recorder
 GenericName[zh_CN]=Guee录屏机
-Exec=/opt/apps/net.guee.recorder/files/GueeRecorder
+Icon=GueeRecorder
+InitialPreference=3
+Keywords=screen recorder;screencast;live streaming;gr;
+Name=Guee Recorder
+Name[zh_CN]=Guee录屏机
 StartupNotify=false
 Terminal=false
 Type=Application
-Categories=AudioVideo;Video;Recorder;Qt;
-Keywords=screen recorder;screencast;live streaming;gr;
-Icon=GueeRecorder
-InitialPreference=3
+Version=1.0.0
+X-Deepin-Vendor=user-custom

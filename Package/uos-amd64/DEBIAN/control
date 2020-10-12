@@ -10,4 +10,4 @@ Architecture: amd64
 Installed-Size: 2900000
 Homepage: http://www.loongson.xyz
 Maintainer: guee[guee@guee.net]
-Description: 高效的屏幕录像及录音程序，可添加多种图像元素，在编辑界面可以随时增删图像元素，并调整各个图像元素的大小和位置，录像保存为mp4或flv文件。
+Description: 高效的屏幕录像及录音软件，在编辑界面可以随时增删图像元素，并调整各个图像元素的大小和位置，图像融合后编码为视频文件。
