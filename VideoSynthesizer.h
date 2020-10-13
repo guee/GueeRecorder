@@ -12,6 +12,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObjectFormat>
+#include <QImage>
 
 class VideoSynthesizer : public QThread, public BaseLayer
 {
@@ -140,10 +141,12 @@ private:
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
-    void putFrameToEncoder(GLuint textureId, GLuint prevTexId);
+    void putFrameToEncoder(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev);
     virtual void onLayerOpened(BaseLayer* layer) override;
     virtual void onLayerRemoved(BaseLayer* layer) override;
     virtual void onSizeChanged(BaseLayer* layer) override;
+
+    QImage m_imgTemp;
 signals:
     void frameReady(uint textureId);
     void initDone(bool success);

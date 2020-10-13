@@ -303,7 +303,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.optimizeStill = false;
     m_vidParams.fastDecode    = false;
     m_vidParams.useMbInfo     = true;
-    //m_vidParams.useMbInfo     = false;
+    m_vidParams.useMbInfo     = false;
     m_vidParams.rateMode      = VR_ConstantBitrate;
     m_vidParams.constantQP    = 23;
     m_vidParams.bitrate       = 2000;
@@ -646,21 +646,30 @@ void VideoSynthesizer::renderThread()
                         if (!initYuvFbo())
                             break;
                         preTimeStamp = 0;
-                        fboRgba2->bind();
-                        glViewport(0, 0, m_vidParams.width, m_vidParams.height);
-                        glClearColor(0,0,0,0);
-                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                        if (fboRgba2)
+                        {
+                            fboRgba2->bind();
+                            glViewport(0, 0, m_vidParams.width, m_vidParams.height);
+                            glClearColor(0,0,0,0);
+                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                            glFlush();
+                        }
                     }
 
                     if (m_vidParams.useMbInfo)
                     {
-                        putFrameToEncoder(fboRgba1->texture(), fboRgba2->texture());
+//                        QString fn1 = QString("/home/guee/Pictures/YUV/%1-1.jpg").arg(m_frameData.timestamp);
+//                        QString fn2 = QString("/home/guee/Pictures/YUV/%1-2.jpg").arg(m_frameData.timestamp);
+//                        fboRgba1->toImage().save(fn1);
+//                        fboRgba2->toImage().save(fn2);
+
+                        putFrameToEncoder(fboRgba1, fboRgba2);
                         fboRgba1 = fboRgba2;
                         fboRgba2 = fboRgba;
                     }
                     else
                     {
-                        putFrameToEncoder(fboRgba->texture(), 0);
+                        putFrameToEncoder(fboRgba1, nullptr);
                     }
                     //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
                     //fprintf(stderr, "帧时间：%d 距离上帧：%d\n", int(m_frameData.timestamp), int(m_frameData.timestamp - preTimeStamp) );
@@ -878,6 +887,7 @@ bool VideoSynthesizer::initYuvFbo()
         m_frameData.mbWidth = (m_vidParams.width + 15) / 16;
         m_frameData.mbHeight = (m_vidParams.height + 15) / 16;
         fboFmt.setInternalTextureFormat(GL_LUMINANCE);
+        qDebug() << "MB_INFO Width:" << m_frameData.mbWidth << ", Height:" << m_frameData.mbHeight;
         m_frameData.fbo_mb = new QOpenGLFramebufferObject(m_frameData.mbWidth, m_frameData.mbHeight, fboFmt);
         m_frameData.buf_mb = new uint8_t[m_frameData.mbWidth * m_frameData.mbHeight];
 
@@ -888,6 +898,8 @@ bool VideoSynthesizer::initYuvFbo()
         m_prog_x264mb->setUniformValue("imageSize", m_vidParams.width, m_vidParams.height);
         m_prog_x264mb->setUniformValue("mbSize", m_frameData.mbWidth, m_frameData.mbHeight);
         m_prog_x264mb->release();
+
+        //m_imgTemp = QImage(m_vidParams.width, m_vidParams.height, QImage::Format_ARGB32);
     }
     return true;
 }
@@ -921,21 +933,21 @@ void VideoSynthesizer::uninitYubFbo()
     }
 }
 
-void VideoSynthesizer::putFrameToEncoder(GLuint textureId, GLuint prevTexId)
+void VideoSynthesizer::putFrameToEncoder(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev)
 {
     if ( m_status < Palying || m_frameData.buffer == nullptr )
     {
         return;
     }
-    if (prevTexId)
+    if (fboPrev)
     {
         m_frameData.fbo_mb->bind();
         m_prog_x264mb->bind();
         glViewport(0, 0, m_frameData.mbWidth, m_frameData.mbHeight);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        glBindTexture(GL_TEXTURE_2D, fboCur->texture());
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, prevTexId);
+        glBindTexture(GL_TEXTURE_2D, fboPrev->texture());
         m_vbo->bind();
         m_prog_x264mb->enableAttributeArray(0);
         m_prog_x264mb->enableAttributeArray(1);
@@ -944,12 +956,30 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId, GLuint prevTexId)
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         glReadBuffer(GL_FRONT);
+        glFlush();
         glReadPixels(0, 0, m_frameData.mbWidth, m_frameData.mbHeight,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData.buf_mb);
         m_vbo->release();
         m_prog_x264mb->release();
         m_frameData.fbo_mb->release();
         glActiveTexture(GL_TEXTURE0);
+
+//        QImage img = fboCur->toImage().convertToFormat(QImage::Format_ARGB32);
+//        for (int y = 0; y < m_frameData.mbHeight - 1; ++y )
+//        {
+//            for (int x = 0; x < m_frameData.mbWidth - 1; ++x)
+//            {
+//                if ( !m_frameData.buf_mb[y*m_frameData.mbWidth + x])
+//                {
+//                    for ( int dy = 0; dy < 16; ++dy)
+//                    {
+//                        memcpy( m_imgTemp.scanLine(y * 16 + dy) + x * 16 * 4, img.scanLine(y * 16 + dy) + x * 16 * 4, 16 * 4);
+//                    }
+//                }
+//            }
+//        }
+//        QString fn = QString("/home/guee/Pictures/YUV/%1.jpg").arg(m_frameData.timestamp);
+//        m_imgTemp.save(fn);
 
 //        QImage img((const uchar*)m_frameData.buf_mb, m_frameData.mbWidth, m_frameData.mbHeight, m_frameData.mbWidth, QImage::Format_Grayscale8);
 //        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);
@@ -968,7 +998,7 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId, GLuint prevTexId)
     m_program->enableAttributeArray(1);
     m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, 5 * sizeof(GLfloat));
     m_program->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindTexture(GL_TEXTURE_2D, fboCur->texture());
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     m_frameData.buffer->bind();
