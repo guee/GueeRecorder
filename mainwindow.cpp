@@ -431,6 +431,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 void MainWindow::moveEvent(QMoveEvent *event)
 {
     Q_UNUSED(event)
+    ui->widgetPreview->fixOffsetAsScreen();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

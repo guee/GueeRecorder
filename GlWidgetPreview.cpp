@@ -446,6 +446,11 @@ void GlWidgetPreview::mouseReleaseEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton )
     {
         QPoint pos = ScreenLayer::mousePhysicalCoordinates() - m_displayOfSceeen.topLeft();
+        if (m_editingLayer && m_hitType != Qt::NoSection)
+        {
+            hitTest(pos);
+            return;
+        }
         hitTest(pos);
         if (m_hitType == Qt::NoSection && m_enterLayer)
         {
