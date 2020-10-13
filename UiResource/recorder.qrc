@@ -85,5 +85,7 @@
         <file>icons/hicolor/48x48/apps/GueeRecorder.png</file>
         <file>icons/hicolor/512x512/apps/GueeRecorder.png</file>
         <file>icons/hicolor/64x64/apps/GueeRecorder.png</file>
+        <file>Shaders/x264-mb.frag</file>
+        <file>Shaders/x264-mb.vert</file>
     </qresource>
 </RCC>

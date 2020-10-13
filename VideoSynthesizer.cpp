@@ -113,6 +113,11 @@ void VideoSynthesizer::uninit()
         delete m_program;
         m_program = nullptr;
     }
+    if (m_prog_x264mb)
+    {
+        delete m_prog_x264mb;
+        m_prog_x264mb = nullptr;
+    }
     if (m_surface)
     {
         delete m_surface;
@@ -253,15 +258,15 @@ bool VideoSynthesizer::play()
     if(m_status == Paused)
     {
         m_audRecorder.pauseEncode(false);
-        m_status = Palying;
         m_timestamp.start();
+        m_status = Palying;
         return true;
     }
     else if (m_status == Opened)
     {
         m_audRecorder.pauseEncode(false);
-        m_status = Palying;
         m_timestamp.start();
+        m_status = Palying;
         return true;
     }
     return false;
@@ -297,6 +302,8 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.threadNum     = 0;
     m_vidParams.optimizeStill = false;
     m_vidParams.fastDecode    = false;
+    m_vidParams.useMbInfo     = true;
+    //m_vidParams.useMbInfo     = false;
     m_vidParams.rateMode      = VR_ConstantBitrate;
     m_vidParams.constantQP    = 23;
     m_vidParams.bitrate       = 2000;
@@ -356,8 +363,7 @@ bool VideoSynthesizer::setSize(int32_t width, int32_t height)
         m_glViewportSize.setHeight(height * 2.0 / width);
         m_glViewportSize.setWidth(2.0);
     }
-    m_pixViewportSize.setWidth(width);
-    m_pixViewportSize.setHeight(height);
+
     m_videoSizeChanged = true;
     return true;
 }
@@ -562,10 +568,20 @@ void VideoSynthesizer::renderThread()
     fboFmt.setMipmap(false);
     fboFmt.setInternalTextureFormat(GL_RGB);    //VMWare + UOS 中，GL_RGBA8 和 GL_RGBA 的FBO纹理共享是全黑的，可能是虚拟机的问题，这里使用 GL_RGB 就可以了。
     fboFmt.setTextureTarget(GL_TEXTURE_2D);
-    QOpenGLFramebufferObject* fboRgba = new QOpenGLFramebufferObject(m_vidParams.width, m_vidParams.height, fboFmt);
-    glBindTexture(GL_TEXTURE_2D, fboRgba->texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    m_pixViewportSize.setWidth(m_vidParams.width);
+    m_pixViewportSize.setHeight(m_vidParams.height);
+
+    auto create_fbo = [&fboFmt](int width, int height)->QOpenGLFramebufferObject* {
+        QOpenGLFramebufferObject* fboRgba = new QOpenGLFramebufferObject(width, height, fboFmt);
+        glBindTexture(GL_TEXTURE_2D, fboRgba->texture());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        return fboRgba;
+    };
+
+    QOpenGLFramebufferObject* fboRgba1 = create_fbo(m_vidParams.width, m_vidParams.height);
+    QOpenGLFramebufferObject* fboRgba2 = m_vidParams.useMbInfo ? create_fbo(m_vidParams.width, m_vidParams.height) : nullptr;
+
 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -578,22 +594,23 @@ void VideoSynthesizer::renderThread()
     while(m_threadWorking)
     {
         if ( m_videoSizeChanged &&
-             (fboRgba->width() != m_vidParams.width || fboRgba->height() != m_vidParams.height ))
+             (m_pixViewportSize.width() != m_vidParams.width || m_pixViewportSize.height() != m_vidParams.height ))
         {
-            delete fboRgba;
-            fboRgba = new QOpenGLFramebufferObject(m_vidParams.width, m_vidParams.height, fboFmt);
-            glBindTexture(GL_TEXTURE_2D, fboRgba->texture());
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+            delete fboRgba1;
+            if (fboRgba2 ) delete fboRgba2;
+            fboRgba1 = create_fbo(m_vidParams.width, m_vidParams.height);
+            fboRgba2 = m_vidParams.useMbInfo ? create_fbo(m_vidParams.width, m_vidParams.height) : nullptr;
+            m_pixViewportSize.setWidth(m_vidParams.width);
+            m_pixViewportSize.setHeight(m_vidParams.height);
             setViewportSize(m_glViewportSize, m_pixViewportSize, true);
+
             m_videoSizeChanged = false;
             emit frameReady(0);
-            qDebug() << "resize to:" << fboRgba->size();
         }
         curTimer = m_frameSync.isNextFrame();
         if (curTimer >= 0)
         {
-            m_frameData.timestamp = m_timestamp.elapsed();
+            m_frameData.timestamp = qMax(int64_t(0), m_timestamp.elapsed());
             if ( updateSourceTextures(curTimer) )
             {
                 isUpdated = true;
@@ -601,25 +618,16 @@ void VideoSynthesizer::renderThread()
             if ( curTimer - preTimer > 1000000 ) isUpdated = true;
         }
 
-
         if ( isUpdated || m_immediateUpdate )
         {
-            //qDebug() <<"帧时间：" << m_timestamp.elapsed_milli();
-            //FrameTimestamp bb;
-            //bb.start();
-            preTimer = curTimer;
-            if (m_timestamp.status() == FrameTimestamp::sync_Syncing)
-            {
-                //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
-                //fprintf(stderr, "帧时间：%d 距离上帧：%d\n", int(m_frameData.timestamp), int(m_frameData.timestamp - preTimeStamp) );
-                preTimeStamp = m_frameData.timestamp;
+            if (isUpdated) preTimer = curTimer;
 
-            }
             m_immediateUpdate = false;
+            QOpenGLFramebufferObject* fboRgba = fboRgba1;
             fboRgba->bind();
             glViewport(0, 0, m_vidParams.width, m_vidParams.height);
             glClearColor(m_backgroundColor.x(), m_backgroundColor.y(), m_backgroundColor.z(), m_backgroundColor.w());
-            //glClearColor(1.0f, m_backgroundColor.y(), m_backgroundColor.z(), m_backgroundColor.w());
+            //glClearColor(0, 0, 0, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             auto &cds = lockChilds();
@@ -628,8 +636,8 @@ void VideoSynthesizer::renderThread()
                 (*it)->draw();
             }
             unlockChilds();
-
-            if (curTimer >= 0)
+            glFlush();
+            if (isUpdated)
             {
                 if ( m_status  == Palying )
                 {
@@ -637,34 +645,44 @@ void VideoSynthesizer::renderThread()
                     {
                         if (!initYuvFbo())
                             break;
+                        preTimeStamp = 0;
+                        fboRgba2->bind();
+                        glViewport(0, 0, m_vidParams.width, m_vidParams.height);
+                        glClearColor(0,0,0,0);
+                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                     }
 
-                    putFrameToEncoder(fboRgba->texture());
+                    if (m_vidParams.useMbInfo)
+                    {
+                        putFrameToEncoder(fboRgba1->texture(), fboRgba2->texture());
+                        fboRgba1 = fboRgba2;
+                        fboRgba2 = fboRgba;
+                    }
+                    else
+                    {
+                        putFrameToEncoder(fboRgba->texture(), 0);
+                    }
+                    //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
+                    //fprintf(stderr, "帧时间：%d 距离上帧：%d\n", int(m_frameData.timestamp), int(m_frameData.timestamp - preTimeStamp) );
+                    //preTimeStamp = m_frameData.timestamp;
+
                 }
                 else if ( m_status < Opened && m_frameData.fbo )
                 {
                     uninitYubFbo();
                 }
-            }
-
-            glFlush();
-\
-            //fboRgba->toImage().save(QString("/home/guee/Pictures/Temp/%1.jpg").arg(m_frameData.timestamp), nullptr, 100 );
-            emit frameReady(fboRgba->texture());
-
-            if (isUpdated)
-            {
                 m_frameRate.add();
                 isUpdated = false;
             }
-            //qDebug() << "PutFrame :" << bb.elapsed_milli();
+            emit frameReady(fboRgba->texture());
         }
         msleep(1);
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    delete fboRgba;
-    fboRgba = nullptr;
+    delete fboRgba1;
+    delete fboRgba2;
+    fboRgba1 = nullptr;
+    fboRgba2 = nullptr;
     uninitYubFbo();
 }
 
@@ -685,20 +703,32 @@ void VideoSynthesizer::loadShaderPrograms()
     m_progPool.addShaderFromSourceFile("RgbToYuv", QOpenGLShader::Fragment, ":/Shaders/RgbToYuv.frag" );
 
 
+    m_progPool.addShaderFromSourceFile("x264-mb", QOpenGLShader::Vertex, ":/Shaders/x264-mb.vert" );
+    m_progPool.addShaderFromSourceFile("x264-mb", QOpenGLShader::Fragment, ":/Shaders/x264-mb.frag" );
+
     QVector<QPair<QString, QOpenGLShader::ShaderType>> s;
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("base", QOpenGLShader::Vertex));
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("base", QOpenGLShader::Fragment));
     m_progPool.setProgramShaders("base", s);
     s.clear();
+
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("SelectScreen", QOpenGLShader::Vertex));
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("SelectScreen", QOpenGLShader::Fragment));
     m_progPool.setProgramShaders("SelectScreen", s);
     s.clear();
+
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("RgbToYuv", QOpenGLShader::Vertex));
     s.push_back(QPair<QString, QOpenGLShader::ShaderType>("RgbToYuv", QOpenGLShader::Fragment));
     m_progPool.setProgramShaders("RgbToYuv", s);
+    s.clear();
+
+    s.push_back(QPair<QString, QOpenGLShader::ShaderType>("x264-mb", QOpenGLShader::Vertex));
+    s.push_back(QPair<QString, QOpenGLShader::ShaderType>("x264-mb", QOpenGLShader::Fragment));
+    m_progPool.setProgramShaders("x264-mb", s);
+    s.clear();
 
     m_program = m_progPool.createProgram("RgbToYuv");
+    m_prog_x264mb = m_progPool.createProgram("x264-mb");
 }
 
 bool VideoSynthesizer::initYuvFbo()
@@ -840,14 +870,40 @@ bool VideoSynthesizer::initYuvFbo()
     m_program->setUniformValue("surfaceSize", m_frameData.textureWidth, m_frameData.textureHeight);
     m_program->setUniformValue("alignSize", m_frameData.alignWidth, m_frameData.alignHeight);
     m_program->setUniformValue("imageSize", m_vidParams.width, m_vidParams.height);
-
     m_program->release();
     m_vbo->release();
+
+    if (m_vidParams.useMbInfo)
+    {
+        m_frameData.mbWidth = (m_vidParams.width + 15) / 16;
+        m_frameData.mbHeight = (m_vidParams.height + 15) / 16;
+        fboFmt.setInternalTextureFormat(GL_LUMINANCE);
+        m_frameData.fbo_mb = new QOpenGLFramebufferObject(m_frameData.mbWidth, m_frameData.mbHeight, fboFmt);
+        m_frameData.buf_mb = new uint8_t[m_frameData.mbWidth * m_frameData.mbHeight];
+
+        m_prog_x264mb->bind();
+        m_prog_x264mb->setUniformValue("qt_ModelViewProjectionMatrix",m);
+        m_prog_x264mb->setUniformValue("qt_Texture0", 0);
+        m_prog_x264mb->setUniformValue("qt_Texture1", 1);
+        m_prog_x264mb->setUniformValue("imageSize", m_vidParams.width, m_vidParams.height);
+        m_prog_x264mb->setUniformValue("mbSize", m_frameData.mbWidth, m_frameData.mbHeight);
+        m_prog_x264mb->release();
+    }
     return true;
 }
 
 void VideoSynthesizer::uninitYubFbo()
 {
+    if ( m_frameData.fbo_mb )
+    {
+        delete m_frameData.fbo_mb;
+        m_frameData.fbo_mb = nullptr;
+    }
+    if ( m_frameData.buf_mb )
+    {
+        delete []m_frameData.buf_mb;
+        m_frameData.buf_mb = nullptr;
+    }
     if ( m_frameData.buffer )
     {
         delete m_frameData.buffer;
@@ -865,20 +921,46 @@ void VideoSynthesizer::uninitYubFbo()
     }
 }
 
-void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
+void VideoSynthesizer::putFrameToEncoder(GLuint textureId, GLuint prevTexId)
 {
     if ( m_status < Palying || m_frameData.buffer == nullptr )
     {
         return;
     }
+    if (prevTexId)
+    {
+        m_frameData.fbo_mb->bind();
+        m_prog_x264mb->bind();
+        glViewport(0, 0, m_frameData.mbWidth, m_frameData.mbHeight);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, prevTexId);
+        m_vbo->bind();
+        m_prog_x264mb->enableAttributeArray(0);
+        m_prog_x264mb->enableAttributeArray(1);
+        m_prog_x264mb->setAttributeBuffer(0, GL_FLOAT, 0, 3, 5 * sizeof(GLfloat));
+        m_prog_x264mb->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glReadBuffer(GL_FRONT);
+        glReadPixels(0, 0, m_frameData.mbWidth, m_frameData.mbHeight,
+                     GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData.buf_mb);
+        m_vbo->release();
+        m_prog_x264mb->release();
+        m_frameData.fbo_mb->release();
+        glActiveTexture(GL_TEXTURE0);
+
+//        QImage img((const uchar*)m_frameData.buf_mb, m_frameData.mbWidth, m_frameData.mbHeight, m_frameData.mbWidth, QImage::Format_Grayscale8);
+//        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);
+//        img.save(fn, "png");
+    }
     uint8_t* offset = nullptr;
     m_frameData.fbo->bind();
 
     glViewport(0, 0, m_frameData.fbo->width(), m_frameData.fbo->height());
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindTexture(GL_TEXTURE_2D, textureId);
 
     m_program->bind();
     m_vbo->bind();
@@ -889,30 +971,26 @@ void VideoSynthesizer::putFrameToEncoder(GLuint textureId)
     glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   // glFlush();
-    //m_frameData.fbo->toImage().save(QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp));
     m_frameData.buffer->bind();
-//int64_t  pp = m_timestamp.elapsed();
+    glReadBuffer(GL_FRONT);
     glReadPixels(0, 0, m_frameData.fbo->width(), m_frameData.fbo->height(),
                  m_frameData.internalFormat, m_frameData.dateType, offset);
     uint8_t* dat = static_cast<uint8_t*>(m_frameData.buffer->map(QOpenGLBuffer::ReadOnly));
-//pp = m_timestamp.elapsed() - pp;
-//fprintf(stderr, "glReadPixels time = %d\n", int32_t(pp) );
-
     if (dat)
     {
 //        QImage img((const uchar*)dat, m_frameData.textureWidth, m_frameData.textureHeight, m_frameData.stride[0], QImage::Format_Grayscale8);
 //        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);
 //        img.save(fn, "png");
         uint8_t* plane[3] = {dat, dat + m_frameData.byteNum[0], dat + m_frameData.byteNum[0] + m_frameData.byteNum[1]};
-        m_vidEncoder.putFrame(m_frameData.timestamp, plane, m_frameData.stride);
+        m_vidEncoder.putFrame(m_frameData.timestamp, plane, m_frameData.stride, m_frameData.buf_mb);
         //m_vidEncoder.putFrame(m_frameData.timestamp, reinterpret_cast<uint8_t*>(dat), m_frameData.stride[0]);
         m_frameData.buffer->unmap();
     }
-
     m_frameData.buffer->release();
     m_vbo->release();
     m_program->release();
+    m_frameData.fbo->release();
+
 }
 
 void VideoSynthesizer::onLayerOpened(BaseLayer *layer)

@@ -182,6 +182,7 @@ struct	SVideoParams
 	bool		annexb;			//设置为false，包的前 4 字节为数据长度;设置为true，包的前 3 字节或 4 字节为前缀码。00 00 00 01 或 00 00 01
 	bool		optimizeStill;	//对图像静止不变的部分进行编码优化。
 	bool		fastDecode;	//使编码出的视频能够被快速解码。
+    bool        useMbInfo;
     int32_t		threadNum;		//编码线程数。0为自动线程数，否则就是指定的线程数量。
 	EVideoRateMode	rateMode;	//码率控制方式
     int32_t     constantQP;

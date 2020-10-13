@@ -110,6 +110,11 @@ private:
 
         QOpenGLBuffer*  buffer;
         QOpenGLFramebufferObject* fbo;
+
+        int mbWidth;
+        int mbHeight;
+        uint8_t*  buf_mb;
+        QOpenGLFramebufferObject* fbo_mb;
     };
 
     FrameInfo    m_frameData;
@@ -128,13 +133,14 @@ private:
     QOpenGLContext* m_context = nullptr;
     QOffscreenSurface* m_surface = nullptr;
     QVector4D m_backgroundColor;
+    QOpenGLShaderProgram* m_prog_x264mb = nullptr;
     void renderThread();
     void run() override;
     BaseSource* onCreateSource(const QString &sourceName) override { Q_UNUSED(sourceName) return nullptr; }
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
-    void putFrameToEncoder(GLuint textureId);
+    void putFrameToEncoder(GLuint textureId, GLuint prevTexId);
     virtual void onLayerOpened(BaseLayer* layer) override;
     virtual void onLayerRemoved(BaseLayer* layer) override;
     virtual void onSizeChanged(BaseLayer* layer) override;

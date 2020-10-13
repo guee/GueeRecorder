@@ -217,13 +217,13 @@ bool GueeVideoEncoder::putFrame( int64_t microsecond, const uint8_t* buf, int32_
     return	putFrame(microsecond, planes, pitchs);
 }
 
-bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], int32_t* pitch)
+bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], const int32_t* pitch, const uint8_t* mb_info)
 {
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
     switch( m_videoParams.encoder )
     {
     case VE_X264:
-        return putFrameX264( microsecond, plane, pitch );
+        return putFrameX264( microsecond, plane, pitch, mb_info );
     case VE_CUDA:
         break;
     case VE_NVENC:
@@ -234,7 +234,7 @@ bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], i
     return false;
 }
 
-bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3], int32_t* pitch)
+bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3], const int32_t* pitch, const uint8_t* mb_info)
 {
     //return true;
     if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return false;
@@ -253,6 +253,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
     {
         --pts;
     }
+
 //    qDebug() << "毫秒:" << microsecond / 1000 << " 距离上帧：" << (microsecond - m_prevFrameTime) / 1000
 //             << ", PTS:" << pts << " PTS增量:" << pts - m_prevFramePts;
 //    fprintf(stderr, "毫秒:%d, 距离上帧:%d, PTS:%d, PTS增量:%d\n",
@@ -287,6 +288,19 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
                 memcpy(picin->img.plane[plan] + h * picin->img.i_stride[plan], buf, static_cast<ulong>(cpsize));
                 buf += pitch[plan];
             }
+        }
+    }
+
+    if (m_videoParams.useMbInfo)
+    {
+        int cpsize = ((m_x264Param.i_width + 15) / 16) * ((m_x264Param.i_height + 15) /16);
+        if (mb_info)
+        {
+            memcpy( picin->prop.mb_info, mb_info, cpsize );
+        }
+        else
+        {
+            memset( picin->prop.mb_info, 0, cpsize );
         }
     }
 
@@ -430,6 +444,12 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
                 byteNum[2] = m_x264Param.i_height / m_csp_tab.heightFix * stride[2];
             }
             size_t bufSize = byteNum[0] + byteNum[1] + byteNum[2] + sizeof(x264_picture_t);
+            if (m_videoParams.useMbInfo)
+            {
+                int mbWidth = (m_x264Param.i_width + 15) / 16;
+                int mbHeight = (m_x264Param.i_height + 15) / 16;
+                bufSize += mbWidth * mbHeight;
+            }
             picin = reinterpret_cast<x264_picture_t*>(malloc(bufSize));
             memset(picin, 0, bufSize);
             picin->img.i_csp = m_x264Param.i_csp;
@@ -440,6 +460,8 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
             picin->img.plane[0] = reinterpret_cast<uint8_t*>(picin + 1);
             picin->img.plane[1] = picin->img.plane[0] + byteNum[0];
             picin->img.plane[2] = picin->img.plane[1] + byteNum[1];
+            if (m_videoParams.useMbInfo)
+                picin->prop.mb_info = picin->img.plane[2] + byteNum[2];
 #else
             picin = new x264_picture_t;
             m_x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
@@ -875,7 +897,7 @@ bool GueeVideoEncoder::set264AnalyserParams()
 //	m_x264Param.analyse.f_psy_trellis;		//Psy Trellis强度			/* Psy trellis strength */
     m_x264Param.analyse.b_psy	= m_videoParams.psyTune != eTuneNone;				//Psy优化开关，可能会增强细节	/* Toggle all psy optimizations */
 
-//	m_x264Param.analyse.b_mb_info	= 0;			/* Use input mb_info data in x264_picture_t */
+    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
 //	m_x264Param.analyse.b_mb_info_update;	/* Update the values in mb_info according to the results of encoding. */
 
 //	/* the deadzone size that will be used in luma quantization */
