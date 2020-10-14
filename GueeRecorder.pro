@@ -204,4 +204,5 @@ DISTFILES += \
     lib/x86_64-linux-gnu/libx264.so.161 \
     Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/mips64el-linux-gnuabi64/libfaac.so.0.0.0 \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
-    Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
+    uos_os_match2020
