@@ -473,6 +473,22 @@ void MainWindow::timerEvent(QTimerEvent *event)
     }
 }
 
+void MainWindow::changeEvent(QEvent *event)
+{
+    if (event->type() != QEvent::WindowStateChange)
+    {
+        return;
+    }
+    if (this->windowState()==Qt::WindowMinimized)
+    {
+
+    }
+    else if (this->windowState()==Qt::WindowActive)
+    {
+
+    }
+}
+
 void MainWindow::on_widgetPreview_initGL()
 {
     setWaitWidget("正在初始化，请稍候……");

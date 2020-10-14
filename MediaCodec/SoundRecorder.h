@@ -73,6 +73,7 @@ private:
 
     void initResample();
     void uninitResample();
+    static QList<QAudioDeviceInfo> &availableDevices();
 };
 
 class SoundRecorder : private QThread

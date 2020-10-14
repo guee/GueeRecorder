@@ -429,7 +429,8 @@ QStringList SoundDevInfo::availableDev(bool refresh)
             {
                 defalut = defaultDeviceInfo.deviceName();
             }
-            for (auto &deviceInfo: QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+
+            for (auto &deviceInfo: availableDevices())
             {
                 QString name = deviceInfo.deviceName();
                 if (name.endsWith(".monitor"))
@@ -463,9 +464,10 @@ QStringList SoundDevInfo::availableDev(bool refresh)
                     m_curDev = defaultDeviceInfo;
                 }
             }
-            for (auto &deviceInfo: QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+
+            for (auto &deviceInfo: availableDevices())
             {
-                if (defaultDeviceInfo != deviceInfo && deviceInfo.deviceName().startsWith("alsa_input."))
+                 if (defaultDeviceInfo != deviceInfo && deviceInfo.deviceName().startsWith("alsa_input."))
                 {
                     m_devLst.append(deviceInfo);
                 }
@@ -998,6 +1000,20 @@ void SoundDevInfo::uninitResample()
     m_dataSize = 0;
     m_sampleBegin = 0;
 }
+
+QList<QAudioDeviceInfo> &SoundDevInfo::availableDevices()
+{
+    static QList<QAudioDeviceInfo> available = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    static std::chrono::steady_clock::time_point preTime = std::chrono::steady_clock::now();
+
+    if (1000 < std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - preTime).count())
+    {
+        available = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+        preTime = std::chrono::steady_clock::now();
+    }
+    return available;
+}
+
 
 
 

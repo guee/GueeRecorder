@@ -26,6 +26,7 @@ public:
     virtual void moveEvent(QMoveEvent* event) override;
     virtual void closeEvent(QCloseEvent *event) override;
     virtual void timerEvent(QTimerEvent* event) override;
+    virtual void changeEvent(QEvent* event) override;
 private slots:
     void on_widgetPreview_initGL();
 

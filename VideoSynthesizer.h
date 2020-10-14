@@ -86,6 +86,8 @@ public:
 
     SoundDevInfo& audCallbackDev() { return m_audRecorder.callbackDev(); }
     SoundDevInfo& audMicInputDev() { return m_audRecorder.micInputDev(); }
+
+    void enablePreview(bool enabled);
 private:
 
     VideoSynthesizer();
@@ -94,6 +96,8 @@ private:
     FrameSynchronization    m_frameSync;
     FrameRateCalc           m_frameRate;
     FrameTimestamp          m_timestamp;
+
+    bool    m_enablePreview = true;
 
     struct FrameInfo
     {

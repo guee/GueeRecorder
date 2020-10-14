@@ -1,6 +1,5 @@
 本程序还在持续开发中，临时提供二进制测试包。分为Loongson版和AMD64版，放在了我的个人网站上。</br>
 [点击打开下载页面（含使用说明）](http://www.loongson.xyz/Articles/Content/18)</br>
-因为打包时没有检查调用的库文件哪些是系统中已有的，哪些是后来新增的，把所有用到的库文件全都放进了压缩包，文件就比较大。</br>
 [开发日记](http://www.loongson.xyz/Articles/Content/19)</br>
 
 # GueeRecorder （Guee 录屏机） 前言
@@ -47,15 +46,13 @@
 #### 开发环境配置：
 　　因为我对Linux还不熟悉，特别是被VisualStudio养成了懒人，对GCC这类编译器以及编译各种开源库都缺少经验，于是只要是软件源中存在的库，我就直接安装使用。即使库的版本老一点，即使编译参数不是最优……只要能凑合用就行。</br>
 　　统信 UOS 专业版：</br>
-　　　　sudo apt-get install g++ gdb</br>
+　　　　sudo apt-get install g++</br>
+   　　 sudo apt-get install gdb</br>
 　　　　sudo apt-get install libgl1-mesa-dev</br>
 　　　　sudo apt-get install libqt5x11extras5-dev</br>
 　　　　sudo apt-get install libxinerama-dev</br>
 　　　　sudo apt-get install libxfixes-dev</br>
 　　　　sudo apt-get install libxcomposite-dev</br>
-　　　　sudo apt-get install libx264-dev</br>
-　　　　sudo apt-get install libfaac-dev</br>
-
 　　　　sudo apt-get install qt5-default</br>
 　　　　sudo apt-get install qt5creator</br>
 </br>
@@ -68,9 +65,6 @@
 　　　　sudo dnf install libXinerama-devel</br>
 　　　　sudo dnf install libXcomposite-devel</br>
 　　　　sudo dnf install libXfixes-devel</br>
-　　　　sudo dnf install x264-devel</br>
-　　　　//aac编码库需要自行下载和编译源码，请参考 [其他人写的文章](https://www.cnblogs.com/wayns/p/facc-install.html)</br>
-
 　　　　sudo dnf inatall qt5-devel</br>
 　　　　sudo dnf inatall qt-creator</br>
 </br>
