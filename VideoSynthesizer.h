@@ -12,7 +12,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObjectFormat>
-#include <QImage>
+
 
 class VideoSynthesizer : public QThread, public BaseLayer
 {
@@ -150,7 +150,6 @@ private:
     virtual void onLayerRemoved(BaseLayer* layer) override;
     virtual void onSizeChanged(BaseLayer* layer) override;
 
-    QImage m_imgTemp;
 signals:
     void frameReady(uint textureId);
     void initDone(bool success);

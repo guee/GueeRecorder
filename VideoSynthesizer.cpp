@@ -952,51 +952,64 @@ void VideoSynthesizer::putFrameToEncoder(QOpenGLFramebufferObject* fboCur, QOpen
 //    FrameTimestamp ttt;
     if (fboPrev)
     {
-        m_frameData.fbo_mb->bind();
-        m_prog_x264mb->bind();
-        glViewport(0, 0, m_frameData.mbWidth, m_frameData.mbHeight);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, fboCur->texture());
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, fboPrev->texture());
-        m_vbo->bind();
-        m_prog_x264mb->enableAttributeArray(0);
-        m_prog_x264mb->enableAttributeArray(1);
-        m_prog_x264mb->setAttributeBuffer(0, GL_FLOAT, 0, 3, 5 * sizeof(GLfloat));
-        m_prog_x264mb->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
+//        m_frameData.fbo_mb->bind();
+//        m_prog_x264mb->bind();
+//        glViewport(0, 0, m_frameData.mbWidth, m_frameData.mbHeight);
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, fboCur->texture());
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, fboPrev->texture());
+//        m_vbo->bind();
+//        m_prog_x264mb->enableAttributeArray(0);
+//        m_prog_x264mb->enableAttributeArray(1);
+//        m_prog_x264mb->setAttributeBuffer(0, GL_FLOAT, 0, 3, 5 * sizeof(GLfloat));
+//        m_prog_x264mb->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        glReadBuffer(GL_FRONT);
-        glFlush();
-        glReadPixels(0, 0, m_frameData.mbWidth, m_frameData.mbHeight,
-                     GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData.buf_mb);
-        m_vbo->release();
-        m_prog_x264mb->release();
-        m_frameData.fbo_mb->release();
-        glActiveTexture(GL_TEXTURE0);
+//        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//        glReadBuffer(GL_FRONT);
+//        glFlush();
+//        glReadPixels(0, 0, m_frameData.mbWidth, m_frameData.mbHeight,
+//                     GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData.buf_mb);
+//        m_vbo->release();
+//        m_prog_x264mb->release();
+//        m_frameData.fbo_mb->release();
+//        glActiveTexture(GL_TEXTURE0);
 
-        QImage img1 = fboPrev->toImage().convertToFormat(QImage::Format_ARGB32);
 
-        QImage img2 = fboCur->toImage().convertToFormat(QImage::Format_ARGB32);
 
-        for (int y = 0; y < m_frameData.mbHeight - 1; ++y )
-        {
-            for (int x = 0; x < m_frameData.mbWidth - 1; ++x)
-            {
-                bool isCon = false;
-                for ( int dy = 0; dy < 16; ++dy)
-                {
-                    if ( memcmp( img1.scanLine(y * 16 + dy) + x * 16 * 4,  img2.scanLine(y * 16 + dy) + x * 16 * 4, 16 * 4) != 0 )
-                    {
-                        isCon = true;
-                        break;
-                    }
-                }
-                m_frameData.buf_mb[y*m_frameData.mbWidth + x] = isCon ? 0 : 1;
-            }
-        }
-//        QString fn = QString("/home/guee/Pictures/YUV/%1.jpg").arg(m_frameData.timestamp);
-//        m_imgTemp.save(fn);
+//        QImage img1 = fboPrev->toImage().convertToFormat(QImage::Format_ARGB32);
+
+//        QImage img2 = fboCur->toImage().convertToFormat(QImage::Format_ARGB32);
+
+//        for (int y = 0; y < m_frameData.mbHeight; ++y )
+//        {
+//            int h = qMin(m_vidParams.height - y * 16, 16);
+//            for (int x = 0; x < m_frameData.mbWidth; ++x)
+//            {
+//                bool isSame = true;
+//                int w = qMin(m_vidParams.width - x * 16, 16);
+//                for ( int dy = 0; dy < h; ++dy)
+//                {
+//                    if ( memcmp( img1.scanLine(y * 16 + dy) + x * 16 * 4,  img2.scanLine(y * 16 + dy) + x * 16 * 4, w * 4) != 0 )
+//                    {
+//                        isSame = false;
+//                        break;
+//                    }
+//                }
+
+//                if (!isSame && m_frameData.buf_mb[y*m_frameData.mbWidth + x])
+//                {
+//                    qDebug() << "Frame:" << m_frameData.timestamp << " Block x:" << x << ", y:" << y << "  Fail!";
+//                    m_frameData.buf_mb[y*m_frameData.mbWidth + x]  = 192;
+//                }
+//                else if (isSame && !m_frameData.buf_mb[y*m_frameData.mbWidth + x])
+//                {
+//                    m_frameData.buf_mb[y*m_frameData.mbWidth + x]  = 64;
+//                }
+//            }
+//        }
+//        QString fnp = QString("/home/guee/Pictures/YUV/%1-Pic.jpg").arg(m_frameData.timestamp);
+//        img1.save(fnp);
 
 //        QImage img((const uchar*)m_frameData.buf_mb, m_frameData.mbWidth, m_frameData.mbHeight, m_frameData.mbWidth, QImage::Format_Grayscale8);
 //        QString fn = QString("/home/guee/Pictures/YUV/%1.png").arg(m_frameData.timestamp);

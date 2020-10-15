@@ -8,5 +8,5 @@ void main(void)
 {
     gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
     qt_TexCoord0 = qt_MultiTexCoord0;
-    qt_TexCoord0.y = 1.0 - qt_TexCoord0.y;
+   // qt_TexCoord0.y = 1.0 - qt_TexCoord0.y;
 }

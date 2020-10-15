@@ -291,7 +291,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
         }
     }
 
-    if (m_videoParams.useMbInfo)
+    if (m_x264Param.analyse.b_mb_info)
     {
         int cpsize = ((m_x264Param.i_width + 15) / 16) * ((m_x264Param.i_height + 15) /16);
         if (mb_info)
@@ -444,7 +444,7 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
                 byteNum[2] = m_x264Param.i_height / m_csp_tab.heightFix * stride[2];
             }
             size_t bufSize = byteNum[0] + byteNum[1] + byteNum[2] + sizeof(x264_picture_t);
-            if (m_videoParams.useMbInfo)
+            if (m_x264Param.analyse.b_mb_info)
             {
                 int mbWidth = (m_x264Param.i_width + 15) / 16;
                 int mbHeight = (m_x264Param.i_height + 15) / 16;
@@ -460,8 +460,10 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
             picin->img.plane[0] = reinterpret_cast<uint8_t*>(picin + 1);
             picin->img.plane[1] = picin->img.plane[0] + byteNum[0];
             picin->img.plane[2] = picin->img.plane[1] + byteNum[1];
-            if (m_videoParams.useMbInfo)
+            if (m_x264Param.analyse.b_mb_info)
                 picin->prop.mb_info = picin->img.plane[2] + byteNum[2];
+            else
+                picin->prop.mb_info = nullptr;
 #else
             picin = new x264_picture_t;
             m_x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
@@ -897,7 +899,7 @@ bool GueeVideoEncoder::set264AnalyserParams()
 //	m_x264Param.analyse.f_psy_trellis;		//Psy Trellis强度			/* Psy trellis strength */
     m_x264Param.analyse.b_psy	= m_videoParams.psyTune != eTuneNone;				//Psy优化开关，可能会增强细节	/* Toggle all psy optimizations */
 
-    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
+//    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
 //	m_x264Param.analyse.b_mb_info_update;	/* Update the values in mb_info according to the results of encoding. */
 
 //	/* the deadzone size that will be used in luma quantization */
