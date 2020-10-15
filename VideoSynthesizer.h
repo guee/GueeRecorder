@@ -118,6 +118,7 @@ private:
 
         int mbWidth;
         int mbHeight;
+        int mbPitch;
         uint8_t*  buf_mb;
         QOpenGLFramebufferObject* fbo_mb;
     };
