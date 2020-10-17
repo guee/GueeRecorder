@@ -46,6 +46,9 @@ private slots:
 
     void on_pushButtonMenu_clicked();
 
+
+    void on_pushButton_EnablePreview_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
     VideoSynthesizer& m_video;

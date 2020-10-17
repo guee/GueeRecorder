@@ -22,6 +22,9 @@ public:
     bool putFrame( int64_t microsecond, const uint8_t* buf, int32_t pitch);
     bool putFrame( int64_t microsecond, uint8_t* const plane[3], const int32_t* pitch, const uint8_t* mb_info = nullptr);
     float encodeFps() const { return m_encodeFPS.fps(); }
+
+    x264_picture_t *beginAddFrame(int64_t microsecond);
+    void doneAddFrame(x264_picture_t* picin);
 private:
 
     struct	s_csp_tab
@@ -52,6 +55,10 @@ private:
     int64_t m_prevFramePts = 0;
 
     FrameRateCalc               m_encodeFPS;
+    int32_t                     m_mbInfoInd = 0;
+    int32_t                     m_mbInfoSize = 0;
+    int32_t                     m_mbInfoCount = 0;
+    uint8_t*                    m_mbInfoBuf = nullptr;
 
 	inline const s_csp_tab& getCspTable( EVideoCSP eFormat );
 	inline int32_t EVideoCSP_To_x264CSP( EVideoCSP eFormat );

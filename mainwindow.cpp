@@ -642,3 +642,8 @@ void MainWindow::on_pushButtonMenu_clicked()
     ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
     ui->widget_AudioRec->resetAudioRecordUI();
 }
+
+void MainWindow::on_pushButton_EnablePreview_toggled(bool checked)
+{
+    m_video.enablePreview(checked);
+}

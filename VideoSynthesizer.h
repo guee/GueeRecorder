@@ -103,24 +103,27 @@ private:
     {
         EVideoCSP csp;
         int64_t timestamp;  //单位为毫秒
-        int alignWidth;
-        int alignHeight;
-        int textureWidth;
-        int textureHeight;
-        GLenum internalFormat;
-        GLenum dateType;
+        struct Plane
+        {
+            int width;
+            int height;
+            int pitch;
+            int bufSize;
+            GLenum internalFormat;
+            GLenum dataType;
+            //QOpenGLBuffer*  buffer = nullptr;
+            QOpenGLFramebufferObject* fbo = nullptr;
+            QOpenGLShaderProgram* prog = nullptr;
+        };
         int planeCount;
-        int stride[3];
-        int byteNum[3];
-
-        QOpenGLBuffer*  buffer;
-        QOpenGLFramebufferObject* fbo;
+        Plane planes[3];
 
         int mbWidth;
         int mbHeight;
         int mbPitch;
-        uint8_t*  buf_mb;
-        QOpenGLFramebufferObject* fbo_mb;
+        uint8_t*  buf_mb = nullptr;
+        QOpenGLFramebufferObject* fbo_mb = nullptr;
+        QOpenGLShaderProgram* prog_mb = nullptr;
     };
 
     FrameInfo    m_frameData;
@@ -130,7 +133,7 @@ private:
     QVector<GueeMediaWriter*> m_writers;
     SoundRecorder m_audRecorder;
 
-    bool initYuvFbo();
+    bool initYuvFbo(ShaderProgramPool& pool);
     void uninitYubFbo();
 
     bool m_immediateUpdate = false;
@@ -139,13 +142,13 @@ private:
     QOpenGLContext* m_context = nullptr;
     QOffscreenSurface* m_surface = nullptr;
     QVector4D m_backgroundColor;
-    QOpenGLShaderProgram* m_prog_x264mb = nullptr;
-    void renderThread();
+
     void run() override;
     BaseSource* onCreateSource(const QString &sourceName) override { Q_UNUSED(sourceName) return nullptr; }
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
+    bool drawFrameToYUV(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev);
     void putFrameToEncoder(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev);
     virtual void onLayerOpened(BaseLayer* layer) override;
     virtual void onLayerRemoved(BaseLayer* layer) override;

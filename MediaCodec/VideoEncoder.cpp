@@ -188,6 +188,14 @@ void GueeVideoEncoder::endEncode(close_step_progress fun, void* param)
         }
         m_picIdlePool.clear();
         m_mtxIdlePool.unlock();
+        if (m_mbInfoBuf)
+        {
+            delete []m_mbInfoBuf;
+            m_mbInfoBuf = nullptr;
+        }
+        m_mbInfoSize = 0;
+        m_mbInfoCount = 0;
+        m_mbInfoInd = 0;
 		break;
 	case VE_CUDA:
 		break;
@@ -232,6 +240,59 @@ bool GueeVideoEncoder::putFrame( int64_t microsecond, uint8_t* const plane[3], c
         break;
     }
     return false;
+}
+
+x264_picture_t *GueeVideoEncoder::beginAddFrame(int64_t microsecond)
+{
+    if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return nullptr;
+    int64_t pts = qRound(double(microsecond) / 1000000.0 * double(m_videoParams.frameRate));
+
+    if (pts < m_prevFramePts)
+    {
+        return nullptr;
+    }
+    if (pts == m_prevFramePts)
+    {
+        ++pts;
+    }
+    else if (pts > m_prevFramePts + 1)
+    {
+        --pts;
+    }
+    x264_picture_t* picin = popCachePool();
+    if (picin == nullptr) return nullptr;
+
+    picin->i_pts = pts;
+    m_prevFramePts = pts;
+    m_prevFrameTime = microsecond;
+
+    if (m_x264Param.analyse.b_mb_info)
+    {
+        picin->prop.mb_info = m_mbInfoBuf + m_mbInfoSize * m_mbInfoInd;
+        m_mbInfoInd = ( m_mbInfoInd + 1 ) % m_mbInfoCount;
+    }
+    return picin;
+}
+
+void GueeVideoEncoder::doneAddFrame(x264_picture_t *picin)
+{
+    if (nullptr == picin) return;
+    m_mtxPendQueue.lock();
+    if (m_encodeFPS.status() == FrameTimestamp::sync_Syncing)
+    {
+        m_picPendQueue.push_back(picin);
+    }
+    else
+    {
+#if _NOT_USE_X264_ALLOC
+        free(picin);
+#else
+        m_x264_picture_clean(picin);
+        delete picin;
+#endif
+    }
+    m_mtxPendQueue.unlock();
+    m_waitPendQueue.release();
 }
 
 bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3], const int32_t* pitch, const uint8_t* mb_info)
@@ -293,15 +354,16 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
 
     if (m_x264Param.analyse.b_mb_info)
     {
-        int cpsize = ((m_x264Param.i_width + 15) / 16) * ((m_x264Param.i_height + 15) /16);
+        picin->prop.mb_info = m_mbInfoBuf + m_mbInfoSize * m_mbInfoInd;
         if (mb_info)
         {
-            memcpy( picin->prop.mb_info, mb_info, cpsize );
+            memcpy( picin->prop.mb_info, mb_info, m_mbInfoSize );
         }
         else
         {
-            memset( picin->prop.mb_info, 0, cpsize );
+            memset( picin->prop.mb_info, 0, m_mbInfoSize );
         }
+        m_mbInfoInd = ( m_mbInfoInd + 1 ) % m_mbInfoCount;
     }
 
     m_mtxPendQueue.lock();
@@ -436,20 +498,17 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
             if (m_csp_tab.planes > 1)
             {
                 stride[1] = stride[0] / m_csp_tab.widthFix[1];
+                stride[1] = (stride[1] + 3) / 4 * 4;
                 byteNum[1] = m_x264Param.i_height / m_csp_tab.heightFix * stride[1];
             }
             if (m_csp_tab.planes > 2)
             {
                 stride[2] = stride[0] / m_csp_tab.widthFix[1];
+                stride[2] = (stride[2] + 3) / 4 * 4;
                 byteNum[2] = m_x264Param.i_height / m_csp_tab.heightFix * stride[2];
             }
             size_t bufSize = byteNum[0] + byteNum[1] + byteNum[2] + sizeof(x264_picture_t);
-            if (m_x264Param.analyse.b_mb_info)
-            {
-                int mbWidth = (m_x264Param.i_width + 15) / 16;
-                int mbHeight = (m_x264Param.i_height + 15) / 16;
-                bufSize += mbWidth * mbHeight;
-            }
+
             picin = reinterpret_cast<x264_picture_t*>(malloc(bufSize));
             memset(picin, 0, bufSize);
             picin->img.i_csp = m_x264Param.i_csp;
@@ -460,10 +519,6 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
             picin->img.plane[0] = reinterpret_cast<uint8_t*>(picin + 1);
             picin->img.plane[1] = picin->img.plane[0] + byteNum[0];
             picin->img.plane[2] = picin->img.plane[1] + byteNum[1];
-            if (m_x264Param.analyse.b_mb_info)
-                picin->prop.mb_info = picin->img.plane[2] + byteNum[2];
-            else
-                picin->prop.mb_info = nullptr;
 #else
             picin = new x264_picture_t;
             m_x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
@@ -487,7 +542,7 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         if (m_encodeFPS.status() != FrameTimestamp::sync_Syncing) return nullptr;
         m_mtxIdlePool.lock();
         picin = m_picIdlePool.last();
-        m_picIdlePool.pop_back();
+        m_picIdlePool.pop_front();
         m_mtxIdlePool.unlock();
     }
     return picin;
@@ -899,7 +954,16 @@ bool GueeVideoEncoder::set264AnalyserParams()
 //	m_x264Param.analyse.f_psy_trellis;		//Psy Trellis强度			/* Psy trellis strength */
     m_x264Param.analyse.b_psy	= m_videoParams.psyTune != eTuneNone;				//Psy优化开关，可能会增强细节	/* Toggle all psy optimizations */
 
-//    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
+    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
+    if (m_x264Param.analyse.b_mb_info)
+    {
+        m_mbInfoInd = 0;
+        int mbWidth = (m_x264Param.i_width + 15) / 16;
+        int mbHeight = (m_x264Param.i_height + 15) / 16;
+        m_mbInfoSize = mbWidth * mbHeight;
+        m_mbInfoCount = m_maxPendQueue + 100;
+        m_mbInfoBuf = new uint8_t[m_mbInfoCount * m_mbInfoSize];
+    }
 //	m_x264Param.analyse.b_mb_info_update;	/* Update the values in mb_info according to the results of encoding. */
 
 //	/* the deadzone size that will be used in luma quantization */

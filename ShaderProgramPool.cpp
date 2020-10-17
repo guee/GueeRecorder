@@ -114,6 +114,25 @@ bool ShaderProgramPool::setProgramShaders(const QString &name, QVector<QPair<QSt
     return true;
 }
 
+bool ShaderProgramPool::setProgramShaders(const QString &name, const QString &file_vert, const QString &file_frag)
+{
+    if (!addShaderFromSourceFile(name, QOpenGLShader::Vertex, file_vert ))
+    {
+        return false;
+    }
+    if (!addShaderFromSourceFile(name, QOpenGLShader::Fragment, file_frag ))
+    {
+        return false;
+    }
+
+    QVector<QPair<QString, QOpenGLShader::ShaderType>> s;
+    s.push_back(QPair<QString, QOpenGLShader::ShaderType>(name, QOpenGLShader::Vertex));
+    s.push_back(QPair<QString, QOpenGLShader::ShaderType>(name, QOpenGLShader::Fragment));
+    setProgramShaders(name, s);
+    s.clear();
+    return true;
+}
+
 QOpenGLShaderProgram *ShaderProgramPool::createProgram(const QString &name)
 {
     auto it = m_programs.find(name);
