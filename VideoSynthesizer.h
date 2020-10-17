@@ -103,27 +103,21 @@ private:
     {
         EVideoCSP csp;
         int64_t timestamp;  //单位为毫秒
-        struct Plane
-        {
-            int width;
-            int height;
-            int pitch;
-            int bufSize;
-            GLenum internalFormat;
-            GLenum dataType;
-            //QOpenGLBuffer*  buffer = nullptr;
-            QOpenGLFramebufferObject* fbo = nullptr;
-            QOpenGLShaderProgram* prog = nullptr;
-        };
+        QRect rect[3];
+        int pitch[3];
+        int bufSize[3];
+        int planeType[3];
         int planeCount;
-        Plane planes[3];
 
+        QSize fboSize;
         int mbWidth;
         int mbHeight;
         int mbPitch;
         uint8_t*  buf_mb = nullptr;
         QOpenGLFramebufferObject* fbo_mb = nullptr;
         QOpenGLShaderProgram* prog_mb = nullptr;
+        QOpenGLFramebufferObject* fbo = nullptr;
+        QOpenGLBuffer* vbo_mb = nullptr;
     };
 
     FrameInfo    m_frameData;
@@ -133,7 +127,7 @@ private:
     QVector<GueeMediaWriter*> m_writers;
     SoundRecorder m_audRecorder;
 
-    bool initYuvFbo(ShaderProgramPool& pool);
+    bool initYuvFbo();
     void uninitYubFbo();
 
     bool m_immediateUpdate = false;

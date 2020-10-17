@@ -954,7 +954,7 @@ bool GueeVideoEncoder::set264AnalyserParams()
 //	m_x264Param.analyse.f_psy_trellis;		//Psy Trellis强度			/* Psy trellis strength */
     m_x264Param.analyse.b_psy	= m_videoParams.psyTune != eTuneNone;				//Psy优化开关，可能会增强细节	/* Toggle all psy optimizations */
 
-    m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
+    //m_x264Param.analyse.b_mb_info	= m_videoParams.useMbInfo;			/* Use input mb_info data in x264_picture_t */
     if (m_x264Param.analyse.b_mb_info)
     {
         m_mbInfoInd = 0;

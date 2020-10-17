@@ -20,25 +20,25 @@ void main(void)
 
     for ( int y = 0; y < 16; ++y )
     {
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 0.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 0.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 1.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 1.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 2.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 2.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 3.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 3.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 0.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 0.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 1.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 1.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 2.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 2.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 3.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 3.0, pos.y)).rgb);
 
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 4.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 4.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 5.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 5.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 6.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 6.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 7.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 7.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 4.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 4.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 5.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 5.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 6.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 6.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 7.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 7.0, pos.y)).rgb);
 
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 8.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 8.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 9.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 9.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 10.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 10.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 11.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 11.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 8.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 8.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 9.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 9.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 10.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 10.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 11.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 11.0, pos.y)).rgb);
 
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 12.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 12.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 13.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 13.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 14.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 14.0, pos.y)).rgb);
-//        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 15.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 15.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 12.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 12.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 13.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 13.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 14.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 14.0, pos.y)).rgb);
+        length += distance(texture2D(qt_Texture0, vec2(pos.x + siz.x * 15.0, pos.y)).rgb, texture2D(qt_Texture1, vec2(pos.x + siz.x * 15.0, pos.y)).rgb);
 
 //        length += abs(texture2D(qt_Texture0, vec2(pos.x + siz.x * 0.0, pos.y)).r- texture2D(qt_Texture1, vec2(pos.x + siz.x * 0.0, pos.y)).r);
 //        length += abs(texture2D(qt_Texture0, vec2(pos.x + siz.x * 1.0, pos.y)).r- texture2D(qt_Texture1, vec2(pos.x + siz.x * 1.0, pos.y)).r);
