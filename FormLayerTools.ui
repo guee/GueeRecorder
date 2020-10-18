@@ -240,6 +240,10 @@ QSpinBox::down-button
 	subcontrol-origin:border;
 	subcontrol-position:bottom right;
 }
+QGroupBox
+{
+	background:#00000000;
+}
 QGroupBox::title
 {
 	font-size:10px;
@@ -544,7 +548,7 @@ QGroupBox::indicator::hover
            <x>0</x>
            <y>0</y>
            <width>158</width>
-           <height>356</height>
+           <height>375</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">

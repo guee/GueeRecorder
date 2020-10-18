@@ -13,5 +13,9 @@ Type=Application
 InitialPreference=3
 Terminal=false
 Icon=net.guee.recorder
-Exec=/opt/apps/net.guee.recorder/files/GueeRecorder
-X-Deepin-Vendor=user-custom
+Exec=/usr/bin/GueeRecorder
+
+
+
+
+

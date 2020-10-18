@@ -111,7 +111,6 @@ private:
 
         QSize fboSize;
         QOpenGLFramebufferObject* fbo = nullptr;
-        QOpenGLFramebufferObject* fboPre = nullptr;
 
         int mbWidth;
         int mbHeight;
@@ -146,7 +145,7 @@ private:
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
-    bool drawFrameToYUV(QOpenGLFramebufferObject *fboCur);
+    bool drawFrameToYUV(QOpenGLFramebufferObject *fboCur, QOpenGLFramebufferObject *fboPre);
     void putFrameToEncoder();
     virtual void onLayerOpened(BaseLayer* layer) override;
     virtual void onLayerRemoved(BaseLayer* layer) override;

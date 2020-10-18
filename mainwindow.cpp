@@ -54,8 +54,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_fpsTimer->start();
 
     ui->setupUi(this);
-
     ui->pushButton_EnablePreview->hide();
+//    ui->pushButton_EnablePreview->setParent(ui->widgetTitle);
+//    ui->pushButton_EnablePreview->move(8, 60);
+//    ui->pushButton_EnablePreview->raise();
 
     ui->widgetLogo->setAttribute(Qt::WA_TransparentForMouseEvents);
     ui->widgetTitleInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -483,12 +485,26 @@ void MainWindow::changeEvent(QEvent *event)
     }
     if (this->windowState()==Qt::WindowMinimized)
     {
-
+        m_video.enablePreview(false);
+    }
+    else if (this->windowState()==Qt::WindowMaximized)
+    {
+        m_video.enablePreview(true);
     }
     else if (this->windowState()==Qt::WindowActive)
     {
-
+        m_video.enablePreview(true);
     }
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    m_video.enablePreview(true);
+}
+
+void MainWindow::hideEvent(QHideEvent *event)
+{
+    m_video.enablePreview(false);
 }
 
 void MainWindow::on_widgetPreview_initGL()
@@ -647,5 +663,5 @@ void MainWindow::on_pushButtonMenu_clicked()
 
 void MainWindow::on_pushButton_EnablePreview_toggled(bool checked)
 {
-    m_video.enablePreview(checked);
+   // m_video.enablePreview(checked);
 }

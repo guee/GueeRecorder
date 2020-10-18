@@ -5,24 +5,40 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
 CONFIG += c++11 precompile_header $(SYS_ARCH)
 PRECOMPILED_HEADER = precompile.h
-LIBS += -lX11 -lXfixes -lXinerama -lXext -lfaac -lXcomposite
+LIBS += -lX11 -lXfixes -lXinerama -lXext -lXcomposite
+
 
 COMPILER=$$system($$QMAKE_CC -v 2>&1)
-#contains 必须和 { 在同一行
-contains(COMPILER, mips64el-linux-gnuabi64){
-    LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libx264.so.161
-    LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libfaac.so.0.0.0
-    #QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
-    QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
-    QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
 
-    QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-linux-gnuabi64\'
+message("$$COMPILER")
+message($$QT_ARCH)
+#contains 必须和 { 在同一行
+if (contains(QT_ARCH, mips64)){
+    if(contains(COMPILER, mips64el-linux-gnuabi64)){
+        #在UOS for loongson上编译
+        LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libx264.so.161
+        LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libfaac.so.0
+        QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
+        QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-linux-gnuabi64\'
+    }else{
+        #在lemote fedora28上编译
+        LIBS += $$PWD/lib/mips64el-redhat-linux/libx264.so.161
+        LIBS += $$PWD/lib/mips64el-redhat-linux/libfaac.so.0
+        QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
+        QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-redhat-linux\'
+    }
+}else{
+    #在UOS for amd64上编译
+    contains(COMPILER, x86_64-linux-gnu){
+        LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
+        LIBS += $$PWD/lib/x86_64-linux-gnu/libfaac.so.0
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
+    }
 }
-contains(COMPILER, x86_64-linux-gnu){
-    LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
-    LIBS += $$PWD/lib/x86_64-linux-gnu/libfaac.so.0.0.0
-    QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
-}
+
+
 #QMAKE_CXXFLAGS += -fopenmp
 #LIBS += -lgomp
 
@@ -211,4 +227,28 @@ DISTFILES += \
     UiResource/Shaders/RgbToU.frag \
     UiResource/Shaders/RgbToY.vert \
     UiResource/Shaders/RgbToV.vert \
-    UiResource/Shaders/RgbToU.vert
+    UiResource/Shaders/RgbToU.vert \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/mips64el-linux-gnuabi64/libfaac.so.0 \
+    Package/pack-fedora \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/applications/net.guee.recorder.desktop \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/bin/GueeRecorder \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/lib64/libfaac.so.0 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/lib64/libx264.so.161 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-0.mips64el/usr/share/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    Package/fedora-loongson/SPECS/GueeRecorder.spec \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libfaac.so.0 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png

@@ -1,9 +1,0 @@
-#!/bin/sh
-if [ -d "/home/guee/rpmbuild" ];
-then
-    cp -r GueeRecorder-fedora-loongson/. /home/guee/rpmbuild
-else
-    cp -r GueeRecorder-fedora-loongson /home/guee/rpmbuild
-fi
-rpmbuild -bb /home/guee/rpmbuild/SPECS/GueeRecorder.spec
-cp /home/guee/rpmbuild/RPMS/mips64el/GueeRecorder-1.0.0-0.mips64el.rpm ./GueeRecorder-1.0.0-0.mips64el.rpm
