@@ -251,4 +251,14 @@ DISTFILES += \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/net.guee.recorder.png \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
-    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    lib/mips64el-linux-gnuabi64/libfaac.so.0 \
+    lib/mips64el-linux-gnuabi64/libx264.so.161 \
+    lib/mips64el-redhat-linux/libfaac.so.0 \
+    lib/mips64el-redhat-linux/libx264.so.161 \
+    lib/x86_64-linux-gnu/libfaac.so.0 \
+    lib/x86_64-linux-gnu/libx264.so.161 \
+    Doc/GueeRecoder-MainUI.png \
+    Doc/GueeRecoder-Main.png \
+    Doc/GueeRecoder-MainUI.xcf \
+    Doc/LayerTools.xcf
