@@ -13,15 +13,15 @@ void main(void)
     gl_FragColor = vec4(texture2D(qt_Texture0, qt_TexCoord0.st).rgb, 1.0);
     if (PlaneType == 0)
     {
-        gl_FragColor.r = dot(gl_FragColor, RGB_Y);
+        gl_FragColor.a = dot(gl_FragColor, RGB_Y);
     }
     else if (PlaneType == 1)
     {
-        gl_FragColor.r = dot(gl_FragColor, RGB_U);
+        gl_FragColor.a = dot(gl_FragColor, RGB_U);
     }
     else if (PlaneType == 2)
     {
-        gl_FragColor.r = dot(gl_FragColor, RGB_V);
+        gl_FragColor.a = dot(gl_FragColor, RGB_V);
     }
  //   gl_FragColor.r = 1.0;
 }

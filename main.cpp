@@ -16,10 +16,9 @@ int main(int argc, char *argv[])
 
     QApplication::setOrganizationName("Guee");
     QApplication::setOrganizationDomain("looongson.xyz");
-    QApplication::setApplicationVersion("1.0.0");
+    QApplication::setApplicationVersion("1.0.1");
     QApplication::setApplicationName("GueeRecorder");
     QApplication::setApplicationDisplayName("Guee 录屏机");
-    QApplication::setApplicationVersion("v1.0.0");
 
     bool alreadyExists = false;
     Window wid = 0;

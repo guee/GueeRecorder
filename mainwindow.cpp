@@ -55,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
 
+    ui->pushButton_EnablePreview->hide();
+
     ui->widgetLogo->setAttribute(Qt::WA_TransparentForMouseEvents);
     ui->widgetTitleInfo->setAttribute(Qt::WA_TransparentForMouseEvents);
 

@@ -110,14 +110,18 @@ private:
         int planeCount;
 
         QSize fboSize;
+        QOpenGLFramebufferObject* fbo = nullptr;
+        QOpenGLFramebufferObject* fboPre = nullptr;
+
         int mbWidth;
         int mbHeight;
         int mbPitch;
         uint8_t*  buf_mb = nullptr;
         QOpenGLFramebufferObject* fbo_mb = nullptr;
         QOpenGLShaderProgram* prog_mb = nullptr;
-        QOpenGLFramebufferObject* fbo = nullptr;
         QOpenGLBuffer* vbo_mb = nullptr;
+
+
     };
 
     FrameInfo    m_frameData;
@@ -142,8 +146,8 @@ private:
     void onReleaseSource(BaseSource* source) override { Q_UNUSED(source) }
     ShaderProgramPool m_progPool;
     void loadShaderPrograms();
-    bool drawFrameToYUV(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev);
-    void putFrameToEncoder(QOpenGLFramebufferObject* fboCur, QOpenGLFramebufferObject* fboPrev);
+    bool drawFrameToYUV(QOpenGLFramebufferObject *fboCur);
+    void putFrameToEncoder();
     virtual void onLayerOpened(BaseLayer* layer) override;
     virtual void onLayerRemoved(BaseLayer* layer) override;
     virtual void onSizeChanged(BaseLayer* layer) override;
