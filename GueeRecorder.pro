@@ -111,6 +111,8 @@ HEADERS += \
     InputSource/PictureSource.h \
     InputSource/ScreenLayer.h \
     InputSource/ScreenSource.h \
+    MediaCodec/x264.161/x264.h \
+    MediaCodec/x264.161/x264_config.h \
     ShaderProgramPool.h \
     StackedWidgetAddLayer.h \
     mainwindow.h \
