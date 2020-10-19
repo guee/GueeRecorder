@@ -8,6 +8,21 @@ PRECOMPILED_HEADER = precompile.h
 LIBS += -lX11 -lXfixes -lXinerama -lXext -lXcomposite
 
 
+#QMAKE_CXXFLAGS += -fopenmp
+#LIBS += -lgomp
+
+# The following define makes your compiler emit warnings if you use
+# any Qt feature that has been marked deprecated (the exact warnings
+# depend on your compiler). Please consult the documentation of the
+# deprecated API in order to know how to port your code away from it.
+DEFINES += QT_DEPRECATED_WARNINGS GL_GLEXT_PROTOTYPES
+
+# You can also make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+# You can also select to disable deprecated APIs only up to a certain version of Qt.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+
 COMPILER=$$system($$QMAKE_CC -v 2>&1)
 
 message("$$COMPILER")
@@ -33,25 +48,13 @@ if (contains(QT_ARCH, mips64)){
     #在UOS for amd64上编译
     contains(COMPILER, x86_64-linux-gnu){
         LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
+        #DEFINES += SYSTEM_X264
+        #LIBS += -lx264
         LIBS += $$PWD/lib/x86_64-linux-gnu/libfaac.so.0
         QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
     }
 }
 
-
-#QMAKE_CXXFLAGS += -fopenmp
-#LIBS += -lgomp
-
-# The following define makes your compiler emit warnings if you use
-# any Qt feature that has been marked deprecated (the exact warnings
-# depend on your compiler). Please consult the documentation of the
-# deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS GL_GLEXT_PROTOTYPES
-
-# You can also make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-# You can also select to disable deprecated APIs only up to a certain version of Qt.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
     Common/FrameSynchronization.cpp \
@@ -108,8 +111,6 @@ HEADERS += \
     InputSource/PictureSource.h \
     InputSource/ScreenLayer.h \
     InputSource/ScreenSource.h \
-    MediaCodec/x264.h \
-    MediaCodec/x264_config.h \
     ShaderProgramPool.h \
     StackedWidgetAddLayer.h \
     mainwindow.h \

@@ -526,11 +526,21 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         }
         else /*if(m_videoParams.onlineMode)*/
         {
-            for ( int i = 0; i < m_picPendQueue.count(); ++i )
+            for ( int i = 0; i < m_picPendQueue.count() - 1; ++i )
             {
                 m_waitPendQueue.acquire();
                 m_picIdlePool.push_back(m_picPendQueue[i]);
                 m_waitIdlePool.release();
+                if (m_x264Param.analyse.b_mb_info)
+                {
+                    uint8_t* m1 = m_picPendQueue[i]->prop.mb_info;
+                    uint8_t* m2 = m_picPendQueue[i + 1]->prop.mb_info;
+                    int mb = ((m_x264Param.i_width + 15) / 16) * ((m_x264Param.i_height + 15) / 16);
+                    for ( int j = 0; j < mb; ++j )
+                    {
+                        m2[j] = m1[j] & m2[j];
+                    }
+                }
                 m_picPendQueue.remove(i);
             }
         }
@@ -679,7 +689,7 @@ bool GueeVideoEncoder::set264BaseParams()
     {
         m_x264Param.b_sliced_threads	= 0;
     }
-    m_x264Param.i_lookahead_threads = 1;//多个线程进行预测分析			/* multiple threads for lookahead analysis */
+    m_x264Param.i_lookahead_threads = 0;//多个线程进行预测分析			/* multiple threads for lookahead analysis */
 //    m_x264Param.b_deterministic;	//是否使用线程进行未确定的优化	/* whether to allow non-deterministic optimizations when threaded */
 //	m_x264Param.b_cpu_independent;	//强制规范行为，而不是依赖于 cpu 的优化算法	/* force canonical behavior rather than cpu-dependent optimal algorithms */
 //	m_x264Param.i_sync_lookahead;	//同步预测缓冲区大小			/* threaded lookahead buffer */

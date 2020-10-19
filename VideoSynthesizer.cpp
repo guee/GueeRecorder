@@ -300,7 +300,7 @@ bool VideoSynthesizer::resetDefaultOption()
 
     m_vidParams.useMbInfo     = true;
     //m_vidParams.useMbInfo     = false;
-    m_vidParams.rateMode      = VR_ConstantBitrate;
+    m_vidParams.rateMode      = VR_ConstantQP;
     m_vidParams.constantQP    = 23;
     m_vidParams.bitrate       = 2000;
     m_vidParams.bitrateMax    = 0;
