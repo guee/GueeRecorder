@@ -143,6 +143,11 @@ void BaseSource::setSourceFps(float fps)
     m_neededFps = fps;
 }
 
+void BaseSource::readyNextImage(int64_t next_timestamp)
+{
+    m_requestTimestamp = next_timestamp;
+}
+
 void BaseSource::setImage(const QImage& image)
 {
     m_imageBuffer = image.bits();
@@ -151,7 +156,7 @@ void BaseSource::setImage(const QImage& image)
     m_height = image.height();
     m_pixFormat = image.format();
     m_imageChanged = true;
-    updateToTexture(0);
+    updateToTexture();
 }
 
 void BaseSource::setFrame(const QVideoFrame &frame)
@@ -275,7 +280,7 @@ void BaseSource::setFrame(const QVideoFrame &frame)
     }
 }
 
-bool BaseSource::updateToTexture(int64_t next_timestamp)
+bool BaseSource::updateToTexture()
 {
     m_imageLock.lock();
     if (m_imageChanged == false)
@@ -338,7 +343,7 @@ bool BaseSource::updateToTexture(int64_t next_timestamp)
     m_texture->setData(m_pixFormatGL, QOpenGLTexture::UInt8, static_cast<const void*>(m_imageBuffer), nullptr);
     //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_BGRA, GL_UNSIGNED_BYTE, m_imageBuffer);
     m_imageLock.unlock();
-    m_requestTimestamp = next_timestamp;
+
     return true;
 }
 

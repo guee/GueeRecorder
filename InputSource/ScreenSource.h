@@ -48,8 +48,8 @@ public:
     bool shotScreen(const QRect* rect = nullptr);
 
     QRect calcShotRect();
-    virtual bool updateToTexture(int64_t next_timestamp);
-    
+    virtual void readyNextImage(int64_t next_timestamp);
+
     static bool windowImage(Window, QImage& img);
 protected:
     static Display *m_display;

@@ -131,7 +131,8 @@ protected:
     bool m_fullViewport = true;        //是否缩放到整个画面。
     VertexArritb    m_vertex[4];
 
-    static bool updateSourceTextures(int64_t requestTimestamp);
+    static bool updateSourceTextures();
+    static void readySourceNextImage(int64_t next_timestamp);
     static BaseSource* findSource(const QString& typeName, const QString& sourceName);
     static void setSourcesFramerate(float fps);
     virtual BaseSource* onCreateSource(const QString &sourceName) = 0;

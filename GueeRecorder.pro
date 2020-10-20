@@ -264,4 +264,17 @@ DISTFILES += \
     Doc/GueeRecoder-MainUI.png \
     Doc/GueeRecoder-Main.png \
     Doc/GueeRecoder-MainUI.xcf \
-    Doc/LayerTools.xcf
+    Doc/LayerTools.xcf \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libfaac.so.0 \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libx264.so.161 \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/info

@@ -25,7 +25,8 @@ public:
     virtual bool isSameSource(const QString& type, const QString& source);
 
     void setSourceFps(float fps);
-    virtual bool updateToTexture(int64_t next_timestamp);
+    bool updateToTexture();
+    virtual void readyNextImage(int64_t next_timestamp);
     void setImage(const QImage& image);
     void setFrame(const QVideoFrame &frame);
     int width() const { return m_width; }

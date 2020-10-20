@@ -283,11 +283,11 @@ bool VideoSynthesizer::pause()
 bool VideoSynthesizer::resetDefaultOption()
 {
     m_vidParams.encoder       = VE_X264;
-    m_vidParams.profile       = VF_High;
+    m_vidParams.profile       = VF_Auto;
     m_vidParams.presetX264    = VP_x264_SuperFast;
     m_vidParams.presetNvenc   = VP_Nvenc_LowLatencyDefault;
     m_vidParams.outputCSP     = Vid_CSP_I420;
-    m_vidParams.psyTune       = eTuneAnimation;
+    m_vidParams.psyTune       = eTuneNone;//eTuneAnimation;
     m_vidParams.width         = 0;
     m_vidParams.height        = 0;
     m_vidParams.frameRate     = 30.0f;
@@ -330,8 +330,6 @@ bool VideoSynthesizer::resetDefaultOption()
     m_audParams.sampleRate = 22050;
     m_audParams.channels = 2;
     m_audParams.channelMask = 0;
-
-
 
     return true;
 }
@@ -559,7 +557,7 @@ bool VideoSynthesizer::setBFrames(int bFrames)
 
 void VideoSynthesizer::run()
 {
-    bool                    isUpdated = false;
+    bool isTextureUpdated = false;
 
     if ( !m_context->makeCurrent(m_surface) )
     {
@@ -590,7 +588,6 @@ void VideoSynthesizer::run()
     emit initDone(true);
     int64_t preTimer = -1000000;
     int64_t curTimer = 0;
-    int64_t preTimeStamp = 0;
 
     while(m_threadWorking)
     {
@@ -611,20 +608,19 @@ void VideoSynthesizer::run()
             m_videoSizeChanged = false;
             emit frameReady(0);
         }
+        isTextureUpdated |= updateSourceTextures();
+
         curTimer = m_frameSync.isNextFrame();
         if (curTimer >= 0)
         {
-            m_frameData.timestamp = qMax(int64_t(0), m_timestamp.elapsed());
-            if ( updateSourceTextures(curTimer) )
-            {
-                isUpdated = true;
-            }
-            if ( curTimer - preTimer > 1000000 ) isUpdated = true;
+            if ( curTimer - preTimer > 1000000 ) isTextureUpdated = true;
         }
-
-        if ( isUpdated || m_immediateUpdate )
+        if ((curTimer >= 0 && isTextureUpdated) || m_immediateUpdate)
         {
-            if (isUpdated)
+            m_immediateUpdate = false;
+            m_frameData.timestamp = qMax(int64_t(0), m_timestamp.elapsed());
+            readySourceNextImage(curTimer);
+            if (isTextureUpdated)
             {
                 preTimer = curTimer;
                 if ( m_status  == Palying )
@@ -633,7 +629,6 @@ void VideoSynthesizer::run()
                 }
             }
 
-            m_immediateUpdate = false;
             QOpenGLFramebufferObject* swfbo = fboRgba1;
             swfbo->bind();
             glViewport(0, 0, m_vidParams.width, m_vidParams.height);
@@ -652,29 +647,19 @@ void VideoSynthesizer::run()
             glDisable(GL_BLEND);
 
 
-            if (isUpdated)
+            if (isTextureUpdated)
             {
                  drawFrameToYUV(fboRgba1, fboRgba2);
                  fboRgba1 = fboRgba2;
                  fboRgba2 = swfbo;
-                 if ( m_status  == Palying )
-                {
-
-
-                    //qDebug() <<"帧时间：" << m_frameData.timestamp << " 距离上帧：" << m_frameData.timestamp - preTimeStamp;
-                    //fprintf(stderr, "帧时间：%d 距离上帧：%d\n", int(m_frameData.timestamp), int(m_frameData.timestamp - preTimeStamp) );
-                    //preTimeStamp = m_frameData.timestamp;
-
-                }
-                m_frameRate.add();
-                isUpdated = false;
-
+                 m_frameRate.add();
             }
             glFlush();
             if (m_enablePreview)
             {
                 emit frameReady(swfbo->texture());
             }
+            isTextureUpdated = false;
         }
         msleep(1);
     }

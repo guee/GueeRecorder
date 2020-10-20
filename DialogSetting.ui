@@ -145,7 +145,7 @@ background-color: rgb(255, 255, 255);
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-120</y>
+        <y>-60</y>
         <width>436</width>
         <height>961</height>
        </rect>
@@ -376,7 +376,7 @@ background-color: rgb(255, 255, 255);
                <number>1</number>
               </property>
               <property name="maximum">
-               <number>30</number>
+               <number>120</number>
               </property>
               <property name="value">
                <number>30</number>
@@ -398,7 +398,7 @@ background-color: rgb(255, 255, 255);
                <double>1.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>60.000000000000000</double>
+               <double>120.000000000000000</double>
               </property>
               <property name="value">
                <double>30.000000000000000</double>

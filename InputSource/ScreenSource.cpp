@@ -885,7 +885,10 @@ bool ScreenSource::shotScreen(const QRect* rect)
         m_imageLock.unlock();
         return false;
     }
-    int64_t tim = QDateTime::currentMSecsSinceEpoch();
+    //int64_t tim = QDateTime::currentMSecsSinceEpoch();
+   // XLockDisplay(ScreenSource::xDisplay());
+   // XSync(ScreenSource::xDisplay(), 0);
+
     if(m_useShm)
     {
         if ( !allocImage(uint32_t(m_width), uint32_t(m_height)) )
@@ -920,8 +923,9 @@ bool ScreenSource::shotScreen(const QRect* rect)
         }
         m_pixFormat = checkPixelFormat(m_img);
     }
-    tim = QDateTime::currentMSecsSinceEpoch() - tim;
-    //fprintf(stderr, "TIME:%d\n", int(tim));
+//    XUnlockDisplay(ScreenSource::xDisplay());
+//    tim = QDateTime::currentMSecsSinceEpoch() - tim;
+//    fprintf(stderr, "TIME:%d\n", int(tim));
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_img->data);
     m_stride = m_img->bytes_per_line;
@@ -1032,12 +1036,11 @@ QRect ScreenSource::calcShotRect()
     return bound;
 }
 
-bool ScreenSource::updateToTexture(int64_t next_timestamp)
+void ScreenSource::readyNextImage(int64_t next_timestamp)
 {
-    bool succ = false;
+    m_requestTimestamp = next_timestamp;
     if (m_sourceName.isEmpty())
     {
-        succ = BaseSource::updateToTexture(next_timestamp);
         m_semShot.release();
         //qDebug() << "updateToTexture()" << next_timestamp;
     }
@@ -1094,7 +1097,7 @@ bool ScreenSource::updateToTexture(int64_t next_timestamp)
                     }
                     else
                     {
-                        succ = true;
+                        m_imageChanged = true;
                     }
                 }
             }
@@ -1106,10 +1109,10 @@ bool ScreenSource::updateToTexture(int64_t next_timestamp)
                     releaseWindow();
                     m_timeCheck.start();
                 }
-            }
-            else
-            {
-                succ = true;
+                else
+                {
+                    m_imageChanged = true;
+                }
             }
             if (m_wid && m_timeCheck.elapsed() > 1000)
             {
@@ -1120,8 +1123,6 @@ bool ScreenSource::updateToTexture(int64_t next_timestamp)
             }
         }
     }
-    m_requestTimestamp = next_timestamp;
-    return succ;
 }
 
 void ScreenSource::run()

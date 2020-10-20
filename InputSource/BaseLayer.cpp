@@ -752,17 +752,25 @@ void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)
 
 }
 
-bool BaseLayer::updateSourceTextures(int64_t requestTimestamp)
+bool BaseLayer::updateSourceTextures()
 {
     bool ret = false;
     for (auto it:m_resPool)
     {
-        if (it->updateToTexture(requestTimestamp))
+        if (it->updateToTexture())
         {
             ret = true;
         }
     }
     return ret;
+}
+
+void BaseLayer::readySourceNextImage(int64_t next_timestamp)
+{
+    for (auto it:m_resPool)
+    {
+        it->readyNextImage(next_timestamp);
+    }
 }
 
 BaseSource *BaseLayer::findSource(const QString& typeName, const QString& sourceName)
