@@ -308,7 +308,7 @@ bool VideoSynthesizer::resetDefaultOption()
     m_vidParams.vbvBuffer     = 0;
     m_vidParams.gopMin        = 30;
     m_vidParams.gopMax        = 300;
-    m_vidParams.refFrames     = 4;
+    m_vidParams.refFrames     = 0;
     m_vidParams.BFrames       = 0;
     m_vidParams.BFramePyramid = 0;
 

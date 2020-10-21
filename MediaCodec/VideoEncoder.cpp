@@ -682,7 +682,7 @@ bool GueeVideoEncoder::set264BaseParams()
         //是否使用线程来分片			/* Whether to use slice-based threading. */
         //								//当 i_threads 不为1，但 b_sliced_threads 为 0 时，输入的帧数要达到 i_threads 帧，才会有编码数据输出。
         //								//因此，要么 i_threads 设置为1，要么给 b_sliced_threads 也设置值，否则在实时的流编码时，会有延迟。
-        //多个线程编码时，同时使用分片线程，可以降低内存消耗，并对编码时CPU消耗也有一定程度的降低。
+        //多个线程编码时，同时使用分片线程，可以降低内存消耗。当编码线程数大于CPU核心数时，对CPU消耗也有一定程度的降低。
         m_x264Param.b_sliced_threads	= 1;
     }
     else

@@ -105,7 +105,7 @@ bool DialogSetting::loadProfile(bool initAudio)
         vid.setSampleBits(ESampleBits(ini.value("bits", vid.sampleBits()).toInt()));
         vid.setSampleRate(ini.value("fps", vid.sampleRate()).toInt());
         vid.setChannels(ini.value("channels", vid.channels()).toInt());
-        vid.setAudioBitrate(ini.value("bps", vid.bitrate()).toInt());
+        vid.setAudioBitrate(ini.value("bps", vid.audioBitrate()).toInt());
         vid.audCallbackDev().selectDev(ini.value("cbDev", "").toString());
         vid.audCallbackDev().setEnable(ini.value("cbEnabled", true).toBool());
         vid.audCallbackDev().setVolume(ini.value("cbVolume", 1.0).toReal());

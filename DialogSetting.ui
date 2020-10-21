@@ -145,9 +145,9 @@ background-color: rgb(255, 255, 255);
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-60</y>
-        <width>436</width>
-        <height>961</height>
+        <y>0</y>
+        <width>425</width>
+        <height>903</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -376,7 +376,7 @@ background-color: rgb(255, 255, 255);
                <number>1</number>
               </property>
               <property name="maximum">
-               <number>120</number>
+               <number>30</number>
               </property>
               <property name="value">
                <number>30</number>
@@ -398,7 +398,7 @@ background-color: rgb(255, 255, 255);
                <double>1.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>120.000000000000000</double>
+               <double>30.000000000000000</double>
               </property>
               <property name="value">
                <double>30.000000000000000</double>
@@ -576,7 +576,8 @@ background-color: rgb(255, 255, 255);
             <item>
              <widget class="QSlider" name="horizontalSlider_Preset">
               <property name="toolTip">
-               <string>在视频码率相近时，编码速度越慢的方案图像质量越高，但编码速度也越慢。
+               <string>在视频码率相近时，编码速度越慢的方案图像质量越高，
+但即使i7级别的CPU在较慢的设置下也难以保持30fps的实时编码。
 通常不要高于&quot;VeryFast&quot;，修改这个设置请谨慎。</string>
               </property>
               <property name="maximum">
@@ -671,17 +672,17 @@ background-color: rgb(255, 255, 255);
             </property>
             <item>
              <property name="text">
-              <string>恒定质量</string>
+              <string>恒定质量 (CQP)</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>固定码率</string>
+              <string>固定码率 (CRF)</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>可变码率</string>
+              <string>可变码率 (VBR)</string>
              </property>
             </item>
            </widget>
@@ -731,7 +732,7 @@ background-color: rgb(255, 255, 255);
               </property>
               <property name="toolTip">
                <string>值越大编码越慢，但能一定程度提高视频图像质量和减少文件体积。
-如果不了解其意义，请使用默认值 4 。</string>
+如果不了解其意义，请使用默认值 0（自动）。</string>
               </property>
               <property name="maximum">
                <number>8</number>
