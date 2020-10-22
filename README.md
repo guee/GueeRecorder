@@ -1,4 +1,4 @@
-本程序还在持续开发中，临时提供二进制测试包。分为Loongson版和AMD64版，放在了我的个人网站上。</br>
+本程序还在持续开发中，提供UOS和Fedora的安装包。分为Loongson版和AMD64版，放在了我的个人网站上。</br>
 [点击打开下载页面（含使用说明）](http://www.loongson.xyz/Articles/Content/18)</br>
 [开发日记](http://www.loongson.xyz/Articles/Content/19)</br>
 

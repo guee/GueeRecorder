@@ -123,7 +123,25 @@ private:
     CWaveFile m_waveFile;
 #endif
     bool mixPcm( int64_t frameBegin, SoundDevInfo& dev, uint8_t* mixBuf );
+private:
+    static bool initFaac_Functions();
 
+    typedef int (FAACAPI *p_faacEncGetVersion)(char **faac_id_string, char **faac_copyright_string);
+    typedef faacEncConfigurationPtr (FAACAPI *p_faacEncGetCurrentConfiguration)(faacEncHandle hEncoder);
+    typedef int (FAACAPI *p_faacEncSetConfiguration)(faacEncHandle hEncoder, faacEncConfigurationPtr config);
+    typedef faacEncHandle (FAACAPI *p_faacEncOpen)(unsigned long sampleRate, unsigned int numChannels, unsigned long *inputSamples, unsigned long *maxOutputBytes);
+    typedef int (FAACAPI *p_faacEncGetDecoderSpecificInfo)(faacEncHandle hEncoder, unsigned char **ppBuffer, unsigned long *pSizeOfDecoderSpecificInfo);
+    typedef int (FAACAPI *p_faacEncEncode)(faacEncHandle hEncoder, int32_t * inputBuffer, unsigned int samplesInput, unsigned char *outputBuffer, unsigned int bufferSize);
+    typedef int (FAACAPI *p_faacEncClose)(faacEncHandle hEncoder);
+
+    static p_faacEncGetVersion faacEncGetVersion;
+    static p_faacEncGetCurrentConfiguration faacEncGetCurrentConfiguration;
+    static p_faacEncSetConfiguration faacEncSetConfiguration;
+    static p_faacEncOpen faacEncOpen;
+    static p_faacEncGetDecoderSpecificInfo faacEncGetDecoderSpecificInfo;
+    static p_faacEncEncode faacEncEncode;
+    static p_faacEncClose faacEncClose;
+    static QLibrary       m_libFaac;
 };
 
 #endif // SOUNDRECORD_H

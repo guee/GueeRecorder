@@ -22,36 +22,29 @@ DEFINES += QT_DEPRECATED_WARNINGS GL_GLEXT_PROTOTYPES
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-
 COMPILER=$$system($$QMAKE_CC -v 2>&1)
-
-message("$$COMPILER")
-message($$QT_ARCH)
+if(contains(COMPILER, mips64el-linux-gnuabi64)){
+    DEFINES += DEBIAN
+}
+#message("$$COMPILER")
+#message($$QT_ARCH)
 #contains 必须和 { 在同一行
+#        DEFINES += SYSTEM_X264
+#        LIBS += -lx264
 if (contains(QT_ARCH, mips64)){
-    if(contains(COMPILER, mips64el-linux-gnuabi64)){
-        #在UOS for loongson上编译
-        LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libx264.so.161
-        LIBS += $$PWD/lib/mips64el-linux-gnuabi64/libfaac.so.0
-        QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
-        QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=gs464e -mloongson-ext -mloongson-ext2 -mloongson-mmi -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Wno-maybe-uninitialized -Wshadow -mfp64 -mhard-float -fno-tree-vectorize -fvisibility=hidden
-        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-linux-gnuabi64\'
+    if(contains(DEFINES, DEBIAN)){
+        #在UOS for loongson (Debian)上编译
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/ls64-de\'
     }else{
-        #在lemote fedora28上编译
-        LIBS += $$PWD/lib/mips64el-redhat-linux/libx264.so.161
-        LIBS += $$PWD/lib/mips64el-redhat-linux/libfaac.so.0
-        QMAKE_CXXFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
-        QMAKE_CFLAGS_RELEASE += -O3 -mmsa -march=mips64r5
-        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/mips64el-redhat-linux\'
+        #在lemote fedora28 (RedHat)上编译
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/ls64-rh\'
     }
-}else{
+}
+
+if (contains(QT_ARCH, x86_64)){
     #在UOS for amd64上编译
-    contains(COMPILER, x86_64-linux-gnu){
-        LIBS += $$PWD/lib/x86_64-linux-gnu/libx264.so.161
-        #DEFINES += SYSTEM_X264
-        #LIBS += -lx264
-        LIBS += $$PWD/lib/x86_64-linux-gnu/libfaac.so.0
-        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/x86_64-linux-gnu\'
+    if(contains(DEFINES, DEBIAN)){
+        QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/amd64-de\'
     }
 }
 
@@ -277,4 +270,53 @@ DISTFILES += \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png \
-    Package/uos-amd64/opt/apps/net.guee.recorder/info
+    Package/uos-amd64/opt/apps/net.guee.recorder/info \
+    Package/fedora-loongson/SPECS/GueeRecorder.spec \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/applications/net.guee.recorder.desktop \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/GueeRecorder \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/GueeRecorder \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/lib/ls64-rh/3a3000/libfaac.so.0 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/lib/ls64-rh/3a3000/libx264.so.161 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/lib/ls64-rh/3a4000/libfaac.so.0 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/lib/ls64-rh/3a4000/libx264.so.161 \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/opt/guee/recorder/lib/ls64-rh/libstdc++.so.6 \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libfaac.so.0 \
+    Package/uos-amd64/opt/apps/net.guee.recorder/files/lib/x86_64-linux-gnu/libx264.so.161 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/ls64-de/3a3000/libfaac.so.0 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/ls64-de/3a3000/libx264.so.161 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/ls64-de/3a4000/libfaac.so.0 \
+    Package/uos-loongson/opt/apps/net.guee.recorder/files/lib/ls64-de/3a4000/libx264.so.161 \
+    Package/pack-fedora \
+    Package/pack-uos \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-1.mips64el/usr/share/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/128x128/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/16x16/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/24x24/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/256x256/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/32x32/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/48x48/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/512x512/apps/net.guee.recorder.png \
+    Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/64x64/apps/net.guee.recorder.png \
+    Package/uos-amd64/DEBIAN/control \
+    Package/uos-amd64/opt/apps/net.guee.recorder/info \
+    Package/uos-loongson/DEBIAN/control \
+    Package/uos-loongson/opt/apps/net.guee.recorder/info \
+    Package/fedora-loongson/SPECS/GueeRecorder.spec

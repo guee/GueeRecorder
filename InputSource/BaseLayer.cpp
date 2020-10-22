@@ -152,6 +152,7 @@ void BaseLayer::draw()
     m_program->setUniformValue("qt_Texture0", 0);
     m_program->setUniformValue("yuvFormat", m_resource->m_intputYuvFormat);
     m_program->setUniformValue("textureSize", m_resource->m_texture->width(), m_resource->m_texture->height());
+    m_program->setUniformValue("opaque", m_resource->m_isOpaque);
     m_program->setUniformValue("contrast", m_hslContrast);
     m_program->setUniformValue("bright", m_hslBright);
     m_program->setUniformValue("saturation", m_hslSaturation);

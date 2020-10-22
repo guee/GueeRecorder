@@ -2,7 +2,7 @@ Summary: 高效率的录屏软件，可以融合多种图像元素，编码为�
 Name: net.guee.recorder
 BuildArch: mips64el
 Version: 1.0.1
-Release: 0
+Release: 1
 License: GPLv3
 Packager: guee@guee.net
 Vendor: guee
@@ -13,9 +13,12 @@ BuildRoot: %{_topdir}/BUILDROOT
 %description
 guee recorder
 %files
-%attr(0777, root, root) "/usr/bin/GueeRecorder"
-%attr(0777, root, root) "/usr/lib64/libx264.so.161"
-%attr(0777, root, root) "/usr/lib64/libfaac.so.0"
+%attr(0777, root, root) "/opt/guee/recorder/GueeRecorder"
+%attr(0777, root, root) "/opt/guee/recorder/lib/ls64-rh/3a3000/libx264.so.161"
+%attr(0777, root, root) "/opt/guee/recorder/lib/ls64-rh/3a3000/libfaac.so.0"
+%attr(0777, root, root) "/opt/guee/recorder/lib/ls64-rh/3a4000/libx264.so.161"
+%attr(0777, root, root) "/opt/guee/recorder/lib/ls64-rh/3a4000/libfaac.so.0"
+%attr(0777, root, root) "/opt/guee/recorder/lib/ls64-rh/libstdc++.so.6"
 %attr(0644, root, root) "/usr/share/applications/net.guee.recorder.desktop"
 %attr(0644, root, root) "/usr/share/icons/hicolor/16x16/apps/net.guee.recorder.png"
 %attr(0644, root, root) "/usr/share/icons/hicolor/24x24/apps/net.guee.recorder.png"

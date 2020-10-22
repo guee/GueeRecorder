@@ -78,9 +78,49 @@ private:
     bool putFrameX264(int64_t microsecond, uint8_t* const plane[3], const int32_t* pitch, const uint8_t* mb_info);
 
     x264_picture_t*	popCachePool();
-    static inline int maximumCommonDivisor(int num, int den);
+    static inline uint maximumCommonDivisor(uint num, uint den);
 
     void run();
+private:
+    static bool initX264_Functions();
+    typedef x264_t* (*p_x264_encoder_open)( x264_param_t * );
+    typedef int (*p_x264_encoder_reconfig)( x264_t *, x264_param_t * );
+    typedef void (*p_x264_encoder_parameters)( x264_t *, x264_param_t * );
+    typedef int (*p_x264_encoder_headers)( x264_t *, x264_nal_t **, int * );
+    typedef int (*p_x264_encoder_encode)( x264_t *, x264_nal_t **, int *, x264_picture_t*, x264_picture_t* );
+    typedef void (*p_x264_encoder_close)( x264_t * );
+    typedef int (*p_x264_encoder_delayed_frames)( x264_t * );
+    typedef int (*p_x264_encoder_maximum_delayed_frames)( x264_t * );
+    typedef void (*p_x264_encoder_intra_refresh)( x264_t * );
+    typedef int (*p_x264_encoder_invalidate_reference)( x264_t *, int64_t );
 
+    typedef void (*p_x264_picture_init)( x264_picture_t * );
+    typedef int (*p_x264_picture_alloc)( x264_picture_t *, int, int, int );
+    typedef void (*p_x264_picture_clean)( x264_picture_t * );
+
+    typedef int (*p_x264_param_default_preset)( x264_param_t *, const char *, const char * );
+    typedef void (*p_x264_param_apply_fastfirstpass)( x264_param_t * );
+    typedef int (*p_x264_param_apply_profile)( x264_param_t *, const char * );
+
+    static p_x264_encoder_open x264_encoder_open;
+    static p_x264_encoder_reconfig x264_encoder_reconfig;
+    static p_x264_encoder_parameters x264_encoder_parameters;
+    static p_x264_encoder_headers x264_encoder_headers;
+    static p_x264_encoder_encode x264_encoder_encode;
+    static p_x264_encoder_close x264_encoder_close;
+    static p_x264_encoder_delayed_frames x264_encoder_delayed_frames;
+    static p_x264_encoder_maximum_delayed_frames x264_encoder_maximum_delayed_frames;
+    static p_x264_encoder_intra_refresh x264_encoder_intra_refresh;
+    static p_x264_encoder_invalidate_reference x264_encoder_invalidate_reference;
+
+    static p_x264_picture_init x264_picture_init;
+    static p_x264_picture_alloc x264_picture_alloc;
+    static p_x264_picture_clean x264_picture_clean;
+
+    static p_x264_param_default_preset x264_param_default_preset;
+    static p_x264_param_apply_fastfirstpass x264_param_apply_fastfirstpass;
+    static p_x264_param_apply_profile x264_param_apply_profile;
+
+    static QLibrary        m_libX264;
 };
 

@@ -52,6 +52,7 @@ public:
     bool m_imageChanged = false;
     bool m_hasImage = false;
     bool m_isVisable = false;
+    bool m_isOpaque = false;    //
     static int pixelBits(QImage::Format fmt);
 protected:
     virtual bool onOpen() = 0;

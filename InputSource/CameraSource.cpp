@@ -3,6 +3,7 @@
 CameraSource::CameraSource(const QString &typeName, const QString &sourceName)
     : BaseSource(typeName, sourceName)
 {
+    m_isOpaque = true;
     m_vidProbe = new QVideoProbe();
     connect(m_vidProbe, &QVideoProbe::videoFrameProbed,
             this, &CameraSource::processFrame);

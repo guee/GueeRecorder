@@ -13,6 +13,8 @@
 #include <sys/ipc.h>
 #include <sys/types.h>
 
+#include <xcb/xproto.h>
+
 Display* ScreenSource::m_display = nullptr;
 int ScreenSource::m_screen = 0;
 Window ScreenSource::m_rootWid = 0;
@@ -115,6 +117,7 @@ public:
 ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
     : BaseSource(typeName, sourceName)
 {
+    m_isOpaque = true;
     m_img = nullptr;
     memset( &m_shmInfo, 0, sizeof(m_shmInfo) );
     m_shmServerAttached = false;

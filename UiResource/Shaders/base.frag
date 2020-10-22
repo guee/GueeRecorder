@@ -6,7 +6,7 @@ uniform int yuvFormat;        //0：正常 RGB/RGBA等。
                                 //1=AYUV444, 2=YUV444, 3=YUV420P, 4=YUV422P
                                 //5=YV12, 6=NV12, 7=NV21, 8=YV16,
                                 //10=NV16, 11=UYVY, 12=YUYV, 13=Y
-
+uniform bool opaque;
 uniform float contrast;     //对比度：-1 ~ 1。 0表示无变化，负数降低对比度，正数增大对比度。
 uniform float bright;       //亮度：-1 ~ 1。 0表示无变化，负数降低亮度，正数增大亮度。
 uniform float saturation;   //饱和度：-1 ~ 1。 0表示无变化，负数降低饱和度，正数增大饱和度。
@@ -23,7 +23,9 @@ vec4 getRGB_Pixel( vec2 pos )
     float y, u, v;
     if ( yuvFormat == 0 )
     {
-        return texture2D(qt_Texture0, pos);
+        vec4 rgb = texture2D(qt_Texture0, pos);
+        if (opaque) rgb.a = 1.0;
+        return rgb;
     }
     else if ( yuvFormat == 5 )  //QVideoFrame::Format_YV12:          //YYYY YYYY VV UU
     {

@@ -1,8 +1,8 @@
 {
     "appid": "net.guee.recorder",
     "name": "guee-recorder",
-    "version": "1.0.1.0",
-    "arch": ["amd64", "mips64","arm64","sw_64"],
+    "version": "1.0.1.1",
+    "arch": ["amd64", "mips64","arm64"],
     "permissions": {
         "autostart": false,
         "notification": false,

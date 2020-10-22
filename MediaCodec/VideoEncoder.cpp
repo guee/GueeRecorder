@@ -1,7 +1,28 @@
 ﻿#include "VideoEncoder.h"
 #include "MediaWriter.h"
 #include <QApplication>
-#define _NOT_USE_X264_ALLOC 1
+
+GueeVideoEncoder::p_x264_encoder_open GueeVideoEncoder::x264_encoder_open = nullptr;
+GueeVideoEncoder::p_x264_encoder_reconfig GueeVideoEncoder::x264_encoder_reconfig = nullptr;
+GueeVideoEncoder::p_x264_encoder_parameters GueeVideoEncoder::x264_encoder_parameters = nullptr;
+GueeVideoEncoder::p_x264_encoder_headers GueeVideoEncoder::x264_encoder_headers = nullptr;
+GueeVideoEncoder::p_x264_encoder_encode GueeVideoEncoder::x264_encoder_encode = nullptr;
+GueeVideoEncoder::p_x264_encoder_close GueeVideoEncoder::x264_encoder_close = nullptr;
+GueeVideoEncoder::p_x264_encoder_delayed_frames GueeVideoEncoder::x264_encoder_delayed_frames = nullptr;
+GueeVideoEncoder::p_x264_encoder_maximum_delayed_frames GueeVideoEncoder::x264_encoder_maximum_delayed_frames = nullptr;
+GueeVideoEncoder::p_x264_encoder_intra_refresh GueeVideoEncoder::x264_encoder_intra_refresh = nullptr;
+GueeVideoEncoder::p_x264_encoder_invalidate_reference GueeVideoEncoder::x264_encoder_invalidate_reference = nullptr;
+
+GueeVideoEncoder::p_x264_picture_init GueeVideoEncoder::x264_picture_init = nullptr;
+GueeVideoEncoder::p_x264_picture_alloc GueeVideoEncoder::x264_picture_alloc = nullptr;
+GueeVideoEncoder::p_x264_picture_clean GueeVideoEncoder::x264_picture_clean = nullptr;
+
+GueeVideoEncoder::p_x264_param_default_preset GueeVideoEncoder::x264_param_default_preset = nullptr;
+GueeVideoEncoder::p_x264_param_apply_fastfirstpass GueeVideoEncoder::x264_param_apply_fastfirstpass = nullptr;
+GueeVideoEncoder::p_x264_param_apply_profile GueeVideoEncoder::x264_param_apply_profile = nullptr;
+
+QLibrary        GueeVideoEncoder::m_libX264;
+QString& initLibPaths(int i);
 
 GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     : QThread(parent)
@@ -25,53 +46,6 @@ GueeVideoEncoder::GueeVideoEncoder(QObject* parent)
     m_videoParams.bitrate		= 1000;
     m_videoParams.BFrames		= -1;
     m_videoParams.BFramePyramid	= 0;
-
-//    QString libFileName = "libx264.so.161";
-
-//    m_libX264.setFileName(libFileName);
-//    if (m_libX264.load())
-//    {
-//        //qDebug() << "succ load x264:" << m_libX264.fileName();
-//        fprintf(stderr,"succ load x264:%s\n", m_libX264.fileName().toUtf8().data() );
-//    }
-//    else
-//    {
-//        //qDebug() << "load " << libFileName << "fail:" << m_libX264.errorString();
-//        m_libX264.setFileName("libx264" );
-//        if (m_libX264.load())
-//        {
-//            qDebug() << "reload x264:" << m_libX264.fileName();
-//        }
-//    }
-//    if (m_libX264.isLoaded())
-//    {
-//        for (int i = 150; i < 200; ++i)
-//        {
-//            QString openName = QString("x264_encoder_open_%1").arg(i);
-//            m_x264_encoder_open = p_x264_encoder_open(m_libX264.resolve(openName.toUtf8()));
-//            if (m_x264_encoder_open) break;
-//        }
-//        //fprintf(stderr, "m_x264_encoder_open(%p):%s\n", m_x264_encoder_open, m_libX264.fileName().toUtf8().data() );
-
-//        m_x264_encoder_reconfig = p_x264_encoder_reconfig(m_libX264.resolve("x264_encoder_reconfig"));
-//        m_x264_encoder_parameters = p_x264_encoder_parameters(m_libX264.resolve("x264_encoder_parameters"));
-//        m_x264_encoder_headers = p_x264_encoder_headers(m_libX264.resolve("x264_encoder_headers"));
-//        m_x264_encoder_encode = p_x264_encoder_encode(m_libX264.resolve("x264_encoder_encode"));
-//        m_x264_encoder_close = p_x264_encoder_close(m_libX264.resolve("x264_encoder_close"));
-//        m_x264_encoder_delayed_frames = p_x264_encoder_delayed_frames(m_libX264.resolve("x264_encoder_delayed_frames"));
-//        m_x264_encoder_maximum_delayed_frames = p_x264_encoder_maximum_delayed_frames(m_libX264.resolve("x264_encoder_maximum_delayed_frames"));
-//        m_x264_encoder_intra_refresh = p_x264_encoder_intra_refresh(m_libX264.resolve("x264_encoder_intra_refresh"));
-//        m_x264_encoder_invalidate_reference = p_x264_encoder_invalidate_reference(m_libX264.resolve("x264_encoder_invalidate_reference"));
-
-//        m_x264_picture_init = p_x264_picture_init(m_libX264.resolve("x264_picture_init"));
-//        m_x264_picture_alloc = p_x264_picture_alloc(m_libX264.resolve("x264_picture_alloc"));
-//        m_x264_picture_clean = p_x264_picture_clean(m_libX264.resolve("x264_picture_clean"));
-
-//        m_x264_param_default_preset = p_x264_param_default_preset(m_libX264.resolve("x264_param_default_preset"));
-//        m_x264_param_apply_fastfirstpass = p_x264_param_apply_fastfirstpass(m_libX264.resolve("x264_param_apply_fastfirstpass"));
-//        m_x264_param_apply_profile = p_x264_param_apply_profile(m_libX264.resolve("x264_param_apply_profile"));
-
-//    }
 }
 
 GueeVideoEncoder::~GueeVideoEncoder()
@@ -99,14 +73,18 @@ bool GueeVideoEncoder::startEncode( const SVideoParams* videoParams )
     {
         return false;
     }
-    if ( videoParams )
+    if (!initX264_Functions())
+    {
+        return false;
+    }
+    if (videoParams)
 	{
         if ( videoParams->height < 16 || videoParams->width < 16 ||
             videoParams->frameRate <= 0.0f || videoParams->frameRate > 240.0f ||
             videoParams->vbvBuffer < 0 || videoParams->bitrateMax < 0 ||
             videoParams->encoder < VE_X264 || videoParams->encoder > VE_INTEL ||
             videoParams->profile < VF_Auto || videoParams->profile > VF_High ||
-            videoParams->rateMode < 0 || videoParams->rateMode > VR_VariableBitrate )
+            videoParams->rateMode < VR_ConstantQP || videoParams->rateMode > VR_VariableBitrate )
 		{
 			return false;
 		}
@@ -165,12 +143,7 @@ void GueeVideoEncoder::endEncode(close_step_progress fun, void* param)
         m_mtxPendQueue.lock();
         for (auto q:m_picPendQueue)
         {
-#if _NOT_USE_X264_ALLOC
             free(q);
-#else
-            m_x264_picture_clean(q);
-            delete q;
-#endif
         }
         m_picPendQueue.clear();
         m_mtxPendQueue.unlock();
@@ -179,12 +152,7 @@ void GueeVideoEncoder::endEncode(close_step_progress fun, void* param)
         if (fun) fun(param);
         for (auto q:m_picIdlePool)
         {
-#if _NOT_USE_X264_ALLOC
             free(q);
-#else
-            m_x264_picture_clean(q);
-            delete q;
-#endif
         }
         m_picIdlePool.clear();
         m_mtxIdlePool.unlock();
@@ -284,12 +252,7 @@ void GueeVideoEncoder::doneAddFrame(x264_picture_t *picin)
     }
     else
     {
-#if _NOT_USE_X264_ALLOC
         free(picin);
-#else
-        m_x264_picture_clean(picin);
-        delete picin;
-#endif
     }
     m_mtxPendQueue.unlock();
     m_waitPendQueue.release();
@@ -357,11 +320,11 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
         picin->prop.mb_info = m_mbInfoBuf + m_mbInfoSize * m_mbInfoInd;
         if (mb_info)
         {
-            memcpy( picin->prop.mb_info, mb_info, m_mbInfoSize );
+            memcpy( picin->prop.mb_info, mb_info, size_t(m_mbInfoSize) );
         }
         else
         {
-            memset( picin->prop.mb_info, 0, m_mbInfoSize );
+            memset( picin->prop.mb_info, 0, size_t(m_mbInfoSize) );
         }
         m_mbInfoInd = ( m_mbInfoInd + 1 ) % m_mbInfoCount;
     }
@@ -373,12 +336,7 @@ bool GueeVideoEncoder::putFrameX264(int64_t microsecond, uint8_t* const plane[3]
     }
     else
     {
-#if _NOT_USE_X264_ALLOC
         free(picin);
-#else
-        m_x264_picture_clean(picin);
-        delete picin;
-#endif
     }
     m_mtxPendQueue.unlock();
     m_waitPendQueue.release();
@@ -476,6 +434,35 @@ void GueeVideoEncoder::run()
 
 }
 
+bool GueeVideoEncoder::initX264_Functions()
+{
+    if (x264_encoder_open) return true;
+    m_libX264.setFileName(initLibPaths(0));
+    if (m_libX264.load())
+    {
+        x264_encoder_open = p_x264_encoder_open(m_libX264.resolve("x264_encoder_open_161"));
+        x264_encoder_reconfig = p_x264_encoder_reconfig(m_libX264.resolve("x264_encoder_reconfig"));
+        x264_encoder_parameters = p_x264_encoder_parameters(m_libX264.resolve("x264_encoder_parameters"));
+        x264_encoder_headers = p_x264_encoder_headers(m_libX264.resolve("x264_encoder_headers"));
+        x264_encoder_encode = p_x264_encoder_encode(m_libX264.resolve("x264_encoder_encode"));
+        x264_encoder_close = p_x264_encoder_close(m_libX264.resolve("x264_encoder_close"));
+        x264_encoder_delayed_frames = p_x264_encoder_delayed_frames(m_libX264.resolve("x264_encoder_delayed_frames"));
+        x264_encoder_maximum_delayed_frames = p_x264_encoder_maximum_delayed_frames(m_libX264.resolve("x264_encoder_maximum_delayed_frames"));
+        x264_encoder_intra_refresh = p_x264_encoder_intra_refresh(m_libX264.resolve("x264_encoder_intra_refresh"));
+        x264_encoder_invalidate_reference = p_x264_encoder_invalidate_reference(m_libX264.resolve("x264_encoder_invalidate_reference"));
+
+        x264_picture_init = p_x264_picture_init(m_libX264.resolve("x264_picture_init"));
+        x264_picture_alloc = p_x264_picture_alloc(m_libX264.resolve("x264_picture_alloc"));
+        x264_picture_clean = p_x264_picture_clean(m_libX264.resolve("x264_picture_clean"));
+
+        x264_param_default_preset = p_x264_param_default_preset(m_libX264.resolve("x264_param_default_preset"));
+        x264_param_apply_fastfirstpass = p_x264_param_apply_fastfirstpass(m_libX264.resolve("x264_param_apply_fastfirstpass"));
+        x264_param_apply_profile = p_x264_param_apply_profile(m_libX264.resolve("x264_param_apply_profile"));
+
+    }
+    return x264_encoder_open != nullptr;
+}
+
 x264_picture_t* GueeVideoEncoder::popCachePool()
 {
     x264_picture_t* picin = nullptr;
@@ -485,9 +472,8 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
         m_mtxPendQueue.lock();
         if (m_picPendQueue.size() < m_maxPendQueue)
         {
-#if _NOT_USE_X264_ALLOC
             int stride[3] = {0};
-            size_t byteNum[3] = {0};
+            int byteNum[3] = {0};
 
             if (m_csp_tab.planes > 0)
             {
@@ -507,7 +493,7 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
                 stride[2] = (stride[2] + 3) / 4 * 4;
                 byteNum[2] = m_x264Param.i_height / m_csp_tab.heightFix * stride[2];
             }
-            size_t bufSize = byteNum[0] + byteNum[1] + byteNum[2] + sizeof(x264_picture_t);
+            size_t bufSize = size_t(byteNum[0] + byteNum[1] + byteNum[2]) + sizeof(x264_picture_t);
 
             picin = reinterpret_cast<x264_picture_t*>(malloc(bufSize));
             memset(picin, 0, bufSize);
@@ -519,10 +505,6 @@ x264_picture_t* GueeVideoEncoder::popCachePool()
             picin->img.plane[0] = reinterpret_cast<uint8_t*>(picin + 1);
             picin->img.plane[1] = picin->img.plane[0] + byteNum[0];
             picin->img.plane[2] = picin->img.plane[1] + byteNum[1];
-#else
-            picin = new x264_picture_t;
-            m_x264_picture_alloc(picin, m_x264Param.i_csp, m_x264Param.i_width, m_x264Param.i_height);
-#endif
         }
         else /*if(m_videoParams.onlineMode)*/
         {
@@ -717,7 +699,7 @@ bool GueeVideoEncoder::set264BaseParams()
 	//m_x264Param.crop_rect.i_bottom	= 2;
     m_x264Param.i_fps_num = static_cast<uint32_t>(m_videoParams.frameRate * 10000.0f); //帧率的分子
     m_x264Param.i_fps_den = 10000;	//帧率的分母
-    int mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
+    uint mcd = maximumCommonDivisor(m_x264Param.i_fps_num, m_x264Param.i_fps_den);
     m_x264Param.i_fps_num /= mcd;
     m_x264Param.i_fps_den /= mcd;
 
@@ -831,7 +813,7 @@ bool GueeVideoEncoder::set264BitrateParams()
 		m_x264Param.rc.i_rc_method	= X264_RC_ABR;
         if (m_x264Param.rc.i_bitrate > m_videoParams.bitrateMax)
         {
-            m_x264Param.rc.i_vbv_max_bitrate = m_x264Param.rc.i_bitrate * 1.5;
+            m_x264Param.rc.i_vbv_max_bitrate = int(m_x264Param.rc.i_bitrate * 1.5);
         }
         else
         {
@@ -1059,11 +1041,11 @@ bool  GueeVideoEncoder::set264OtherParams()
 	return true;
 }
 
-int GueeVideoEncoder::maximumCommonDivisor(int num, int den)
+uint GueeVideoEncoder::maximumCommonDivisor(uint num, uint den)
 {
     while(true)
     {
-        int c = num % den;
+        uint c = num % den;
         if (!c) break;
         num = den;
         den = c;

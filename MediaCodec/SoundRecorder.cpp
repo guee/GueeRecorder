@@ -2,6 +2,17 @@
 #include <QDebug>
 #include "../VideoSynthesizer.h"
 
+QString& initLibPaths(int i);
+
+SoundRecorder::p_faacEncGetVersion SoundRecorder::faacEncGetVersion = nullptr;
+SoundRecorder::p_faacEncGetCurrentConfiguration SoundRecorder::faacEncGetCurrentConfiguration = nullptr;
+SoundRecorder::p_faacEncSetConfiguration SoundRecorder::faacEncSetConfiguration = nullptr;
+SoundRecorder::p_faacEncOpen SoundRecorder::faacEncOpen = nullptr;
+SoundRecorder::p_faacEncGetDecoderSpecificInfo SoundRecorder::faacEncGetDecoderSpecificInfo = nullptr;
+SoundRecorder::p_faacEncEncode SoundRecorder::faacEncEncode = nullptr;
+SoundRecorder::p_faacEncClose SoundRecorder::faacEncClose = nullptr;
+QLibrary       SoundRecorder::m_libFaac;
+
 SoundRecorder::SoundRecorder()
     :m_sndCallback(*this)
     ,m_sndMicInput(*this)
@@ -101,7 +112,7 @@ bool SoundRecorder::stopRec()
 
 bool SoundRecorder::startEncode(const SAudioParams *audioParams)
 {
-    if (audioParams == nullptr)
+    if (audioParams == nullptr || !initFaac_Functions())
     {
         return false;
     }
@@ -398,6 +409,23 @@ bool SoundRecorder::mixPcm(int64_t frameBegin, SoundDevInfo &dev, uint8_t *mixBu
     }
     dev.m_mutexPcmBuf.unlock();
     return ret;
+}
+
+bool SoundRecorder::initFaac_Functions()
+{
+    if (faacEncGetVersion) return true;
+    m_libFaac.setFileName(initLibPaths(1));
+    if (m_libFaac.load())
+    {
+        faacEncGetVersion = p_faacEncGetVersion(m_libFaac.resolve("faacEncGetVersion"));
+        faacEncGetCurrentConfiguration = p_faacEncGetCurrentConfiguration(m_libFaac.resolve("faacEncGetCurrentConfiguration"));
+        faacEncSetConfiguration = p_faacEncSetConfiguration(m_libFaac.resolve("faacEncSetConfiguration"));
+        faacEncOpen = p_faacEncOpen(m_libFaac.resolve("faacEncOpen"));
+        faacEncGetDecoderSpecificInfo = p_faacEncGetDecoderSpecificInfo(m_libFaac.resolve("faacEncGetDecoderSpecificInfo"));
+        faacEncEncode = p_faacEncEncode(m_libFaac.resolve("faacEncEncode"));
+        faacEncClose = p_faacEncClose(m_libFaac.resolve("faacEncClose"));
+    }
+    return faacEncGetVersion != nullptr;
 }
 
 SoundDevInfo::SoundDevInfo(SoundRecorder &recorder)
