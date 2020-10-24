@@ -40,15 +40,14 @@ private slots:
     void on_videoSynthesizer_initDone(bool success);
     void on_fpsTimerView_timeout();
     void on_pushButtonClose_clicked();
-
     void on_pushButtonMinimize_clicked();
+    void on_pushButtonMenu_clicked();
 
     void on_pushButtonScreenSelect_clicked(bool checked);
     void on_pushButtonCameraSelect_clicked(bool checked);
     void on_pushButtonMediaSelect_clicked(bool checked);
 
     void on_systemTrayIcon_activated(QSystemTrayIcon::ActivationReason reason);
-
     void on_pushButton_EnablePreview_toggled(bool checked);
 
 private:

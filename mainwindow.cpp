@@ -738,6 +738,15 @@ void MainWindow::on_pushButtonMinimize_clicked()
     }
 }
 
+void MainWindow::on_pushButtonMenu_clicked()
+{
+    DialogSetting dlg(this);
+    dlg.exec();
+    dlg.saveProfile();
+    ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
+    ui->widget_AudioRec->resetAudioRecordUI();
+}
+
 void MainWindow::on_pushButtonScreenSelect_clicked(bool checked)
 {
     if (!checked && ui->stackedWidgetAddContents->isVisible() && ui->stackedWidgetAddContents->currentIndex() == 0)
