@@ -156,7 +156,7 @@ DISTFILES += \
     Doc/GueeRecorder-Help.docx \
     Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-2.mips64el/usr/share/applications/net.guee.recorder.desktop \
     Package/fedora-loongson/BUILDROOT/net.guee.recorder-1.0.1-2.mips64el/usr/share/icons/hicolor/scalable/apps/net.guee.recorder.svg \
-    Package/fedora-loongson/SPECS/GueeRecorder.spec
+    Package/fedora-loongson/SPECS/GueeRecorder.spec \
     Package/uos-loongson/DEBIAN/control \
     Package/uos-loongson/opt/apps/net.guee.recorder/info \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
@@ -188,7 +188,7 @@ DISTFILES += \
     Doc/icon.psd \
     Doc/logo.psd \
     Doc/GueeRecoder-MainUI.xcf \
-    Doc/LayerTools.xcf \
+    Doc/LayerTools.xcf
 
 
 
