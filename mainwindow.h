@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QActionGroup>
+#include <QSystemTrayIcon>
 #include "VideoSynthesizer.h"
 #include "./InputSource/ScreenLayer.h"
 #undef Bool
@@ -46,8 +47,7 @@ private slots:
     void on_pushButtonCameraSelect_clicked(bool checked);
     void on_pushButtonMediaSelect_clicked(bool checked);
 
-    void on_pushButtonMenu_clicked();
-
+    void on_systemTrayIcon_activated(QSystemTrayIcon::ActivationReason reason);
 
     void on_pushButton_EnablePreview_toggled(bool checked);
 
@@ -60,9 +60,11 @@ private:
     QRect m_pressKeyGeometry;
     QPoint m_pressLeftWndOffset;
     Qt::WindowFrameSection m_hitMain = Qt::NoSection;
-    QMenu* m_menu = nullptr;
+    QMenu* m_trayMenu = nullptr;
+    QSystemTrayIcon* m_trayIcon = nullptr;
     void setHitCursor(Qt::WindowFrameSection hit);
-    void initMenu();
+    void initSystemTrayIcon();
+    void showSystemTrayMenu();
     static void on_close_step_progress(void* param);
 
     void setWaitWidget(const QString& str = QString());

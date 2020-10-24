@@ -34,7 +34,10 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="UiResource/recorder.qrc">:/icon64.png</pixmap>
+        <pixmap resource="UiResource/recorder.qrc">:/GueeRecorder.svg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -76,6 +79,9 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -121,6 +127,9 @@
         <property name="text">
          <string>作者：&lt;a href=&quot;http://www.loongson.xyz&quot;&gt;Guee&lt;/a&gt;</string>
         </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="5" column="0">
@@ -144,6 +153,9 @@
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="3" column="0" colspan="2">
@@ -160,6 +172,9 @@
            <property name="text">
             <string>CPU：&lt;a href=&quot;http://www.loongson.cn/product/cpu/3/1288.html&quot;&gt;Loongson 3A4000&lt;/a&gt;</string>
            </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -167,12 +182,18 @@
            <property name="text">
             <string>OS：&lt;a href=&quot;https://www.chinauos.com/&quot;&gt;统信UOS&lt;/a&gt;、&lt;a href=&quot;http://www.lemote.com/&quot;&gt;龙梦Fedora28&lt;/a&gt;</string>
            </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="QLabel" name="label_21">
            <property name="text">
             <string>IDE：&lt;a href=&quot;https://www.qt.io/&quot;&gt;QtCreator 4.8.x（Qt 5.x+GCC）&lt;/a&gt;</string>
+           </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
            </property>
           </widget>
          </item>

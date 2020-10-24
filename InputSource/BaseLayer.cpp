@@ -146,7 +146,8 @@ bool BaseLayer::pause()
 
 void BaseLayer::draw()
 {
-    if (m_resource == nullptr || m_program == nullptr || m_resource->m_texture == nullptr || !m_resource->m_texture->isCreated()) return;
+    if (m_resource == nullptr || !m_resource->m_hasImage || !m_resource->m_isVisable
+            || m_program == nullptr || m_resource->m_texture == nullptr || !m_resource->m_texture->isCreated()) return;
 
     m_program->bind();
     m_program->setUniformValue("qt_Texture0", 0);
@@ -214,6 +215,16 @@ void BaseLayer::unlockImage()
     {
         m_resource->m_imageLock.unlock();
     }
+}
+
+bool BaseLayer::isVisabled()
+{
+    return (!m_parent || (m_resource && m_resource->m_isVisable));
+}
+
+bool BaseLayer::hasImage()
+{
+    return (!m_parent || (m_resource && m_resource->m_hasImage));
 }
 
 bool BaseLayer::moveToLayer(int32_t layer)
@@ -290,10 +301,12 @@ int32_t BaseLayer::layerIndex()
 BaseLayer *BaseLayer::childLayer(const QPointF &pos, bool onlyChild, bool realBox)
 {
     BaseLayer* inp = nullptr;
+    if ( m_parent && ( m_resource == nullptr || !m_resource->m_hasImage || !m_resource->m_isVisable )) return nullptr;
+
     m_mutexChilds.lock();
     for ( auto i:m_childs )
     {
-        inp = i->childLayer(pos, false);
+        inp = i->childLayer(pos, false, realBox);
         if (inp)
         {
             m_mutexChilds.unlock();

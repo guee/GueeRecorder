@@ -4,10 +4,12 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
+#include <X11/extensions/Xfixes.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
 #include <QSemaphore>
 
+class ScreenLayer;
 class ScreenSource : public BaseSource
 {
 public:
@@ -20,7 +22,7 @@ public:
     static bool setRecordCursor(bool record);
     static bool isRecordCursor();
     static bool readScreenConfig();
-    static QImage::Format checkPixelFormat(XImage* image);
+    static QImage::Format checkPixelFormat(const XImage* img);
     static QVector<QRect>& screenRects() {static_init(); return m_screenRects;}
     static QRect& screenBound() {static_init(); return m_screenBound;}
     static Display* xDisplay() {static_init(); return m_display;}
@@ -51,7 +53,10 @@ public:
     virtual void readyNextImage(int64_t next_timestamp);
 
     static bool windowImage(Window, QImage& img);
+    static void updateCursorTexture();
+    static void releaseCursorTexture();
 protected:
+    friend ScreenLayer;
     static Display *m_display;
     static int m_screen;
     static Window m_rootWid;
@@ -65,10 +70,16 @@ protected:
     static bool m_recordCursor;
     static bool m_cursorUseable;
 
+    static XFixesCursorImage* m_cursorImage1;
+    static XFixesCursorImage* m_cursorImage2;
+    static QOpenGLTexture* m_cursorTexture1;
+    static QOpenGLTexture* m_cursorTexture2;
+
     static Atom m_atom_wm_state;
     static Atom m_atom_net_wm_state;
     static Atom m_atom_net_wm_state_hidden;
 
+    bool m_isXCompcapMode = false;
     XImage *m_img = nullptr;
     Window m_wid = 0;
     Pixmap m_pix = 0;

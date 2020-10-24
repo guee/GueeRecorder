@@ -23,6 +23,7 @@ public:
 
     bool event(QEvent *event) override;
     void setFixedWindow(bool fixed);
+    virtual void timerEvent(QTimerEvent* event) override;
 private slots:
     void on_pushButtonRemove_clicked();
     void on_pushButtonFullScreen_clicked(bool checked);
@@ -54,6 +55,7 @@ private:
     VideoSynthesizer*   m_video = nullptr;
     BaseLayer* m_layer = nullptr;
     int32_t m_posChangeByProg = 0;
+    bool m_curLayerIsVisabled = false;
 
     int32_t findLayerItem(BaseLayer* layer);
     void resetButStatus();

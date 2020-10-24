@@ -2,14 +2,14 @@
 
 BaseSource::BaseSource()
 {
-
+    m_isVisable = true;
 }
 
 BaseSource::BaseSource(const QString& typeName, const QString &sourceName)
     : m_typeName(typeName)
     , m_sourceName(sourceName)
 {
-
+    m_isVisable = true;
 }
 
 BaseSource::~BaseSource()
@@ -43,6 +43,7 @@ bool BaseSource::sourceOpen(BaseLayer *layer)
     }
     m_imageLock.unlock();
     layer->onSizeChanged(layer);
+
     return m_status >= BaseLayer::Opened;
 }
 

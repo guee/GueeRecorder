@@ -77,14 +77,6 @@
         <file>butDing_normal.png</file>
         <file>butResortDefault_normal.png</file>
         <file>butResortDefault_enter.png</file>
-        <file>icons/hicolor/128x128/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/16x16/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/24x24/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/256x256/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/32x32/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/48x48/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/512x512/apps/GueeRecorder.png</file>
-        <file>icons/hicolor/64x64/apps/GueeRecorder.png</file>
         <file>Shaders/x264-mb.frag</file>
         <file>Shaders/x264-mb.vert</file>
         <file>Shaders/RgbToU.frag</file>
@@ -93,5 +85,8 @@
         <file>Shaders/RgbToV.vert</file>
         <file>Shaders/RgbToY.frag</file>
         <file>Shaders/RgbToY.vert</file>
+        <file>GueeRecorder.svg</file>
+        <file>GueeRecorder_record.svg</file>
+        <file>GueeRecorder_pause.svg</file>
     </qresource>
 </RCC>

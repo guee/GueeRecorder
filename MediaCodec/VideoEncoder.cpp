@@ -458,7 +458,6 @@ bool GueeVideoEncoder::initX264_Functions()
         x264_param_default_preset = p_x264_param_default_preset(m_libX264.resolve("x264_param_default_preset"));
         x264_param_apply_fastfirstpass = p_x264_param_apply_fastfirstpass(m_libX264.resolve("x264_param_apply_fastfirstpass"));
         x264_param_apply_profile = p_x264_param_apply_profile(m_libX264.resolve("x264_param_apply_profile"));
-
     }
     return x264_encoder_open != nullptr;
 }

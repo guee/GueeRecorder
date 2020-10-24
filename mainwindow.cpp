@@ -44,9 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
     //this->setAttribute(Qt::WA_TranslucentBackground);
     //this->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-    //this->setWindowIcon(QIcon(":/gueeRecorder.ico"));
-    this->setWindowIcon(QIcon(":/icons/hicolor/64x64/apps/GueeRecorder.png"));
-    //this->setWindowTitle(QApplication::applicationDisplayName());
+
+    this->setWindowIcon(QIcon(":/GueeRecorder.svg"));
 
     m_fpsTimer = new QTimer(this);
     m_fpsTimer->setObjectName("fpsTimerView");
@@ -87,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetLayerTools, &FormLayerTools::on_layerRemoved);
     connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetLayerTools, &FormLayerTools::on_layerMoved);
 
-    connect(&m_video, &VideoSynthesizer::layerAdded, ui->widgetPreview, &GlWidgetPreview::on_layerAdded);
+    //connect(&m_video, &VideoSynthesizer::layerAdded, ui->widgetPreview, &GlWidgetPreview::on_layerAdded);
     connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetPreview, &GlWidgetPreview::on_layerRemoved);
     connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetPreview, &GlWidgetPreview::on_layerMoved);
 
@@ -123,6 +122,8 @@ MainWindow::MainWindow(QWidget *parent)
     {
         ui->widgetLayerTools->show();
     }
+
+    initSystemTrayIcon();
 }
 
 MainWindow::~MainWindow()
@@ -315,11 +316,66 @@ void MainWindow::setHitCursor(Qt::WindowFrameSection hit)
     }
 }
 
-void MainWindow::initMenu()
+void MainWindow::initSystemTrayIcon()
 {
-//    QList<int>
-//    QAction ss;
-    //    ss.setData()
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) return;
+    m_trayIcon = new QSystemTrayIcon(this);
+    m_trayIcon->setToolTip(QApplication::applicationName());
+    m_trayIcon->setIcon(QIcon(":/GueeRecorder.svg"));
+
+    m_trayIcon->show();
+    connect(m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::on_systemTrayIcon_activated);
+
+}
+
+void MainWindow::showSystemTrayMenu()
+{
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) return;
+    QMenu* menu = new QMenu(this);
+    QAction* actShow = menu->addAction( this->isHidden() ? "显示主窗口" : "隐藏主窗口");
+    QAction* actRec = menu->addAction(m_video.status() == BaseLayer::NoOpen ? "开始录制" : "停止录制");
+    QAction* actPause = nullptr;
+    if (m_video.status() > BaseLayer::NoOpen)
+    {
+        actPause = menu->addAction(m_video.status() == BaseLayer::Paused ? "继续录制" : "暂停录制");
+    }
+    menu->addSeparator();
+    //if (m_video.status() == BaseLayer::NoOpen)
+    QAction* actExit = menu->addAction("退出程序");
+
+    QAction* act = menu->exec(QCursor::pos());
+    if (act == actShow)
+    {
+        if (this->isHidden())
+            this->show();
+        else
+            this->hide();
+    }
+    else if (act == actRec)
+    {
+        if (m_video.status() == BaseLayer::NoOpen)
+            on_pushButtonRecStart_clicked();
+        else
+            on_pushButtonRecStop_clicked();
+    }
+    else if (act && act == actPause)
+    {
+        if (m_video.status() == BaseLayer::Paused)
+        {
+            ui->pushButtonRecPause->setChecked(false);
+            on_pushButtonRecPause_clicked(false);
+        }
+        else
+        {
+            ui->pushButtonRecPause->setChecked(true);
+            on_pushButtonRecPause_clicked(true);
+        }
+    }
+    else if (act == actExit)
+    {
+        on_pushButtonClose_clicked();
+    }
+    delete menu;
 }
 
 void MainWindow::on_close_step_progress(void* param)
@@ -443,6 +499,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
     qDebug() << "closeEvent";
     if (m_video.status() >= BaseLayer::Opened)
     {
+        if (this->isHidden())
+        {
+            show();
+        }
         if (QMessageBox::question(this, "退出 Guee 录屏机", "正在录制视频，是否结束录制并退程序？",
                                   QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)
                 == QMessageBox::Yes)
@@ -535,12 +595,23 @@ void MainWindow::on_pushButtonRecStart_clicked()
     {
         ui->pushButtonMenu->setDisabled(true);
         m_video.play();
+        ui->pushButtonRecPause->setChecked(false);
         ui->stackedWidgetRecControl->setCurrentIndex(1);
         m_fpsTimer->setInterval(200);
+
+        if (m_trayIcon) m_trayIcon->setIcon(QIcon(":/GueeRecorder_record.svg"));
     }
     else
     {
-        QMessageBox::critical(this, "开始录制", "启动录像失败");
+        if (this->isHidden())
+        {
+            if (m_trayIcon && QSystemTrayIcon::supportsMessages())
+                m_trayIcon->showMessage("Guee 录屏机", "启动录像失败",QIcon(":/GueeRecorder.svg"), 4000);
+        }
+        else
+        {
+            QMessageBox::critical(this, "开始录制", "启动录像失败");
+        }
         ui->pushButtonMenu->setDisabled(false);
         ui->pushButtonRecStart->setDisabled(false);
     }
@@ -555,6 +626,11 @@ void MainWindow::on_pushButtonRecStop_clicked()
     ui->pushButtonMenu->setDisabled(false);
     ui->pushButtonRecStart->setDisabled(false);
     setWaitWidget();
+    if (m_trayIcon)
+    {
+        m_trayIcon->setIcon(QIcon(":/GueeRecorder.svg"));
+        m_trayIcon->setToolTip(QApplication::applicationName());
+    }
 }
 
 void MainWindow::on_pushButtonRecPause_clicked(bool checked)
@@ -562,11 +638,13 @@ void MainWindow::on_pushButtonRecPause_clicked(bool checked)
     if (checked)
     {
         m_video.pause();
+        if (m_trayIcon) m_trayIcon->setIcon(QIcon(":/GueeRecorder_pause.svg"));
         m_fpsTimer->setInterval(1000);
     }
     else
     {
         m_video.play();
+        if (m_trayIcon) m_trayIcon->setIcon(QIcon(":/GueeRecorder_record.svg"));
         m_fpsTimer->setInterval(200);
     }
 }
@@ -587,10 +665,10 @@ void MainWindow::on_videoSynthesizer_initDone(bool success)
 
 void MainWindow::on_fpsTimerView_timeout()
 {
-    QString str;
+    static int count = 0;
+    QString strFps;
     if (m_video.status() >= VideoSynthesizer::Opened)
     {
-        str = QString("渲染fps:%1  编码fps：%2").arg(double(m_video.renderFps()), 0, 'f', 1).arg(double(m_video.encodeFps()), 0, 'f', 1);
         int64_t tim = m_video.timestamp() / 1000;
         int64_t h = tim / 3600000;
         tim %= 3600000;
@@ -599,26 +677,47 @@ void MainWindow::on_fpsTimerView_timeout()
         int64_t s = tim / 1000;
 
         static bool sw = false;
+
         if (m_video.status() == VideoSynthesizer::Paused)
         {
+            strFps = QString("输入:%1fps").arg(double(m_video.renderFps()), 0, 'f', 1);
             sw = !sw;
             if (sw)
             {
                 ui->labelRecordTime->setText("已暂停");
             }
+            else
+            {
+                ui->labelRecordTime->setText(QString("%1:%2:%3").arg(h,2,10,QChar('0')).arg(m,2,10,QChar('0')).arg(s,2,10,QChar('0')));
+            }
+            if (m_trayIcon)
+            {
+                m_trayIcon->setToolTip(QString("已录制 %1:%2:%3 [暂停] %4 (点击鼠标中键继续录制)").arg(h,2,10,QChar('0')).arg(m,2,10,QChar('0')).arg(s,2,10,QChar('0')).arg(strFps));
+            }
+            count = 0;
         }
         else
         {
+            strFps = QString("输入:%1fps  编码:%2fps").arg(double(m_video.renderFps()), 0, 'f', 1).arg(double(m_video.encodeFps()), 0, 'f', 1);
             sw = false;
-        }
-        if (!sw)
             ui->labelRecordTime->setText(QString("%1:%2:%3").arg(h,2,10,QChar('0')).arg(m,2,10,QChar('0')).arg(s,2,10,QChar('0')));
+            if (m_trayIcon && count == 0)
+            {
+                m_trayIcon->setToolTip(QString("已录制 %1:%2:%3 %4 (点击鼠标中键暂停录制)").arg(h,2,10,QChar('0')).arg(m,2,10,QChar('0')).arg(s,2,10,QChar('0')).arg(strFps));
+            }
+            count = (count + 1) % 5;
+        }
     }
     else
     {
-        str = QString("渲染fps:%1").arg(double(m_video.renderFps()), 0, 'f', 1);
+        strFps = QString("输入:%1fps").arg(double(m_video.renderFps()), 0, 'f', 1);
+        if (m_trayIcon && count == 0)
+        {
+            m_trayIcon->setToolTip(QString("%1 %2 (点击鼠标中键开始录制)").arg(QApplication::applicationName()).arg(strFps));
+        }
+        count = (count + 1) % 5;
     }
-    ui->labelRenderFps->setText(str);
+    ui->labelRenderFps->setText(strFps);
 }
 
 void MainWindow::on_pushButtonClose_clicked()
@@ -629,7 +728,14 @@ void MainWindow::on_pushButtonClose_clicked()
 
 void MainWindow::on_pushButtonMinimize_clicked()
 {
-    showMinimized();
+    if (QSystemTrayIcon::isSystemTrayAvailable())
+    {
+        hide();
+    }
+    else
+    {
+        showMinimized();
+    }
 }
 
 void MainWindow::on_pushButtonScreenSelect_clicked(bool checked)
@@ -650,15 +756,45 @@ void MainWindow::on_pushButtonMediaSelect_clicked(bool checked)
         ui->pushButtonMediaSelect->setChecked(true);
 }
 
-void MainWindow::on_pushButtonMenu_clicked()
+void MainWindow::on_systemTrayIcon_activated(QSystemTrayIcon::ActivationReason reason)
 {
-    //hide();
-    //return;
-    DialogSetting dlg(this);
-    dlg.exec();
-    dlg.saveProfile();
-    ui->labelVideoInfo->setText(QString("%1 x %2 @ %3").arg(m_video.width()).arg(m_video.height()).arg(m_video.frameRate()));
-    ui->widget_AudioRec->resetAudioRecordUI();
+    //fprintf(stderr, "on_systemTrayIcon_activated %d\n", reason);
+    switch(reason)
+    {
+    case QSystemTrayIcon::Context:  //鼠标右键
+        showSystemTrayMenu();
+        break;
+    case QSystemTrayIcon::DoubleClick:  //在UOS上，没有得到双击消息
+        if (this->isHidden())
+            this->show();
+        else
+            this->hide();
+        break;
+    case QSystemTrayIcon::Trigger:  //鼠标左键
+        showSystemTrayMenu();
+        break;
+    case QSystemTrayIcon::MiddleClick:  //鼠标中键
+        if (m_video.status() == BaseLayer::NoOpen)
+        {
+            on_pushButtonRecStart_clicked();
+        }
+        else if (m_video.status() > BaseLayer::NoOpen)
+        {
+            if (m_video.status() == BaseLayer::Paused)
+            {
+                ui->pushButtonRecPause->setChecked(false);
+                on_pushButtonRecPause_clicked(false);
+            }
+            else
+            {
+                ui->pushButtonRecPause->setChecked(true);
+                on_pushButtonRecPause_clicked(true);
+            }
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void MainWindow::on_pushButton_EnablePreview_toggled(bool checked)

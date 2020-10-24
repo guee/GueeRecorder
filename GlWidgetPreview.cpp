@@ -66,6 +66,14 @@ void GlWidgetPreview::initializeGL()
 
 void GlWidgetPreview::paintGL()
 {
+    if (m_editingLayer && (!m_editingLayer->hasImage() || !m_editingLayer->isVisabled()))
+    {
+        m_editingLayer = nullptr;
+    }
+    if (m_enterLayer && (!m_enterLayer->hasImage() || !m_enterLayer->isVisabled()))
+    {
+        m_enterLayer = nullptr;
+    }
     if (m_program == nullptr) return;
     //QOpenGLFramebufferObject::bindDefault();
     glViewport(0, 0, m_viewportSize.width(), m_viewportSize.height());
@@ -509,7 +517,7 @@ void GlWidgetPreview::makeObject()
 void GlWidgetPreview::hitTest(const QPoint &pos)
 {
     Qt::WindowFrameSection hit = Qt::NoSection;
-    if (m_editingLayer)
+    if (m_editingLayer && m_editingLayer->hasImage() && m_editingLayer->isVisabled())
     {
         QRectF rt = m_editingLayer->rect();
         m_boxOfEditing.setRect(qRound(rt.x() * m_displayOfSceeen.width()),
@@ -602,6 +610,11 @@ void GlWidgetPreview::hitTest(const QPoint &pos)
                                         qRound(rt.width() * m_displayOfSceeen.width()),
                                         qRound(rt.height() * m_displayOfSceeen.height()));
             }
+        }
+        if (m_editingLayer && (!m_editingLayer->hasImage() || !m_editingLayer->isVisabled()))
+        {
+            m_editingLayer = m_enterLayer;
+            m_boxOfEditing = m_boxEnterLayer;
         }
     }
     else
@@ -705,7 +718,10 @@ void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
 
 void GlWidgetPreview::on_selectLayer(BaseLayer *layer)
 {
-    if (layer == nullptr) notifySelectLayer(layer);
+    if (layer == nullptr)
+        notifySelectLayer(layer);
+    else if (!layer->hasImage() || !layer->isVisabled())
+        layer = nullptr;
     if (layer == m_editingLayer)
     {
         m_enterLayer = nullptr;

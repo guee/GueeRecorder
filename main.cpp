@@ -32,42 +32,24 @@ QString& initLibPaths(int i)
         if (!x264libPath.endsWith("/")) x264libPath.append("/");
         faaclibPath = x264libPath;
     #ifdef Q_PROCESSOR_MIPS_64
-        #ifdef DEBIAN
         if (is3A4000())
         {
-            x264libPath.append("lib/ls64-de/3a4000/libx264.so.161");
-            faaclibPath.append("lib/ls64-de/3a4000/libfaac.so.0");
+            x264libPath.append("lib/lisa64/3a4000/libx264.so.161");
+            faaclibPath.append("lib/lisa64/3a4000/libfaac.so.0");
         }
         else
         {
-            x264libPath.append("lib/ls64-de/3a3000/libx264.so.161");
-            faaclibPath.append("lib/ls64-de/3a3000/libfaac.so.0");
+            x264libPath.append("lib/lisa64/3a3000/libx264.so.161");
+            faaclibPath.append("lib/lisa64/3a3000/libfaac.so.0");
         }
-        #else
-        if (is3A4000())
-        {
-            x264libPath.append("lib/ls64-rh/3a4000/libx264.so.161");
-            faaclibPath.append("lib/ls64-rh/3a4000/libfaac.so.0");
-        }
-        else
-        {
-            x264libPath.append("lib/ls64-rh/3a3000/libx264.so.161");
-            faaclibPath.append("lib/ls64-rh/3a3000/libfaac.so.0");
-        }
-        #endif
     #endif
 
     #ifdef Q_PROCESSOR_ARM
     #endif
 
     #ifdef QPROCESSOR_X86_64
-        #ifdef DEBIAN
-        x264libPath.append("lib/amd64-de/libx264.so.161");
-        faaclibPath.append("lib/amd64-de/libfaac.so.0");
-        #else
-        x264libPath.append("lib/amd64-rh/libx264.so.161");
-        faaclibPath.append("lib/amd64-rh/libfaac.so.0");
-        #endif
+        x264libPath.append("lib/amd64/libx264.so.161");
+        faaclibPath.append("lib/amd64/libfaac.so.0");
     #endif
     }
     switch(i)

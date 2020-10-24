@@ -1,8 +1,7 @@
 #include "ScreenLayer.h"
-
-
 #include <X11/Xlib.h>
 #include <QX11Info>
+#include <X11/extensions/Xfixes.h>
 
 ScreenLayer::ScreenLayer()
 {
@@ -167,8 +166,72 @@ void ScreenLayer::onReleaseSource(BaseSource* source)
 
 void ScreenLayer::draw()
 {
-    XLockDisplay(ScreenSource::xDisplay());
-    XSync(ScreenSource::xDisplay(), 0);
-    BaseLayer::draw();
-    XUnlockDisplay(ScreenSource::xDisplay());
+    ScreenSource* ss = (ScreenSource*)m_resource;
+    if (ss == nullptr || !ss->m_hasImage || !ss->m_isVisable) return;
+    XFixesCursorImage* ci;
+    QOpenGLTexture* tex;
+
+    if (ss->m_isXCompcapMode)
+    {
+        XLockDisplay(ScreenSource::xDisplay());
+        XSync(ScreenSource::xDisplay(), 0);
+        BaseLayer::draw();
+        XUnlockDisplay(ScreenSource::xDisplay());
+        ci = ss->m_cursorImage2;
+        tex = ss->m_cursorTexture2;
+    }
+    else
+    {
+        BaseLayer::draw();
+        ci = ss->m_cursorImage1;
+        tex = ss->m_cursorTexture1;
+    }
+    if (ci == nullptr || tex == nullptr) return;
+    QRect curRect(ci->x - ci->xhot, ci->y - ci->yhot, ci->width, ci->height);
+    QRect curDraw = curRect.intersected(m_shotOnScreen);
+    if (curDraw.isNull()) return;
+    qreal xScale = m_realBoxOnView.width() / m_shotOnScreen.width();
+    qreal yScale = m_realBoxOnView.height() / m_shotOnScreen.height();
+    QRectF onView(m_realBoxOnView.x() + (curDraw.x() - m_shotOnScreen.x()) * xScale,
+                           m_realBoxOnView.y() + (curDraw.y() - m_shotOnScreen.y()) * yScale,
+                           curDraw.width() * xScale,
+                           curDraw.height() * yScale);
+    float onTextL = float(curDraw.x() - curRect.x()) / float(curRect.width());
+    float onTextT = float(curDraw.y() - curRect.y()) / float(curRect.height());
+    float onTextR = onTextL + float(curDraw.width()) / float(curRect.width());
+    float onTextB = onTextT + float(curDraw.height()) / float(curRect.height());
+
+    VertexArritb    vertex[4] = {{QVector3D(float(onView.right()), float(onView.y()), 0.0f), QVector2D(onTextR, onTextT)},
+                                 {QVector3D(float(onView.x()), float(onView.y()), 0.0f), QVector2D(onTextL, onTextT)},
+                                 {QVector3D(float(onView.x()), float(onView.bottom()), 0.0f), QVector2D(onTextL, onTextB)},
+                                 {QVector3D(float(onView.right()), float(onView.bottom()), 0.0f), QVector2D(onTextR, onTextB)}};
+    if (m_vboCursor == nullptr)
+    {
+        m_vboCursor = new QOpenGLBuffer();
+        m_vboCursor->create();
+        m_vboCursor->bind();
+        m_vboCursor->allocate(&vertex, 5 * 4 * sizeof(GLfloat));
+    }
+    else
+    {
+        m_vboCursor->bind();
+        m_vboCursor->write(0, &vertex, 5 * 4 * sizeof(GLfloat));
+    }
+
+
+    m_program->bind();
+    m_program->setUniformValue("qt_Texture0", 0);
+    m_program->setUniformValue("yuvFormat", 0);
+    m_program->setUniformValue("textureSize", ci->width, ci->height);
+    m_program->setUniformValue("opaque", false);
+    m_program->setUniformValue("transparence", 1.0f);
+
+    m_program->enableAttributeArray(0);
+    m_program->enableAttributeArray(1);
+    m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, 5 * sizeof(GLfloat));
+    m_program->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
+
+    tex->bind(0);
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }

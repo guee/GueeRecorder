@@ -16,6 +16,7 @@ FormLayerTools::FormLayerTools(QWidget *parent) :
     ui->listViewLayers->setSelectionModel(selModel);
     connect(selModel, &QItemSelectionModel::currentRowChanged, this, &FormLayerTools::on_listLayersSelect_currentRowChanged);
     setCursor(Qt::ArrowCursor);
+    startTimer(200);
 }
 
 FormLayerTools::~FormLayerTools()
@@ -81,6 +82,20 @@ bool FormLayerTools::event(QEvent *event)
 void FormLayerTools::setFixedWindow(bool fixed)
 {
     ui->pushButtonDing->setChecked(fixed);
+}
+
+void FormLayerTools::timerEvent(QTimerEvent *event)
+{
+    if (m_layer)
+    {
+        bool isVisabled = (m_layer->hasImage() && m_layer->isVisabled());
+        if (m_curLayerIsVisabled != isVisabled)
+        {
+            m_curLayerIsVisabled = isVisabled;
+            ui->scrollAreaOption->setEnabled(m_curLayerIsVisabled);
+            emit selectLayer(m_layer);
+        }
+    }
 }
 
 void FormLayerTools::on_pushButtonRemove_clicked()
@@ -212,10 +227,11 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
     if ( current.isValid() )
     {
         m_layer = reinterpret_cast<BaseLayer*>(current.data(Qt::UserRole+1).toULongLong());
+        m_curLayerIsVisabled = m_layer->hasImage() && m_layer->isVisabled();
         qDebug() << "on_listLayersSelect_currentRowChanged(isValid):" << m_layer;
         emit selectLayer(m_layer);
         ui->labelLayers->setText(QString("%1/%2").arg(m_layer->layerIndex() + 1).arg(m_video->childLayerCount()));
-        ui->scrollAreaOption->setEnabled(true);
+        ui->scrollAreaOption->setEnabled(m_curLayerIsVisabled);
         ui->widgetLayerTools->setEnabled(true);
     }
     else
@@ -232,10 +248,10 @@ void FormLayerTools::on_listLayersSelect_currentRowChanged(const QModelIndex &cu
     if (m_layer)
     {
         ++m_posChangeByProg;
-        ui->spinBoxX->setRange(-m_video->width() * 10, m_video->width());
-        ui->spinBoxY->setRange(-m_video->height() * 10, m_video->height());
-        ui->spinBoxW->setMaximum(m_video->width() * 10);
-        ui->spinBoxH->setMaximum(m_video->height() * 10);
+        ui->spinBoxX->setRange(-m_video->width() * 10, m_video->width() * 10);
+        ui->spinBoxY->setRange(-m_video->height() * 10, m_video->height() * 10);
+        ui->spinBoxW->setMaximum(65535);
+        ui->spinBoxH->setMaximum(65535);
 
         ui->pushButtonFullScreen->setChecked(m_layer->isFullViewport());
         ui->pushButtonAspratio->setChecked(m_layer->aspectRatioMode() != Qt::IgnoreAspectRatio);
@@ -318,7 +334,7 @@ void FormLayerTools::on_layerAdded(BaseLayer *layer)
     model->insertRow(layer->layerIndex(), item);
    // ui->listViewLayers->setIndexWidget()
     //model->setI
-    if (layer == m_layer )
+    if (nullptr == m_layer )
     {
         ui->listViewLayers->setCurrentIndex(item->index());
     }
@@ -354,9 +370,13 @@ void FormLayerTools::on_selectLayer(BaseLayer *layer)
     if (m_layer != layer)
     {
         m_layer = layer;
+
         QStandardItemModel *model = static_cast<QStandardItemModel*>(ui->listViewLayers->model());
         if (m_layer)
+        {
             ui->listViewLayers->setCurrentIndex(model->item(m_layer->layerIndex())->index());
+            m_curLayerIsVisabled = m_layer->hasImage() && m_layer->isVisabled();
+        }
         else
             ui->listViewLayers->setCurrentIndex(QModelIndex());
     }

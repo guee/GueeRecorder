@@ -1,9 +1,5 @@
 #pragma once
-#ifdef SYSTEM_X264
-#include "x264.h"
-#else
 #include "./x264.161/x264.h"
-#endif
 #include <QtCore>
 #include <QThread>
 #include "MediaStream.h"

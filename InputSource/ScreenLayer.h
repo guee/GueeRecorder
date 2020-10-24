@@ -3,6 +3,7 @@
 
 #include "BaseLayer.h"
 #include "ScreenSource.h"
+
 class ScreenLayer : public BaseLayer
 {
 public:
@@ -45,6 +46,10 @@ private:
     friend ScreenSource;
     Option    m_shotOption;
     QRect     m_shotOnScreen;
+
+    QOpenGLBuffer* m_vboCursor = nullptr;
+    QRectF    m_cursorOnView;
+
     virtual BaseSource* onCreateSource(const QString &sourceName);
     virtual void onReleaseSource(BaseSource* source);
     virtual void draw();

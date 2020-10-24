@@ -117,13 +117,11 @@ private:
         int mbPitch;
         uint8_t*  buf_mb = nullptr;
         QOpenGLFramebufferObject* fbo_mb = nullptr;
-        QOpenGLShaderProgram* prog_mb = nullptr;
         QOpenGLBuffer* vbo_mb = nullptr;
-
-
     };
 
     FrameInfo    m_frameData;
+    QOpenGLShaderProgram* m_prog_mb = nullptr;
 
     GueeVideoEncoder m_vidEncoder;
     GueeMediaStream m_medStream;
@@ -136,6 +134,7 @@ private:
     bool m_immediateUpdate = false;
     bool m_threadWorking = false;
     bool m_videoSizeChanged = false;
+    bool m_isFirstFrame = false;
     QOpenGLContext* m_context = nullptr;
     QOffscreenSurface* m_surface = nullptr;
     QVector4D m_backgroundColor;

@@ -56,6 +56,9 @@ public:
     const void *lockImage();
     void unlockImage();
 
+    bool isVisabled();
+    bool hasImage();
+
 
     BaseLayer* parent() {return m_parent;}
     bool moveToLayer(int32_t layer);
@@ -130,6 +133,7 @@ protected:
     QOpenGLShaderProgram* m_program = nullptr;
     bool m_fullViewport = true;        //是否缩放到整个画面。
     VertexArritb    m_vertex[4];
+    BaseSource* m_resource = nullptr;
 
     static bool updateSourceTextures();
     static void readySourceNextImage(int64_t next_timestamp);
@@ -158,7 +162,6 @@ private:
 
     bool            m_rectOnSourceInited = false;
     bool            m_vertexChanged = false;
-    BaseSource* m_resource = nullptr;
 
     float m_hslContrast = 0.0f;
     float m_hslBright = 0.0f;

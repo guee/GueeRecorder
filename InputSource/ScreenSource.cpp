@@ -26,6 +26,12 @@ QVector<QRect> ScreenSource::m_screenRects;
 QRect ScreenSource::m_screenBound;
 bool ScreenSource::m_recordCursor = false;
 bool ScreenSource::m_cursorUseable = false;
+
+XFixesCursorImage* ScreenSource::m_cursorImage1 = nullptr;
+XFixesCursorImage* ScreenSource::m_cursorImage2 = nullptr;
+QOpenGLTexture* ScreenSource::m_cursorTexture1 = nullptr;
+QOpenGLTexture* ScreenSource::m_cursorTexture2 = nullptr;
+
 bool ScreenSource::m_xCompcapIsValid = false;
 Atom ScreenSource::m_atom_wm_state = 0;
 Atom ScreenSource::m_atom_net_wm_state = 0;
@@ -165,9 +171,11 @@ bool ScreenSource::onOpen()
             return false;
         }
         m_timeCheck.start();
+        m_isXCompcapMode = true;
     }
     else
     {
+        m_isXCompcapMode = false;
         start();
     }
     return true;
@@ -287,11 +295,12 @@ bool ScreenSource::static_init()
 
 void ScreenSource::static_uninit()
 {
-    if(m_display != nullptr) {
+    if(m_display != nullptr)
+    {
         XCloseDisplay(m_display);
         m_display = nullptr;
-
     }
+
 }
 
 bool ScreenSource::setRecordCursor(bool record)
@@ -378,10 +387,10 @@ bool ScreenSource::readScreenConfig()
     return true;
 }
 
-QImage::Format ScreenSource::checkPixelFormat(XImage* image)
+QImage::Format ScreenSource::checkPixelFormat(const XImage* img)
 {
     QImage::Format pixFmt = QImage::Format_Invalid;
-    switch(image->bits_per_pixel)
+    switch(img->bits_per_pixel)
     {
     case 1:
         pixFmt = QImage::Format_Mono;
@@ -393,21 +402,21 @@ QImage::Format ScreenSource::checkPixelFormat(XImage* image)
         pixFmt = QImage::Format_Indexed8;
         break;
     case 16:
-        if(image->red_mask == 0xf800 && image->green_mask == 0x07e0 && image->blue_mask == 0x001f)
+        if(img->red_mask == 0xf800 && img->green_mask == 0x07e0 && img->blue_mask == 0x001f)
             pixFmt = QImage::Format_RGB16;
-        else if(image->red_mask == 0x7c00 && image->green_mask == 0x03e0 && image->blue_mask == 0x001f)
+        else if(img->red_mask == 0x7c00 && img->green_mask == 0x03e0 && img->blue_mask == 0x001f)
             pixFmt = QImage::Format_RGB555;
         break;
     case 24:
-        if(image->red_mask == 0xff0000 && image->green_mask == 0x00ff00 && image->blue_mask == 0x0000ff)
+        if(img->red_mask == 0xff0000 && img->green_mask == 0x00ff00 && img->blue_mask == 0x0000ff)
             pixFmt = QImage::Format_RGB888;
-        else if(image->red_mask == 0x0000ff && image->green_mask == 0x00ff00 && image->blue_mask == 0xff0000)
+        else if(img->red_mask == 0x0000ff && img->green_mask == 0x00ff00 && img->blue_mask == 0xff0000)
             pixFmt = QImage::Format_RGB888; //??Qt 没有对应的格式。
         break;
     case 32:
-        if(image->red_mask == 0x00ff0000 && image->green_mask == 0x0000ff00 && image->blue_mask == 0x000000ff)
+        if(img->red_mask == 0x00ff0000 && img->green_mask == 0x0000ff00 && img->blue_mask == 0x000000ff)
             pixFmt = QImage::Format_ARGB32;
-        else if(image->red_mask == 0x000000ff && image->green_mask == 0x0000ff00 && image->blue_mask == 0x00ff0000)
+        else if(img->red_mask == 0x000000ff && img->green_mask == 0x0000ff00 && img->blue_mask == 0x00ff0000)
             pixFmt = QImage::Format_RGBA8888;
         else
             pixFmt = QImage::Format_ARGB32;
@@ -832,7 +841,7 @@ bool ScreenSource::captureWindow()
                     || scr->m_shotOption.mode == ScreenLayer::clientOfWindow)
             {
                 scr->m_shotOnScreen = QRect(m_attr.x, m_attr.y, m_attr.width, m_attr.height) + scr->m_shotOption.margins;
-                scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
+                //scr->m_shotOnScreen = m_screenBound.intersected(scr->m_shotOnScreen);
                 scr->setRectOnSource(QRect(0, 0, m_width, m_height) + scr->m_shotOption.margins);
             }
         }
@@ -932,16 +941,15 @@ bool ScreenSource::shotScreen(const QRect* rect)
 
     m_imageBuffer   = reinterpret_cast<uint8_t*>(m_img->data);
     m_stride = m_img->bytes_per_line;
-    if (m_cursorUseable && m_recordCursor) drawCursor();
     m_imageLock.unlock();
 
     for (auto it:m_layers)
     {
         ScreenLayer* scr = static_cast<ScreenLayer*>(it);
-        scr->m_shotOnScreen.translate(m_screenBound.left() - m_shotRect.left(), m_screenBound.top() - m_shotRect.top());
-        if (sizeChanged || scr->m_shotOnScreen != scr->m_rectOnSource)
+        QRect rtOnSour = scr->m_shotOnScreen.translated(m_screenBound.left() - m_shotRect.left(), m_screenBound.top() - m_shotRect.top());
+        if (sizeChanged || rtOnSour != scr->m_rectOnSource)
         {
-            scr->setRectOnSource(scr->m_shotOnScreen);
+            scr->setRectOnSource(rtOnSour);
         }
     }
 
@@ -1097,9 +1105,11 @@ void ScreenSource::readyNextImage(int64_t next_timestamp)
                     {
                         releaseWindow();
                         m_timeCheck.start();
+                        m_hasImage = false;
                     }
                     else
                     {
+                        m_hasImage = true;
                         m_imageChanged = true;
                     }
                 }
@@ -1111,10 +1121,12 @@ void ScreenSource::readyNextImage(int64_t next_timestamp)
                 {
                     releaseWindow();
                     m_timeCheck.start();
+                    m_hasImage = false;
                 }
                 else
                 {
                     m_imageChanged = true;
+                    m_hasImage = true;
                 }
             }
             if (m_wid && m_timeCheck.elapsed() > 1000)
@@ -1125,6 +1137,75 @@ void ScreenSource::readyNextImage(int64_t next_timestamp)
                 m_timeCheck.start();
             }
         }
+    }
+}
+
+void ScreenSource::updateCursorTexture()
+{
+    if ( nullptr == m_display || !m_cursorUseable || !m_recordCursor )
+    {
+        releaseCursorTexture();
+        return;
+    }
+
+    if (m_cursorImage1)
+    {
+        XFree(m_cursorImage1);
+        m_cursorImage1 = nullptr;
+    }
+    m_cursorImage1 = XFixesGetCursorImage(m_display);
+    if (m_cursorImage1 == nullptr) return;
+
+    if (nullptr == m_cursorTexture1 || m_cursorTexture1->width() != m_cursorImage1->width || m_cursorTexture1->height() != m_cursorImage1->height)
+    {
+        if (m_cursorTexture1)
+            delete m_cursorTexture1;
+        m_cursorTexture1 = new QOpenGLTexture(QOpenGLTexture::Target2D);
+        m_cursorTexture1->create();
+        m_cursorTexture1->bind();
+        m_cursorTexture1->setSize(m_cursorImage1->width, m_cursorImage1->height);
+        m_cursorTexture1->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+        m_cursorTexture1->setFormat(QOpenGLTexture::RGBA8_UNorm);
+        m_cursorTexture1->allocateStorage(QOpenGLTexture::BGRA, QOpenGLTexture::UInt8);
+    }
+    else
+    {
+        m_cursorTexture1->bind();
+    }
+    int pixCount = m_cursorImage1->height * m_cursorImage1->width;
+    ulong* orgPix = m_cursorImage1->pixels;
+    uint* newPix = reinterpret_cast<uint*>(orgPix);
+    for ( int i = 0; i < pixCount; ++i )
+    {
+        newPix[i] = orgPix[i] & 0xFFFFFFFF;
+    }
+    m_cursorTexture1->setData(QOpenGLTexture::BGRA, QOpenGLTexture::UInt8, static_cast<const void*>(newPix), nullptr);
+
+    qSwap(m_cursorImage1, m_cursorImage2);
+    qSwap(m_cursorTexture1, m_cursorTexture2);
+}
+
+void ScreenSource::releaseCursorTexture()
+{
+    if (m_cursorImage1)
+    {
+        XFree(m_cursorImage1);
+        m_cursorImage1 = nullptr;
+    }
+    if (m_cursorImage2)
+    {
+        XFree(m_cursorImage2);
+        m_cursorImage2 = nullptr;
+    }
+    if (m_cursorTexture1)
+    {
+        delete m_cursorTexture1;
+        m_cursorTexture1 = nullptr;
+    }
+    if (m_cursorTexture2)
+    {
+        delete m_cursorTexture2;
+        m_cursorTexture2 = nullptr;
     }
 }
 

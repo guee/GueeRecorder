@@ -2,7 +2,7 @@
 Categories=AudioVideo;Video;Recorder;Qt;
 Comment=High efficiency screen recording software, can fuse a variety of image elements, encoded as video files.
 Comment[zh_CN]=高效率的录屏软件，可以融合多种图像元素，编码为视频文件。
-Version=1.0.1
+Version=1.0.1-2
 Name=Guee Recorder
 Name[zh_CN]=Guee录屏机
 GenericName=Guee Recorder
