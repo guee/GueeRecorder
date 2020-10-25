@@ -29,7 +29,7 @@ public:
     bool isEnabled() const { return m_isEnabled; }
     void setEnable(bool enable);
 
-    qreal amplitude() const { return m_curAmplitude; }
+    qreal amplitude() { qreal c = m_curAmplitude; m_curAmplitude = 0.0; return c; }
     qreal volume() const { return m_volume; }
     bool setVolume(qreal val);
     const QAudioFormat& format() const { return m_format; }

@@ -64,6 +64,7 @@ bool CameraSource::onClose()
         m_camera->stop();
         m_camera->unload();
         m_camera = nullptr;
+        m_hasImage = false;
     }
     return true;
 }
@@ -72,6 +73,7 @@ bool CameraSource::onPlay()
 {
     if (m_camera)
     {
+        m_hasImage = true;
         m_camera->start();
         return true;
     }

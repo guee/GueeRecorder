@@ -28,6 +28,7 @@ bool PictureSource::onOpen()
     m_height = m_image->height();
     m_pixFormat = m_image->format();
     m_imageChanged = true;
+    m_hasImage = true;
     for (auto it:m_layers)
     {
         it->setRectOnSource(QRect(0, 0, m_width, m_height));
@@ -43,6 +44,7 @@ bool PictureSource::onClose()
         m_image = nullptr;
         m_imageBuffer = nullptr;
         m_imageChanged = false;
+        m_hasImage = false;
         return true;
     }
     return false;

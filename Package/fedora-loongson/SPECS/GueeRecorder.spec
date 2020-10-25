@@ -8,7 +8,7 @@ Packager: guee@guee.net
 Vendor: guee
 Group: Unspecified
 URL: http://www.loongson.xyz/Articles/Content/18
-Requires: mesa-libGL, mesa-libGLU, qt5-qtx11extras, libXinerama, libXfixes, libXcomposite, qt5-qtmultimedia
+Requires: mesa-libGL, mesa-libGLU, qt5-qtx11extras, libXinerama, libXfixes, libXcomposite, qt5-qtmultimedia, qt5-qtsvg, qt5-qtimageformats
 BuildRoot: %{_topdir}/BUILDROOT
 %description
 guee recorder

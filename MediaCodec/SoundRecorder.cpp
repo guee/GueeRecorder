@@ -902,7 +902,7 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
     }
 
     const int numSamples = int(len / (m_format.sampleSize() / 8));
-    int skip = m_format.channelCount() * 2 + 1;
+    int skip = 1;//m_format.channelCount() * 2 + 1;
     qreal amplitude = 0.0;
     switch (m_format.sampleSize())
     {
@@ -968,11 +968,12 @@ qint64 SoundDevInfo::writeData(const char *data, qint64 len)
             amplitude = qreal(maxValue);
         }
     }
-    m_curAmplitude = qMin(1.0, amplitude);
+    amplitude = qMin(1.0, amplitude);
 
-    m_curAmplitude /= QAudio::convertVolume(m_volume,
+    amplitude /= QAudio::convertVolume(m_volume,
                            QAudio::LogarithmicVolumeScale,QAudio::LinearVolumeScale
                            );
+    m_curAmplitude = qMax(m_curAmplitude, amplitude);
     return len;
 }
 
