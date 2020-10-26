@@ -352,10 +352,11 @@ void BaseLayer::setRect(qreal x, qreal y, qreal w, qreal h)
 
 void BaseLayer::movCenter(qreal x, qreal y)
 {
-    m_fullViewport = false;
+    m_userdefOnView = m_realBoxOnView;
     x = (x - 0.5) * m_glViewportSize.width();
     y = (y - 0.5) * m_glViewportSize.height();
     m_userdefOnView.moveCenter(QPointF(x, y));
+    m_fullViewport = false;
     onSizeChanged(this);
 }
 

@@ -149,7 +149,7 @@ vec3 hsl2rgb(float h, float s, float l)
 void main(void)
 {
     vec4 pix = getRGB_Pixel(qt_TexCoord0.st);
-    if (contrast != 0.0 || bright != 0.0 || saturation != 0.0)
+    if (hue != 0.0 || contrast != 0.0 || bright != 0.0 || saturation != 0.0)
     {
         float c = contrast >= 0.0 ? 1.0 + contrast * 9.0 : 1.0 + contrast * 9.0 / 10.0;
         float b = bright >= 0.0 ? 1.0 + bright * 9.0 : 1.0 + bright * 9.0 / 10.0;

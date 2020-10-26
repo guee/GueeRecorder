@@ -879,6 +879,7 @@ void ScreenSource::releaseWindow()
 
 bool ScreenSource::shotScreen(const QRect* rect)
 {
+
     m_imageLock.lock();
     if ( rect )
     {

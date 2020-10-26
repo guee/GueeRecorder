@@ -564,7 +564,7 @@ bool VideoSynthesizer::setBFrames(int bFrames)
 void VideoSynthesizer::run()
 {
     bool isTextureUpdated = false;
-
+    bool isFrameTimeOK = false;
     if ( !m_context->makeCurrent(m_surface) )
     {
         return;
@@ -619,17 +619,19 @@ void VideoSynthesizer::run()
         curTimer = m_frameSync.isNextFrame();
         if (curTimer >= 0)
         {
+            isFrameTimeOK = true;
             if ( curTimer - preTimer > 1000000 ) isTextureUpdated = true;
         }
-        if ((curTimer >= 0 && isTextureUpdated) || m_immediateUpdate)
+        if ((isFrameTimeOK && isTextureUpdated) || m_immediateUpdate)
         {
+            preTimer = curTimer;
             m_immediateUpdate = false;
-            m_frameData.timestamp = qMax(int64_t(0), m_timestamp.elapsed());
-            readySourceNextImage(curTimer);
-            ScreenSource::updateCursorTexture();
-            if (isTextureUpdated)
+            if (isFrameTimeOK)
             {
-                preTimer = curTimer;
+                m_frameData.timestamp = qMax(int64_t(0), m_timestamp.elapsed());
+                readySourceNextImage(curTimer);
+                ScreenSource::updateCursorTexture();
+
                 if ( m_status  == Palying )
                 {
                     putFrameToEncoder();
@@ -654,12 +656,13 @@ void VideoSynthesizer::run()
             glDisable(GL_BLEND);
 
 
-            if (isTextureUpdated)
+            if (isFrameTimeOK)
             {
                  drawFrameToYUV(fboRgba1, fboRgba2);
                  fboRgba1 = fboRgba2;
                  fboRgba2 = swfbo;
                  m_frameRate.add();
+                 isFrameTimeOK = false;
             }
             glFlush();
             if (m_enablePreview)
@@ -910,7 +913,6 @@ void VideoSynthesizer::uninitYubFbo()
 
 void VideoSynthesizer::putFrameToEncoder()
 {
-
     if (m_frameData.fbo == nullptr) return;
 
     x264_picture_t* picin = m_vidEncoder.beginAddFrame(m_frameData.timestamp);

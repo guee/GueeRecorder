@@ -1,5 +1,5 @@
 Package: net.guee.recorder
-Version: 1.0.1-2
+Version: 1.0.1-3
 Section: video
 Priority: optional
 Depends: libqt5x11extras5, libqt5svg5, libxinerama1, libglx-mesa0, libxfixes3, libxcomposite1

@@ -217,6 +217,7 @@ x264_picture_t *GueeVideoEncoder::beginAddFrame(int64_t microsecond)
 
     if (pts < m_prevFramePts)
     {
+        qDebug() <<"beginAddFrame pts = "<< pts << " pre=" << m_prevFramePts;
         return nullptr;
     }
     if (pts == m_prevFramePts)

@@ -334,10 +334,7 @@ void FormLayerTools::on_layerAdded(BaseLayer *layer)
     model->insertRow(layer->layerIndex(), item);
    // ui->listViewLayers->setIndexWidget()
     //model->setI
-    if (nullptr == m_layer )
-    {
-        ui->listViewLayers->setCurrentIndex(item->index());
-    }
+    ui->listViewLayers->setCurrentIndex(item->index());
     if (m_layer)
     {
         ui->labelLayers->setText(QString("%1/%2").arg(m_layer->layerIndex()).arg(m_video->childLayerCount()));

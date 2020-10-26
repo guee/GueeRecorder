@@ -2,7 +2,7 @@ Summary: 高效率的录屏软件，可以融合多种图像元素，编码为�
 Name: net.guee.recorder
 BuildArch: mips64el
 Version: 1.0.1
-Release: 2
+Release: 3
 License: GPLv3
 Packager: guee@guee.net
 Vendor: guee
