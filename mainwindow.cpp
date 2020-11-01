@@ -86,7 +86,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetLayerTools, &FormLayerTools::on_layerRemoved);
     connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetLayerTools, &FormLayerTools::on_layerMoved);
 
-    //connect(&m_video, &VideoSynthesizer::layerAdded, ui->widgetPreview, &GlWidgetPreview::on_layerAdded);
     connect(&m_video, &VideoSynthesizer::layerRemoved, ui->widgetPreview, &GlWidgetPreview::on_layerRemoved);
     connect(&m_video, &VideoSynthesizer::layerMoved, ui->widgetPreview, &GlWidgetPreview::on_layerMoved);
 
@@ -200,6 +199,9 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         }
         else if ( event->type() == QEvent::Hide)
         {
+            ui->pushButtonScreenSelect->setChecked(false);
+            ui->pushButtonCameraSelect->setChecked(false);
+            ui->pushButtonMediaSelect->setChecked(false);
             //mouseOnAddContents = false;
         }
     }
@@ -333,12 +335,28 @@ void MainWindow::showSystemTrayMenu()
     if (!QSystemTrayIcon::isSystemTrayAvailable()) return;
     QMenu* menu = new QMenu(this);
     QAction* actShow = menu->addAction( this->isHidden() ? "显示主窗口" : "隐藏主窗口");
-    QAction* actRec = menu->addAction(m_video.status() == BaseLayer::NoOpen ? "开始录制" : "停止录制");
+    QAction* actRec = nullptr;
+    if (m_video.status() == BaseLayer::NoOpen)
+    {
+        actRec =  menu->addAction(QIcon(":/GueeRecorder_menu_record.svg"), "开始录制");
+    }
+    else
+    {
+        actRec =  menu->addAction(QIcon(":/GueeRecorder_menu_stop.svg"), "停止录制");
+    }
     QAction* actPause = nullptr;
     if (m_video.status() > BaseLayer::NoOpen)
     {
-        actPause = menu->addAction(m_video.status() == BaseLayer::Paused ? "继续录制" : "暂停录制");
+        if (m_video.status() == BaseLayer::Paused)
+        {
+            actPause = menu->addAction(QIcon(":/GueeRecorder_menu_record.svg"), "继续录制");
+        }
+        else
+        {
+            actPause = menu->addAction(QIcon(":/GueeRecorder_menu_pause.svg"), "暂停录制");
+        }
     }
+
     menu->addSeparator();
     //if (m_video.status() == BaseLayer::NoOpen)
     QAction* actExit = menu->addAction("退出程序");

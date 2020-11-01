@@ -45,6 +45,8 @@ QString& initLibPaths(int i)
     #endif
 
     #ifdef Q_PROCESSOR_ARM
+        x264libPath.append("lib/arm64/libx264.so.161");
+        faaclibPath.append("lib/arm64/libfaac.so.0");
     #endif
 
     #ifdef Q_PROCESSOR_X86_64

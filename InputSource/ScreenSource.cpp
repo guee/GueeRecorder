@@ -132,9 +132,9 @@ ScreenSource::ScreenSource(const QString& typeName, const QString &sourceName)
 
 ScreenSource::~ScreenSource()
 {
+    qDebug() << "ScreenSource 析构";
     onClose();
 
-    qDebug() << "ScreenSource 析构";
 }
 
 bool ScreenSource::onOpen()

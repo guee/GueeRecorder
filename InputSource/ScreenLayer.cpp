@@ -11,7 +11,7 @@ ScreenLayer::ScreenLayer()
 
 ScreenLayer::~ScreenLayer()
 {
-    close();
+   close();
 }
 
 int32_t ScreenLayer::screenCount()

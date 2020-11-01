@@ -60,7 +60,9 @@ bool BaseLayer::open(const QString &sourceName)
             m_resource->setSourceFps(frameRate());
             if (m_resource->sourceOpen(this))
             {
+                m_lockSources.lock();
                 m_resPool.push_back(m_resource);
+                m_lockSources.unlock();
                 m_status = Opened;
             }
             else
@@ -94,6 +96,7 @@ void BaseLayer::close()
     if ( m_resource )
     {
         m_status = NoOpen;
+        m_lockSources.lock();
         if ( m_resource->sourceClose(this) )
         {
             //如果返回 true，表示已经没有被任何layer引用，需要删除对象
@@ -104,6 +107,7 @@ void BaseLayer::close()
             }
             onReleaseSource(m_resource);
         }
+        m_lockSources.unlock();
         m_resource = nullptr;
     }
 }
@@ -146,9 +150,12 @@ bool BaseLayer::pause()
 
 void BaseLayer::draw()
 {
-    if (m_resource == nullptr || !m_resource->m_hasImage || !m_resource->m_isVisable
-            || m_program == nullptr || m_resource->m_texture == nullptr || !m_resource->m_texture->isCreated()) return;
 
+    if (m_resource == nullptr || !m_resource->m_hasImage || !m_resource->m_isVisable
+            || m_program == nullptr || m_resource->m_texture == nullptr || !m_resource->m_texture->isCreated())
+    {
+        return;
+    }
     m_program->bind();
     m_program->setUniformValue("qt_Texture0", 0);
     m_program->setUniformValue("yuvFormat", m_resource->m_intputYuvFormat);
@@ -186,8 +193,8 @@ void BaseLayer::draw()
     m_program->setAttributeBuffer(1, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
     m_resource->m_texture->bind(0);
-
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
 }
 
 int32_t BaseLayer::stride() const
@@ -770,6 +777,7 @@ void BaseLayer::setShaderProgram(QOpenGLShaderProgram *prog)
 bool BaseLayer::updateSourceTextures()
 {
     bool ret = false;
+    m_lockSources.lock();
     for (auto it:m_resPool)
     {
         if (it->updateToTexture())
@@ -777,33 +785,43 @@ bool BaseLayer::updateSourceTextures()
             ret = true;
         }
     }
+    m_lockSources.unlock();
     return ret;
 }
 
 void BaseLayer::readySourceNextImage(int64_t next_timestamp)
 {
+    m_lockSources.lock();
     for (auto it:m_resPool)
     {
         it->readyNextImage(next_timestamp);
     }
+    m_lockSources.unlock();
 }
 
 BaseSource *BaseLayer::findSource(const QString& typeName, const QString& sourceName)
 {
+    m_lockSources.lock();
     for (auto it:m_resPool)
     {
         if (it->isSameSource(typeName, sourceName) )
+        {
+            m_lockSources.unlock();
             return it;
+        }
     }
+    m_lockSources.unlock();
     return nullptr;
 }
 
 void BaseLayer::setSourcesFramerate(float fps)
 {
+    m_lockSources.lock();
     for (auto it:m_resPool)
     {
         it->setSourceFps(fps);
     }
+    m_lockSources.unlock();
 }
 
 void BaseLayer::onSizeChanged(BaseLayer* layer)
@@ -909,6 +927,7 @@ void BaseLayer::onLayerRemoved(BaseLayer *layer)
 
 QVector<BaseLayer *> &BaseLayer::lockChilds()
 {
+    //m_lockSources.lock();
     m_mutexChilds.lock();
     return m_childs;
 }
@@ -916,6 +935,7 @@ QVector<BaseLayer *> &BaseLayer::lockChilds()
 void BaseLayer::unlockChilds()
 {
     m_mutexChilds.unlock();
+    //m_lockSources.unlock();
 }
 
 int BaseLayer::mov_Left(qreal left, QRectF& box)

@@ -88,5 +88,8 @@
         <file>GueeRecorder.svg</file>
         <file>GueeRecorder_record.svg</file>
         <file>GueeRecorder_pause.svg</file>
+        <file>GueeRecorder_menu_record.svg</file>
+        <file>GueeRecorder_menu_pause.svg</file>
+        <file>GueeRecorder_menu_stop.svg</file>
     </qresource>
 </RCC>

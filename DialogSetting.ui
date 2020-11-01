@@ -146,8 +146,8 @@ background-color: rgb(255, 255, 255);
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>425</width>
-        <height>903</height>
+        <width>436</width>
+        <height>961</height>
        </rect>
       </property>
       <property name="sizePolicy">

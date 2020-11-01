@@ -699,12 +699,6 @@ void GlWidgetPreview::on_videoSynthesizer_frameReady(uint textureId)
     }
 }
 
-void GlWidgetPreview::on_layerAdded(BaseLayer *layer)
-{
-    on_selectLayer(layer);
-    notifySelectLayer(layer);
-}
-
 void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
 {
     if (layer)
@@ -718,10 +712,10 @@ void GlWidgetPreview::on_layerRemoved(BaseLayer *layer)
 
 void GlWidgetPreview::on_selectLayer(BaseLayer *layer)
 {
-    if (layer == nullptr)
-        notifySelectLayer(layer);
-    else if (!layer->hasImage() || !layer->isVisabled())
+    if (layer && (!layer->hasImage() || !layer->isVisabled()))
         layer = nullptr;
+    else
+        notifySelectLayer(layer);
     if (layer == m_editingLayer)
     {
         m_enterLayer = nullptr;

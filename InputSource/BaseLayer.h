@@ -134,6 +134,7 @@ protected:
     bool m_fullViewport = true;        //是否缩放到整个画面。
     VertexArritb    m_vertex[4];
     BaseSource* m_resource = nullptr;
+    QMutex m_mutexChilds;
 
     static bool updateSourceTextures();
     static void readySourceNextImage(int64_t next_timestamp);
@@ -153,7 +154,6 @@ private:
     static QMutex m_lockSources;
     static QVector<QOpenGLShaderProgram*>   m_progPool;
     QVector<BaseLayer*> m_childs;
-    QMutex m_mutexChilds;
 
     int mov_Left(qreal left, QRectF& box);
     int mov_Right(qreal right, QRectF& box);

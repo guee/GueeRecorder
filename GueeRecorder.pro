@@ -36,6 +36,9 @@ if (contains(QT_ARCH, x86_64)){
     QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/amd64\'
 }
 
+if (contains(QT_ARCH, arm64)){
+    QMAKE_LFLAGS += -Wl,-rpath,\'\$\$ORIGIN/lib/arm64\'
+}
 
 SOURCES += \
     Common/FrameSynchronization.cpp \
@@ -161,12 +164,10 @@ DISTFILES += \
     Package/uos-loongson/opt/apps/net.guee.recorder/info \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
     Package/uos-loongson/opt/apps/net.guee.recorder/entries/icons/hicolor/scalable/apps/net.guee.recorder.svg \
-    Package/uos-loongson/opt/apps/net.guee.recorder/files/GueeRecorder \
     Package/uos-amd64/DEBIAN/control \
     Package/uos-amd64/opt/apps/net.guee.recorder/info \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
     Package/uos-amd64/opt/apps/net.guee.recorder/entries/icons/hicolor/scalable/apps/net.guee.recorder.svg \
-    Package/uos-amd64/opt/apps/net.guee.recorder/files/GueeRecorder \
     lib/amd64/libfaac.so.0 \
     lib/amd64/libx264.so.161 \
     lib/lisa64/3a3000/libfaac.so.0 \
@@ -188,7 +189,14 @@ DISTFILES += \
     Doc/icon.psd \
     Doc/logo.psd \
     Doc/GueeRecoder-MainUI.xcf \
-    Doc/LayerTools.xcf
+    Doc/LayerTools.xcf \
+    Package/uos-arm64/opt/apps/net.guee.recorder/entries/applications/net.guee.recorder.desktop \
+    Package/uos-arm64/opt/apps/net.guee.recorder/entries/icons/hicolor/scalable/apps/net.guee.recorder.svg \
+    Package/uos-arm64/DEBIAN/control \
+    Package/uos-arm64/opt/apps/net.guee.recorder/info \
+    lib/arm64/libfaac.so.0 \
+    lib/arm64/libx264.so.161
+
 
 
 

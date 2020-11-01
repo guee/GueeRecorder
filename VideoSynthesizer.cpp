@@ -614,6 +614,7 @@ void VideoSynthesizer::run()
             m_videoSizeChanged = false;
             emit frameReady(0);
         }
+
         isTextureUpdated |= updateSourceTextures();
 
         curTimer = m_frameSync.isNextFrame();

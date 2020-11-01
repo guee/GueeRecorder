@@ -75,7 +75,6 @@ private:
     }
 public slots:
     void on_videoSynthesizer_frameReady(uint textureId);
-    void on_layerAdded(BaseLayer* layer);
     void on_layerRemoved(BaseLayer* layer);
     void on_selectLayer(BaseLayer* layer);
     void on_layerMoved(BaseLayer* layer);
