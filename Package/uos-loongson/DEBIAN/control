@@ -2,10 +2,10 @@ Package: net.guee.recorder
 Version: 1.0.1-4
 Section: video
 Priority: optional
-Depends: libqt5x11extras5, libqt5svg5, libxinerama1, libglx-mesa0, libxfixes3, libxcomposite1
+Depends: libqt5x11extras5, libxinerama1, libglx-mesa0, libxfixes3, libxcomposite1, libqt5multimediawidgets5, libqt5svg5, qt5-image-formats-plugins
 Suggests: Openssl
 Architecture: mips64el
-Installed-Size: 7400000
+Installed-Size: 5400000
 Homepage: http://www.loongson.xyz
 Maintainer: guee[guee@guee.net]
 Description: 高效的屏幕录像及录音软件，在编辑界面可以随时增删图像元素，并调整各个图像元素的大小和位置，图像融合后编码为视频文件。

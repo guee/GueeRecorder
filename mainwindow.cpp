@@ -121,8 +121,6 @@ MainWindow::MainWindow(QWidget *parent)
     {
         ui->widgetLayerTools->show();
     }
-
-    initSystemTrayIcon();
 }
 
 MainWindow::~MainWindow()
@@ -589,6 +587,8 @@ void MainWindow::on_widgetPreview_initGL()
 {
     setWaitWidget("正在初始化，请稍候……");
     m_video.init(ui->widgetPreview->context());
+
+    initSystemTrayIcon();
     m_delayInitAudio = startTimer(200);
 }
 
